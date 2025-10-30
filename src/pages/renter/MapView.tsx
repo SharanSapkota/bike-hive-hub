@@ -46,7 +46,7 @@ const mockBikes: Bike[] = [
   {
     id: "2",
     name: "City Cruiser Deluxe",
-    location: { lat: 65.0519, lng: 25.3663 },
+    location: { lat: 65.0591, lng: 25.4653 },
     city: "Oulu",
     state: "NY",
     pricePerHour: 5,
@@ -60,7 +60,7 @@ const mockBikes: Bike[] = [
   {
     id: "3",
     name: "Road Racer Speed",
-    location: { lat: 40.7118, lng: -74.004 },
+    location: { lat: 65.1591, lng: 25.465 },
     city: "New York",
     state: "NY",
     pricePerHour: 10,
@@ -213,11 +213,9 @@ const MapView = () => {
             );
 
             if (point) {
-              const mapContainer = map.getDiv();
-              const rect = mapContainer.getBoundingClientRect();
               setPopupPosition({
-                x: rect.left + point.x,
-                y: rect.top + point.y,
+                x: point.x,
+                y: point.y - 60,
               });
             }
           }
@@ -337,15 +335,15 @@ const MapView = () => {
         <div
           className="fixed z-20 animate-scale-in pointer-events-none"
           style={{
-            left: `${Math.min(Math.max(popupPosition.x, 120), window.innerWidth - 120)}px`,
-            top: `${Math.max(popupPosition.y - 20, 50)}px`,
+            left: `${Math.min(Math.max(popupPosition.x, 130), window.innerWidth - 130)}px`,
+            top: `${Math.max(Math.min(popupPosition.y, window.innerHeight - 300), 60)}px`,
             transform: "translate(-50%, -100%)",
             maxWidth: "calc(100vw - 32px)",
           }}
         >
           {/* Arrow pointing to marker */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
-            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-card"></div>
+            <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
 
           <Card className="w-[240px] shadow-xl pointer-events-auto max-h-[60vh] overflow-y-auto">
