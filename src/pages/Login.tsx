@@ -7,12 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bike, MapPin } from 'lucide-react';
+import { Bike } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
-
-const libraries: ("places")[] = ["places"];
 
 // Validation schema
 const signupSchema = z.object({
@@ -27,7 +24,10 @@ const signupSchema = z.object({
     const age = today.getFullYear() - birthDate.getFullYear();
     return age >= 18;
   }, 'You must be at least 18 years old'),
-  address: z.string().min(10, 'Please enter a complete address'),
+  country: z.string().min(2, 'Country is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State/Province is required'),
+  postalCode: z.string().min(3, 'Postal code is required'),
   password: z.string().min(8, 'Password must be at least 8 characters').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -51,13 +51,14 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [dob, setDob] = useState('');
-  const [address, setAddress] = useState('');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [registerRole, setRegisterRole] = useState<UserRole>('renter');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; // User needs to replace this
 
   if (isAuthenticated) {
     navigate('/');
@@ -92,7 +93,10 @@ const Login = () => {
         email,
         phone,
         dob,
-        address,
+        country,
+        city,
+        state,
+        postalCode,
         password,
         confirmPassword,
       };
@@ -121,13 +125,6 @@ const Login = () => {
       toast.error(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      setAddress(place.formatted_address || '');
     }
   };
 
@@ -288,26 +285,51 @@ const Login = () => {
                     {errors.dob && <p className="text-xs text-destructive">{errors.dob}</p>}
                   </div>
 
-                  {/* Address with Google Places */}
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address *</Label>
-                    <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={libraries}>
-                      <Autocomplete
-                        onLoad={setAutocomplete}
-                        onPlaceChanged={onPlaceChanged}
-                      >
-                        <div className="relative">
-                          <Input
-                            id="address"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            placeholder="Start typing your address..."
-                          />
-                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </Autocomplete>
-                    </LoadScript>
-                    {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
+                  {/* Address Fields */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country *</Label>
+                      <Input
+                        id="country"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        placeholder="United States"
+                      />
+                      {errors.country && <p className="text-xs text-destructive">{errors.country}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="New York"
+                      />
+                      {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State/Province *</Label>
+                      <Input
+                        id="state"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        placeholder="NY"
+                      />
+                      {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="postalCode">Postal Code *</Label>
+                      <Input
+                        id="postalCode"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        placeholder="10001"
+                      />
+                      {errors.postalCode && <p className="text-xs text-destructive">{errors.postalCode}</p>}
+                    </div>
                   </div>
 
                   {/* Password */}
