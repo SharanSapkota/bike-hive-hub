@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Bike } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { api } from '@/lib/api';
 
 // Validation schema
 const signupSchema = z.object({
@@ -115,14 +116,36 @@ const Login = () => {
         return;
       }
 
-      // TODO: Call API to register user with all fields
-      const fullName = `${firstName} ${middleName} ${lastName}`.trim();
-      await register(email, password, fullName, registerRole);
+      // Call signup API
+      const response = await api.post('/signup', {
+        firstName,
+        middleName,
+        lastName,
+        email,
+        phone,
+        dob,
+        address: {
+          country,
+          city,
+          state,
+          postalCode
+        },
+        password,
+        role: registerRole
+      });
+
+      // Store auth token if provided
+      if (response.data.token) {
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error: any) {
       console.error('Registration failed:', error);
-      toast.error(error.message || 'Registration failed');
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
