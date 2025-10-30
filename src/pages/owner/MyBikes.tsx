@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, ImageIcon } from 'lucide-react';
+import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, ImageIcon, Locate } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -147,6 +147,50 @@ const MyBikes = () => {
     }
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    toast.loading('Getting your location...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        if (isLoaded && window.google) {
+          const geocoder = new window.google.maps.Geocoder();
+          const latlng = { lat: latitude, lng: longitude };
+
+          geocoder.geocode({ location: latlng }, (results, status) => {
+            toast.dismiss();
+            
+            if (status === 'OK' && results && results[0]) {
+              setFormData({
+                ...formData,
+                location: results[0].formatted_address,
+                address: {
+                  formatted: results[0].formatted_address,
+                  lat: latitude,
+                  lng: longitude,
+                },
+              });
+              toast.success('Location updated!');
+            } else {
+              toast.error('Could not retrieve address');
+            }
+          });
+        }
+      },
+      (error) => {
+        toast.dismiss();
+        toast.error('Unable to get your location');
+        console.error('Geolocation error:', error);
+      }
+    );
+  };
+
   const handleAddBike = () => {
     // TODO: API call to add bike and upload images
     const newBike: BikeData = {
@@ -271,7 +315,20 @@ const MyBikes = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="address">Address</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleUseCurrentLocation}
+                    className="h-auto py-1 px-2 text-xs"
+                    disabled={!isLoaded}
+                  >
+                    <Locate className="h-3 w-3 mr-1" />
+                    Use current location
+                  </Button>
+                </div>
                 {isLoaded ? (
                   <Autocomplete
                     onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
