@@ -17,11 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useLoadScript, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import { Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
 import { uploadImages } from '@/lib/s3Upload';
-
-const libraries: ("places")[] = ["places"];
 
 const mapContainerStyle = {
   width: '100%',
@@ -85,11 +83,6 @@ const mockBikes: BikeData[] = [
 ];
 
 const MyBikes = () => {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: 'AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc',
-    libraries,
-  });
-
   const [bikes, setBikes] = useState<BikeData[]>(mockBikes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeData | null>(null);
@@ -214,7 +207,7 @@ const MyBikes = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        if (isLoaded && window.google) {
+        if (window.google) {
           const geocoder = new window.google.maps.Geocoder();
           const latlng = { lat: latitude, lng: longitude };
 
@@ -417,40 +410,28 @@ const MyBikes = () => {
                     size="sm"
                     onClick={handleUseCurrentLocation}
                     className="h-auto py-1 px-2 text-xs"
-                    disabled={!isLoaded}
                   >
                     <Locate className="h-3 w-3 mr-1" />
                     Use current location
                   </Button>
                 </div>
-                {isLoaded ? (
-                  <Autocomplete
-                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                    onPlaceChanged={onPlaceSelected}
-                  >
-                    <Input
-                      id="address"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="Search for an address..."
-                      className="w-full"
-                    />
-                  </Autocomplete>
-                ) : (
+                <Autocomplete
+                  onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                  onPlaceChanged={onPlaceSelected}
+                >
                   <Input
                     id="address"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Loading address search..."
-                    disabled
+                    placeholder="Search for an address..."
+                    className="w-full"
                   />
-                )}
+                </Autocomplete>
                 <p className="text-xs text-muted-foreground">
                   Start typing to search for an address
                 </p>
                 
-                {isLoaded && (
-                  <div className="mt-3 rounded-lg overflow-hidden border relative">
+                <div className="mt-3 rounded-lg overflow-hidden border relative">
                     {isMapLoading && (
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
                         <div className="flex flex-col items-center gap-2">
@@ -471,7 +452,7 @@ const MyBikes = () => {
                       )}
                     </GoogleMap>
                   </div>
-                )}
+                )
               </div>
 
               <div className="space-y-2">

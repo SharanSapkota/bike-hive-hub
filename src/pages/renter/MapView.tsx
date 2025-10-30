@@ -1,15 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from "@react-google-maps/api";
+import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Star, X, Search } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
-const libraries: ("places")[] = ["places"];
 
 interface Bike {
   id: string;
@@ -159,11 +156,6 @@ const containerStyle = {
 
 const MapView = () => {
   const navigate = useNavigate();
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
 
   const [bikes, setBikes] = useState<Bike[]>(mockBikes);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -203,9 +195,7 @@ const MapView = () => {
           setCenter(newCenter);
           
           // Get address from coordinates
-          if (isLoaded) {
-            await getAddressFromCoordinates(newCenter.lat, newCenter.lng);
-          }
+          await getAddressFromCoordinates(newCenter.lat, newCenter.lng);
           setIsLoadingLocation(false);
         },
         (error) => {
@@ -219,7 +209,7 @@ const MapView = () => {
 
     // TODO: Fetch bikes from API
     // api.get('/bikes/nearby').then(response => setBikes(response.data));
-  }, [isLoaded]);
+  }, []);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -321,21 +311,17 @@ const MapView = () => {
     autocompleteRef.current = autocomplete;
   };
 
-  if (!isLoaded || isLoadingLocation) {
+  if (isLoadingLocation) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground font-medium">
-            {!isLoaded ? "Loading map..." : "Getting your location..."}
-          </p>
-          {isLoadingLocation && (
-            <div className="mt-4 w-64 mx-auto">
-              <div className="h-1 bg-muted-foreground/20 rounded-full overflow-hidden">
-                <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }}></div>
-              </div>
+          <p className="text-muted-foreground font-medium">Getting your location...</p>
+          <div className="mt-4 w-64 mx-auto">
+            <div className="h-1 bg-muted-foreground/20 rounded-full overflow-hidden">
+              <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }}></div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -348,30 +334,21 @@ const MapView = () => {
         <Card className="shadow-xl">
           <div className="flex items-center gap-2 p-3">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
-            {isLoaded ? (
-              <Autocomplete
-                onLoad={onAutocompleteLoad}
-                onPlaceChanged={onPlaceChanged}
-                options={{
-                  fields: ["formatted_address", "geometry", "name"],
-                }}
-              >
-                <Input
-                  type="text"
-                  placeholder="Search for a location..."
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
-                />
-              </Autocomplete>
-            ) : (
+            <Autocomplete
+              onLoad={onAutocompleteLoad}
+              onPlaceChanged={onPlaceChanged}
+              options={{
+                fields: ["formatted_address", "geometry", "name"],
+              }}
+            >
               <Input
                 type="text"
-                placeholder="Loading search..."
-                disabled
+                placeholder="Search for a location..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
               />
-            )}
+            </Autocomplete>
           </div>
         </Card>
       </div>
