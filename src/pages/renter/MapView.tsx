@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation } from 'lucide-react';
+import { useEffect, useState, useCallback } from "react";
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Navigation } from "lucide-react";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
 
 interface Bike {
   id: string;
@@ -22,95 +22,95 @@ interface Bike {
 // Mock data - will be replaced with API call
 const mockBikes: Bike[] = [
   {
-    id: '1',
-    name: 'Mountain Explorer Pro',
-    location: { lat: 40.7128, lng: -74.006 },
-    city: 'New York',
-    state: 'NY',
+    id: "1",
+    name: "Mountain Explorer Pro",
+    location: { lat: 65.0593, lng: 25.4663 },
+    city: "Oulu",
+    state: "NY",
     pricePerHour: 8,
-    category: 'Mountain',
+    category: "Mountain",
     available: true,
   },
   {
-    id: '2',
-    name: 'City Cruiser Deluxe',
+    id: "2",
+    name: "City Cruiser Deluxe",
     location: { lat: 40.7138, lng: -74.008 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 5,
-    category: 'City',
+    category: "City",
     available: true,
   },
   {
-    id: '3',
-    name: 'Road Racer Speed',
+    id: "3",
+    name: "Road Racer Speed",
     location: { lat: 40.7118, lng: -74.004 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 10,
-    category: 'Road',
+    category: "Road",
     available: true,
   },
   {
-    id: '4',
-    name: 'Electric Bolt',
+    id: "4",
+    name: "Electric Bolt",
     location: { lat: 40.7158, lng: -74.009 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 12,
-    category: 'Electric',
+    category: "Electric",
     available: true,
   },
   {
-    id: '5',
-    name: 'Hybrid Comfort',
+    id: "5",
+    name: "Hybrid Comfort",
     location: { lat: 40.7098, lng: -74.003 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 7,
-    category: 'Hybrid',
+    category: "Hybrid",
     available: true,
   },
   {
-    id: '6',
-    name: 'Mountain Trail',
+    id: "6",
+    name: "Mountain Trail",
     location: { lat: 40.7108, lng: -74.007 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 9,
-    category: 'Mountain',
+    category: "Mountain",
     available: true,
   },
   {
-    id: '7',
-    name: 'City Commuter',
+    id: "7",
+    name: "City Commuter",
     location: { lat: 40.7148, lng: -74.005 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 6,
-    category: 'City',
+    category: "City",
     available: true,
   },
   {
-    id: '8',
-    name: 'Electric Cruiser',
+    id: "8",
+    name: "Electric Cruiser",
     location: { lat: 40.7168, lng: -74.0065 },
-    city: 'New York',
-    state: 'NY',
+    city: "New York",
+    state: "NY",
     pricePerHour: 11,
-    category: 'Electric',
+    category: "Electric",
     available: true,
   },
 ];
 
 const containerStyle = {
-  width: '100%',
-  height: '100%',
+  width: "100%",
+  height: "100%",
 };
 
 const MapView = () => {
   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
+    id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
 
@@ -130,8 +130,8 @@ const MapView = () => {
           });
         },
         (error) => {
-          console.error('Error getting location:', error);
-        }
+          console.error("Error getting location:", error);
+        },
       );
     }
 
@@ -161,8 +161,8 @@ const MapView = () => {
           }
         },
         (error) => {
-          console.error('Error getting location:', error);
-        }
+          console.error("Error getting location:", error);
+        },
       );
     }
   };
@@ -199,7 +199,9 @@ const MapView = () => {
             position={bike.location}
             onClick={() => setSelectedBike(bike)}
             icon={{
-              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              url:
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(`
                 <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="20" cy="20" r="18" fill="#14b8a6" stroke="white" stroke-width="2"/>
                   <text x="20" y="26" font-size="20" text-anchor="middle" fill="white">🚲</text>
@@ -211,18 +213,17 @@ const MapView = () => {
         ))}
 
         {selectedBike && (
-          <InfoWindow
-            position={selectedBike.location}
-            onCloseClick={() => setSelectedBike(null)}
-          >
+          <InfoWindow position={selectedBike.location} onCloseClick={() => setSelectedBike(null)}>
             <div className="p-2 min-w-[200px]">
               <h3 className="font-semibold text-lg mb-1">{selectedBike.name}</h3>
               <p className="text-sm text-gray-600 mb-1">{selectedBike.category}</p>
-              <p className="text-xs text-gray-500 mb-2">{selectedBike.city}, {selectedBike.state}</p>
+              <p className="text-xs text-gray-500 mb-2">
+                {selectedBike.city}, {selectedBike.state}
+              </p>
               <p className="font-bold text-teal-600 mb-2">${selectedBike.pricePerHour}/hr</p>
               <button
                 className="w-full px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:opacity-90"
-                onClick={() => alert('Rental feature coming soon!')}
+                onClick={() => alert("Rental feature coming soon!")}
               >
                 Rent Now
               </button>
@@ -233,11 +234,7 @@ const MapView = () => {
 
       {/* Floating controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-        <Button
-          size="icon"
-          onClick={handleCenterOnUser}
-          className="bg-card shadow-lg hover:bg-card/90"
-        >
+        <Button size="icon" onClick={handleCenterOnUser} className="bg-card shadow-lg hover:bg-card/90">
           <Navigation className="h-5 w-5" />
         </Button>
       </div>
@@ -263,9 +260,7 @@ const MapView = () => {
                   <MapPin className="h-3 w-3" />
                   {selectedBike.city}, {selectedBike.state}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedBike.category} Bike
-                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">{selectedBike.category} Bike</p>
               </div>
               <Badge variant="secondary" className="bg-primary/10 text-primary">
                 Available
@@ -277,9 +272,7 @@ const MapView = () => {
                 <p className="text-2xl font-bold text-primary">${selectedBike.pricePerHour}</p>
                 <p className="text-xs text-muted-foreground">per hour</p>
               </div>
-              <Button className="bg-gradient-primary hover:opacity-90">
-                Rent Now
-              </Button>
+              <Button className="bg-gradient-primary hover:opacity-90">Rent Now</Button>
             </div>
           </div>
         </Card>
