@@ -45,6 +45,11 @@ const Profile = () => {
   const [passportPreview, setPassportPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [verificationPhone, setVerificationPhone] = useState(VERIFICATION_DATA.phone);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isCodeSent, setIsCodeSent] = useState(false);
   
   // Payment form states
   const [cardNumber, setCardNumber] = useState('');
@@ -114,20 +119,49 @@ const Profile = () => {
   };
 
   const handleVerifyEmail = async () => {
+    if (!showEmailVerification) {
+      setShowEmailVerification(true);
+      return;
+    }
+    
     try {
       // TODO: Call API to send verification email
       toast.success('Verification email sent! Please check your inbox.');
+      setIsCodeSent(true);
     } catch (error) {
       toast.error('Failed to send verification email');
     }
   };
 
   const handleVerifyPhone = async () => {
+    if (!showPhoneVerification) {
+      setShowPhoneVerification(true);
+      return;
+    }
+    
     try {
       // TODO: Call API to send verification SMS
-      toast.success('Verification code sent to your phone!');
+      toast.success(`Verification code sent to ${verificationPhone}!`);
+      setIsCodeSent(true);
     } catch (error) {
       toast.error('Failed to send verification code');
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      // TODO: Call API to verify the code
+      if (verificationCode.length === 6) {
+        toast.success('Successfully verified!');
+        setShowEmailVerification(false);
+        setShowPhoneVerification(false);
+        setIsCodeSent(false);
+        setVerificationCode('');
+      } else {
+        toast.error('Please enter a valid 6-digit code');
+      }
+    } catch (error) {
+      toast.error('Failed to verify code');
     }
   };
 
@@ -412,55 +446,135 @@ const Profile = () => {
             </div>
 
             {/* Email Verification */}
-            <div className="flex items-center justify-between p-4 rounded-lg border">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">Email Verification</Label>
-                <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.email}</p>
+            <div className="p-4 rounded-lg border space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Email Verification</Label>
+                  <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {VERIFICATION_DATA.emailVerified ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <span className="text-sm font-medium text-green-500">Verified</span>
+                    </>
+                  ) : (
+                    <Button 
+                      onClick={handleVerifyEmail}
+                      variant="outline" 
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <XCircle className="h-4 w-4 text-destructive" />
+                      Verify Email
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {VERIFICATION_DATA.emailVerified ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm font-medium text-green-500">Verified</span>
-                  </>
-                ) : (
-                  <Button 
-                    onClick={handleVerifyEmail}
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <XCircle className="h-4 w-4 text-destructive" />
-                    Verify Email
-                  </Button>
-                )}
-              </div>
+              
+              {showEmailVerification && !VERIFICATION_DATA.emailVerified && (
+                <div className="space-y-3 pt-2 border-t">
+                  {!isCodeSent ? (
+                    <Button 
+                      onClick={handleVerifyEmail}
+                      className="w-full bg-gradient-primary hover:opacity-90"
+                    >
+                      Send Verification Code
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="emailCode">Enter 6-digit code</Label>
+                        <Input
+                          id="emailCode"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleVerifyCode}
+                        className="w-full bg-gradient-primary hover:opacity-90"
+                      >
+                        Verify Code
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Phone Verification */}
-            <div className="flex items-center justify-between p-4 rounded-lg border">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">Phone Verification</Label>
-                <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.phone}</p>
+            <div className="p-4 rounded-lg border space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Phone Verification</Label>
+                  <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.phone}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {VERIFICATION_DATA.phoneVerified ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <span className="text-sm font-medium text-green-500">Verified</span>
+                    </>
+                  ) : (
+                    <Button 
+                      onClick={handleVerifyPhone}
+                      variant="outline" 
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <XCircle className="h-4 w-4 text-destructive" />
+                      Verify Phone
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {VERIFICATION_DATA.phoneVerified ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm font-medium text-green-500">Verified</span>
-                  </>
-                ) : (
-                  <Button 
-                    onClick={handleVerifyPhone}
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <XCircle className="h-4 w-4 text-destructive" />
-                    Verify Phone
-                  </Button>
-                )}
-              </div>
+              
+              {showPhoneVerification && !VERIFICATION_DATA.phoneVerified && (
+                <div className="space-y-3 pt-2 border-t">
+                  {!isCodeSent ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <Input
+                          id="phoneNumber"
+                          type="tel"
+                          value={verificationPhone}
+                          onChange={(e) => setVerificationPhone(e.target.value)}
+                          placeholder="+1 (555) 000-0000"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleVerifyPhone}
+                        className="w-full bg-gradient-primary hover:opacity-90"
+                      >
+                        Send Verification Code
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneCode">Enter 6-digit code</Label>
+                        <Input
+                          id="phoneCode"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleVerifyCode}
+                        className="w-full bg-gradient-primary hover:opacity-90"
+                      >
+                        Verify Code
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
