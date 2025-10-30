@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useLoadScript, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import { api } from '@/lib/api';
+import { uploadImages } from '@/lib/s3Upload';
 
 const libraries: ("places")[] = ["places"];
 
@@ -191,38 +193,63 @@ const MyBikes = () => {
     );
   };
 
-  const handleAddBike = () => {
-    // TODO: API call to add bike and upload images
-    const newBike: BikeData = {
-      id: Date.now().toString(),
-      name: formData.name,
-      category: formData.category,
-      pricePerHour: Number(formData.pricePerHour),
-      pricePerDay: Number(formData.pricePerDay),
-      location: formData.location,
-      address: formData.address || undefined,
-      description: formData.description,
-      available: true,
-      images: imagePreviews, // In production, these would be uploaded URLs
-    };
+  const handleAddBike = async () => {
+    try {
+      toast.loading('Uploading images...');
 
-    setBikes([...bikes, newBike]);
-    setIsAddDialogOpen(false);
-    
-    // Reset form
-    setFormData({
-      name: '',
-      category: 'City',
-      pricePerHour: '',
-      pricePerDay: '',
-      location: '',
-      address: null,
-      description: '',
-    });
-    setSelectedImages([]);
-    setImagePreviews([]);
-    
-    toast.success('Bike added successfully!');
+      // Upload images to S3 and get their URLs
+      const imageUrls = selectedImages.length > 0 
+        ? await uploadImages(selectedImages)
+        : [];
+
+      toast.dismiss();
+      toast.loading('Adding bike...');
+
+      // Call API to create bike with image URLs
+      const bikeData = {
+        name: formData.name,
+        category: formData.category,
+        pricePerHour: Number(formData.pricePerHour),
+        pricePerDay: Number(formData.pricePerDay),
+        location: formData.location,
+        address: formData.address,
+        description: formData.description,
+        images: imageUrls,
+      };
+
+      const response = await api.post('/bikes', bikeData);
+
+      // Add the new bike to the local state
+      const newBike: BikeData = {
+        ...bikeData,
+        id: response.data.id || Date.now().toString(),
+        available: true,
+      };
+
+      setBikes([...bikes, newBike]);
+      setIsAddDialogOpen(false);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        category: 'City',
+        pricePerHour: '',
+        pricePerDay: '',
+        location: '',
+        address: null,
+        description: '',
+      });
+      setSelectedImages([]);
+      setImagePreviews([]);
+      
+      toast.dismiss();
+      toast.success('Bike added successfully!');
+    } catch (error: any) {
+      toast.dismiss();
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add bike';
+      toast.error(errorMessage);
+      console.error('Error adding bike:', error);
+    }
   };
 
   const handleToggleAvailability = (bikeId: string) => {
