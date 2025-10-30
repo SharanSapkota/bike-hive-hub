@@ -95,6 +95,7 @@ const MyBikes = () => {
   const [editingBike, setEditingBike] = useState<BikeData | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isMapLoading, setIsMapLoading] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   // Form state
@@ -126,6 +127,11 @@ const MyBikes = () => {
   const openAddDialog = () => {
     resetForm();
     setIsDialogOpen(true);
+    // Automatically get current location for new bike
+    setIsMapLoading(true);
+    setTimeout(() => {
+      handleUseCurrentLocation();
+    }, 500);
   };
 
   const openEditDialog = (bike: BikeData) => {
@@ -143,7 +149,13 @@ const MyBikes = () => {
     if (bike.images && bike.images.length > 0) {
       setImagePreviews(bike.images);
     }
+    // Show map loading while setting up the previous location
+    setIsMapLoading(true);
     setIsDialogOpen(true);
+    // Map will load with existing coordinates
+    setTimeout(() => {
+      setIsMapLoading(false);
+    }, 1000);
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,9 +203,11 @@ const MyBikes = () => {
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser');
+      setIsMapLoading(false);
       return;
     }
 
+    setIsMapLoading(true);
     toast.loading('Getting your location...');
 
     navigator.geolocation.getCurrentPosition(
@@ -206,6 +220,7 @@ const MyBikes = () => {
 
           geocoder.geocode({ location: latlng }, (results, status) => {
             toast.dismiss();
+            setIsMapLoading(false);
             
             if (status === 'OK' && results && results[0]) {
               setFormData({
@@ -222,10 +237,13 @@ const MyBikes = () => {
               toast.error('Could not retrieve address');
             }
           });
+        } else {
+          setIsMapLoading(false);
         }
       },
       (error) => {
         toast.dismiss();
+        setIsMapLoading(false);
         toast.error('Unable to get your location');
         console.error('Geolocation error:', error);
       }
@@ -432,7 +450,15 @@ const MyBikes = () => {
                 </p>
                 
                 {isLoaded && (
-                  <div className="mt-3 rounded-lg overflow-hidden border">
+                  <div className="mt-3 rounded-lg overflow-hidden border relative">
+                    {isMapLoading && (
+                      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                          <p className="text-sm text-muted-foreground">Loading map...</p>
+                        </div>
+                      </div>
+                    )}
                     <GoogleMap
                       mapContainerStyle={mapContainerStyle}
                       center={formData.address ? { lat: formData.address.lat, lng: formData.address.lng } : defaultCenter}
