@@ -1,13 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, Star, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MapPin, Navigation, Star, X, Search } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
+const libraries: ("places")[] = ["places"];
 
 interface Bike {
   id: string;
@@ -160,6 +162,7 @@ const MapView = () => {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
   });
 
   const [bikes, setBikes] = useState<Bike[]>(mockBikes);
@@ -169,6 +172,8 @@ const MapView = () => {
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [currentAddress, setCurrentAddress] = useState<string>("");
+  const [searchValue, setSearchValue] = useState<string>("");
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -292,6 +297,30 @@ const MapView = () => {
     }
   };
 
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry?.location) {
+        const newCenter = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        };
+        setCenter(newCenter);
+        setSearchValue(place.formatted_address || "");
+        setCurrentAddress(place.formatted_address || "");
+        
+        if (map) {
+          map.panTo(newCenter);
+          map.setZoom(14);
+        }
+      }
+    }
+  };
+
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = autocomplete;
+  };
+
   if (!isLoaded || isLoadingLocation) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
@@ -314,6 +343,39 @@ const MapView = () => {
 
   return (
     <div className="relative h-[calc(100vh-2rem)] rounded-lg overflow-hidden">
+      {/* Search Bar */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
+        <Card className="shadow-xl">
+          <div className="flex items-center gap-2 p-3">
+            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+            {isLoaded ? (
+              <Autocomplete
+                onLoad={onAutocompleteLoad}
+                onPlaceChanged={onPlaceChanged}
+                options={{
+                  fields: ["formatted_address", "geometry", "name"],
+                }}
+              >
+                <Input
+                  type="text"
+                  placeholder="Search for a location..."
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                />
+              </Autocomplete>
+            ) : (
+              <Input
+                type="text"
+                placeholder="Loading search..."
+                disabled
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+              />
+            )}
+          </div>
+        </Card>
+      </div>
+
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
@@ -361,7 +423,7 @@ const MapView = () => {
       </div>
 
       {/* Current location and bikes count */}
-      <div className="absolute top-4 left-4 z-10 space-y-2">
+      <div className="absolute top-20 left-4 z-10 space-y-2">
         {currentAddress && (
           <Card className="shadow-lg">
             <div className="p-3 flex items-center gap-2">
