@@ -37,6 +37,18 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] = useState<'credit' | 'paypal' | 'bank'>('credit');
+  
+  // Payment form states
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [paypalEmail, setPaypalEmail] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [routingNumber, setRoutingNumber] = useState('');
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +68,41 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handlePaymentMethodClick = (type: 'credit' | 'paypal' | 'bank') => {
+    setSelectedPaymentType(type);
+    setIsPaymentModalOpen(false);
+    setIsPaymentFormOpen(true);
+  };
+
+  const handleAddNewPayment = () => {
+    setIsPaymentModalOpen(false);
+    setIsPaymentFormOpen(true);
+  };
+
+  const handlePaymentFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // TODO: Call API to save payment method
+      toast.success('Payment method saved successfully!');
+      setIsPaymentFormOpen(false);
+      // Reset form
+      setCardNumber('');
+      setCardExpiry('');
+      setCardCVV('');
+      setCardName('');
+      setPaypalEmail('');
+      setBankName('');
+      setAccountNumber('');
+      setRoutingNumber('');
+    } catch (error) {
+      toast.error('Failed to save payment method');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -305,7 +352,11 @@ const Profile = () => {
             {PAYMENT_METHODS.map((method) => (
               <div 
                 key={method.id}
-                className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 transition-colors"
+                onClick={() => handlePaymentMethodClick(
+                  method.type === 'Credit Card' ? 'credit' : 
+                  method.type === 'PayPal' ? 'paypal' : 'bank'
+                )}
+                className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -336,10 +387,167 @@ const Profile = () => {
               </div>
             ))}
             
-            <Button className="w-full bg-gradient-primary hover:opacity-90 mt-4">
+            <Button 
+              onClick={handleAddNewPayment}
+              className="w-full bg-gradient-primary hover:opacity-90 mt-4"
+            >
               Add New Payment Method
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Form Modal */}
+      <Dialog open={isPaymentFormOpen} onOpenChange={setIsPaymentFormOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Payment Method</DialogTitle>
+            <DialogDescription>Enter your payment information</DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handlePaymentFormSubmit} className="space-y-4 mt-4">
+            {/* Payment Type Selector */}
+            <div className="space-y-2">
+              <Label>Payment Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant={selectedPaymentType === 'credit' ? 'default' : 'outline'}
+                  onClick={() => setSelectedPaymentType('credit')}
+                  className="w-full"
+                >
+                  Card
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedPaymentType === 'paypal' ? 'default' : 'outline'}
+                  onClick={() => setSelectedPaymentType('paypal')}
+                  className="w-full"
+                >
+                  PayPal
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedPaymentType === 'bank' ? 'default' : 'outline'}
+                  onClick={() => setSelectedPaymentType('bank')}
+                  className="w-full"
+                >
+                  Bank
+                </Button>
+              </div>
+            </div>
+
+            {/* Credit Card Form */}
+            {selectedPaymentType === 'credit' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="cardName">Cardholder Name</Label>
+                  <Input
+                    id="cardName"
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cardNumber">Card Number</Label>
+                  <Input
+                    id="cardNumber"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    placeholder="1234 5678 9012 3456"
+                    maxLength={19}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cardExpiry">Expiry Date</Label>
+                    <Input
+                      id="cardExpiry"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cardCVV">CVV</Label>
+                    <Input
+                      id="cardCVV"
+                      type="password"
+                      value={cardCVV}
+                      onChange={(e) => setCardCVV(e.target.value)}
+                      placeholder="123"
+                      maxLength={4}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* PayPal Form */}
+            {selectedPaymentType === 'paypal' && (
+              <div className="space-y-2">
+                <Label htmlFor="paypalEmail">PayPal Email</Label>
+                <Input
+                  id="paypalEmail"
+                  type="email"
+                  value={paypalEmail}
+                  onChange={(e) => setPaypalEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Bank Form */}
+            {selectedPaymentType === 'bank' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="Chase Bank"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="1234567890"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="routingNumber">Routing Number</Label>
+                  <Input
+                    id="routingNumber"
+                    value={routingNumber}
+                    onChange={(e) => setRoutingNumber(e.target.value)}
+                    placeholder="021000021"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-primary hover:opacity-90"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save Payment Method'}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
