@@ -84,7 +84,7 @@ const mockBikes: BikeData[] = [
 
 const MyBikes = () => {
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    googleMapsApiKey: 'AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc',
     libraries,
   });
 
