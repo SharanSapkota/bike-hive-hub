@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -155,6 +156,7 @@ const containerStyle = {
 };
 
 const MapView = () => {
+  const navigate = useNavigate();
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -419,7 +421,11 @@ const MapView = () => {
                   <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
                   <p className="text-[9px] text-muted-foreground">per hour</p>
                 </div>
-                <Button size="sm" className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3">
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3"
+                  onClick={() => navigate(`/payment/${selectedBike.id}`)}
+                >
                   Rent
                 </Button>
               </div>
