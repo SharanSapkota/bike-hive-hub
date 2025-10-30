@@ -177,7 +177,10 @@ const MapView = () => {
       });
 
       if (response.results[0]) {
-        setCurrentAddress(response.results[0].formatted_address);
+        const address = response.results[0].formatted_address;
+        setCurrentAddress(address);
+        // Cache the address
+        sessionStorage.setItem('userAddress', address);
       }
     } catch (error) {
       console.error("Error getting address:", error);
@@ -185,7 +188,20 @@ const MapView = () => {
   };
 
   useEffect(() => {
-    // Get user's current location
+    // Check if we have a cached location
+    const cachedLocation = sessionStorage.getItem('userLocation');
+    const cachedAddress = sessionStorage.getItem('userAddress');
+    
+    if (cachedLocation && cachedAddress) {
+      // Use cached location - no loading needed
+      const location = JSON.parse(cachedLocation);
+      setCenter(location);
+      setCurrentAddress(cachedAddress);
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    // Get user's current location only if not cached
     if (navigator.geolocation) {
       setIsLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
@@ -195,6 +211,9 @@ const MapView = () => {
             lng: position.coords.longitude,
           };
           setCenter(newCenter);
+          
+          // Cache the location
+          sessionStorage.setItem('userLocation', JSON.stringify(newCenter));
           
           // Get address from coordinates
           await getAddressFromCoordinates(newCenter.lat, newCenter.lng);
