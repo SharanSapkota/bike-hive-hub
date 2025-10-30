@@ -183,27 +183,7 @@ const MapView = () => {
 
   const handleMarkerClick = useCallback((bike: Bike) => {
     setSelectedBike(bike);
-    
-    if (map) {
-      const projection = map.getProjection();
-      if (projection) {
-        const point = projection.fromLatLngToPoint(new google.maps.LatLng(bike.location.lat, bike.location.lng));
-        if (point) {
-          const scale = Math.pow(2, map.getZoom() || 0);
-          const worldPoint = new google.maps.Point(
-            point.x * scale,
-            point.y * scale
-          );
-          const pixelOffset = map.getDiv().getBoundingClientRect();
-          
-          setPopupPosition({
-            x: worldPoint.x - pixelOffset.left,
-            y: worldPoint.y - pixelOffset.top - 60 // Offset above marker
-          });
-        }
-      }
-    }
-  }, [map]);
+  }, []);
 
   const onUnmount = useCallback(() => {
     setMap(null);
@@ -212,37 +192,42 @@ const MapView = () => {
   useEffect(() => {
     if (map && selectedBike) {
       const updatePopupPosition = () => {
-        const projection = map.getProjection();
-        if (projection) {
-          const overlay = new google.maps.OverlayView();
-          overlay.onAdd = function() {
-            overlay.getPanes();
-          };
-          overlay.draw = function() {};
-          overlay.setMap(map);
-          
-          const point = overlay.getProjection()?.fromLatLngToContainerPixel(
-            new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng)
-          );
-          
-          if (point) {
-            setPopupPosition({
-              x: point.x,
-              y: point.y - 60
-            });
+        const overlay = new google.maps.OverlayView();
+        
+        overlay.onAdd = function() {};
+        
+        overlay.draw = function() {
+          const projection = this.getProjection();
+          if (projection) {
+            const point = projection.fromLatLngToContainerPixel(
+              new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng)
+            );
+            
+            if (point) {
+              setPopupPosition({
+                x: point.x,
+                y: point.y - 60
+              });
+            }
           }
-          
+        };
+        
+        overlay.setMap(map);
+        
+        // Cleanup
+        setTimeout(() => {
           overlay.setMap(null);
-        }
+        }, 100);
       };
       
       updatePopupPosition();
-      map.addListener('zoom_changed', updatePopupPosition);
-      map.addListener('center_changed', updatePopupPosition);
+      
+      const zoomListener = map.addListener('zoom_changed', updatePopupPosition);
+      const centerListener = map.addListener('center_changed', updatePopupPosition);
       
       return () => {
-        google.maps.event.clearListeners(map, 'zoom_changed');
-        google.maps.event.clearListeners(map, 'center_changed');
+        google.maps.event.removeListener(zoomListener);
+        google.maps.event.removeListener(centerListener);
       };
     }
   }, [map, selectedBike]);
