@@ -1,12 +1,15 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Star, X, Search } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
+const libraries: ("places")[] = ["places"];
 
 interface Bike {
   id: string;
@@ -156,6 +159,11 @@ const containerStyle = {
 
 const MapView = () => {
   const navigate = useNavigate();
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
 
   const [bikes, setBikes] = useState<Bike[]>(mockBikes);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -312,6 +320,29 @@ const MapView = () => {
   };
 
   // Removed the early return for loading state - now showing map with overlay
+
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
+        <div className="text-center">
+          <p className="text-destructive font-medium mb-2">Error loading maps</p>
+          <p className="text-muted-foreground text-sm">Please refresh the page</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-foreground font-semibold text-lg">Loading map...</p>
+          <p className="text-muted-foreground text-sm mt-2">Please wait</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[calc(100vh-2rem)] rounded-lg overflow-hidden">
