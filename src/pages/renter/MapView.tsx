@@ -11,6 +11,8 @@ interface Bike {
   id: string;
   name: string;
   location: { lat: number; lng: number };
+  city: string;
+  state: string;
   pricePerHour: number;
   category: string;
   available: boolean;
@@ -21,26 +23,82 @@ interface Bike {
 const mockBikes: Bike[] = [
   {
     id: '1',
-    name: 'Mountain Explorer',
+    name: 'Mountain Explorer Pro',
     location: { lat: 40.7128, lng: -74.006 },
+    city: 'New York',
+    state: 'NY',
     pricePerHour: 8,
     category: 'Mountain',
     available: true,
   },
   {
     id: '2',
-    name: 'City Cruiser',
+    name: 'City Cruiser Deluxe',
     location: { lat: 40.7138, lng: -74.008 },
+    city: 'New York',
+    state: 'NY',
     pricePerHour: 5,
     category: 'City',
     available: true,
   },
   {
     id: '3',
-    name: 'Road Racer',
+    name: 'Road Racer Speed',
     location: { lat: 40.7118, lng: -74.004 },
+    city: 'New York',
+    state: 'NY',
     pricePerHour: 10,
     category: 'Road',
+    available: true,
+  },
+  {
+    id: '4',
+    name: 'Electric Bolt',
+    location: { lat: 40.7158, lng: -74.009 },
+    city: 'New York',
+    state: 'NY',
+    pricePerHour: 12,
+    category: 'Electric',
+    available: true,
+  },
+  {
+    id: '5',
+    name: 'Hybrid Comfort',
+    location: { lat: 40.7098, lng: -74.003 },
+    city: 'New York',
+    state: 'NY',
+    pricePerHour: 7,
+    category: 'Hybrid',
+    available: true,
+  },
+  {
+    id: '6',
+    name: 'Mountain Trail',
+    location: { lat: 40.7108, lng: -74.007 },
+    city: 'New York',
+    state: 'NY',
+    pricePerHour: 9,
+    category: 'Mountain',
+    available: true,
+  },
+  {
+    id: '7',
+    name: 'City Commuter',
+    location: { lat: 40.7148, lng: -74.005 },
+    city: 'New York',
+    state: 'NY',
+    pricePerHour: 6,
+    category: 'City',
+    available: true,
+  },
+  {
+    id: '8',
+    name: 'Electric Cruiser',
+    location: { lat: 40.7168, lng: -74.0065 },
+    city: 'New York',
+    state: 'NY',
+    pricePerHour: 11,
+    category: 'Electric',
     available: true,
   },
 ];
@@ -159,7 +217,8 @@ const MapView = () => {
           >
             <div className="p-2 min-w-[200px]">
               <h3 className="font-semibold text-lg mb-1">{selectedBike.name}</h3>
-              <p className="text-sm text-gray-600 mb-2">{selectedBike.category}</p>
+              <p className="text-sm text-gray-600 mb-1">{selectedBike.category}</p>
+              <p className="text-xs text-gray-500 mb-2">{selectedBike.city}, {selectedBike.state}</p>
               <p className="font-bold text-teal-600 mb-2">${selectedBike.pricePerHour}/hr</p>
               <button
                 className="w-full px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:opacity-90"
@@ -202,6 +261,9 @@ const MapView = () => {
                 <h3 className="font-semibold text-lg">{selectedBike.name}</h3>
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <MapPin className="h-3 w-3" />
+                  {selectedBike.city}, {selectedBike.state}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {selectedBike.category} Bike
                 </p>
               </div>
