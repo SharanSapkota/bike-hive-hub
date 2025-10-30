@@ -3,7 +3,7 @@ import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, Star } from "lucide-react";
+import { MapPin, Navigation, Star, X } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
@@ -230,24 +230,30 @@ const MapView = () => {
           fullscreenControl: false,
         }}
       >
-        {bikes.map((bike) => (
-          <Marker
-            key={bike.id}
-            position={bike.location}
-            onClick={() => setSelectedBike(bike)}
-            icon={{
-              url:
-                "data:image/svg+xml;charset=UTF-8," +
-                encodeURIComponent(`
-                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="20" r="18" fill="#14b8a6" stroke="white" stroke-width="2"/>
-                  <text x="20" y="26" font-size="20" text-anchor="middle" fill="white">🚲</text>
-                </svg>
-              `),
-              scaledSize: new google.maps.Size(40, 40),
-            }}
-          />
-        ))}
+        {bikes.map((bike) => {
+          const isSelected = selectedBike?.id === bike.id;
+          return (
+            <Marker
+              key={bike.id}
+              position={bike.location}
+              onClick={() => setSelectedBike(bike)}
+              icon={{
+                url:
+                  "data:image/svg+xml;charset=UTF-8," +
+                  encodeURIComponent(`
+                  <svg width="${isSelected ? 56 : 40}" height="${isSelected ? 56 : 40}" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+                    ${isSelected ? '<circle cx="28" cy="28" r="26" fill="#14b8a6" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>' : ''}
+                    <circle cx="28" cy="28" r="22" fill="#14b8a6" stroke="white" stroke-width="${isSelected ? 3 : 2}"/>
+                    <text x="28" y="${isSelected ? 36 : 34}" font-size="${isSelected ? 26 : 24}" text-anchor="middle" fill="white">🚲</text>
+                  </svg>
+                `),
+                scaledSize: new google.maps.Size(isSelected ? 56 : 40, isSelected ? 56 : 40),
+                anchor: new google.maps.Point(isSelected ? 28 : 20, isSelected ? 28 : 20),
+              }}
+              zIndex={isSelected ? 1000 : 1}
+            />
+          );
+        })}
       </GoogleMap>
 
       {/* Floating controls */}
@@ -270,13 +276,15 @@ const MapView = () => {
       {/* Selected bike card (mobile-friendly bottom card) */}
       {selectedBike && (
         <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-10 shadow-lg">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSelectedBike(null)}
-            className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted z-10"
+            className="absolute top-2 right-2 h-8 w-8 rounded-full z-10"
             aria-label="Close"
           >
-            <span className="text-lg">×</span>
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
           <div className="p-4">
             {/* Image Carousel */}
             {selectedBike.images && selectedBike.images.length > 0 && (
