@@ -35,7 +35,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 8,
     category: "Mountain",
     available: true,
-    images: ["https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400", "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=400"],
+    images: [
+      "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400",
+      "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=400",
+    ],
     condition: "Excellent",
     reviews: 24,
     rating: 4.8,
@@ -43,8 +46,8 @@ const mockBikes: Bike[] = [
   {
     id: "2",
     name: "City Cruiser Deluxe",
-    location: { lat: 40.7138, lng: -74.008 },
-    city: "New York",
+    location: { lat: 65.0519, lng: 25.3663 },
+    city: "Oulu",
     state: "NY",
     pricePerHour: 5,
     category: "City",
@@ -63,7 +66,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 10,
     category: "Road",
     available: true,
-    images: ["https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400", "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
+    images: [
+      "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400",
+      "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400",
+    ],
     condition: "Excellent",
     reviews: 32,
     rating: 4.9,
@@ -133,7 +139,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 11,
     category: "Electric",
     available: true,
-    images: ["https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400", "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
+    images: [
+      "https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400",
+      "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400",
+    ],
     condition: "Excellent",
     reviews: 36,
     rating: 4.8,
@@ -193,38 +202,38 @@ const MapView = () => {
     if (map && selectedBike) {
       const updatePopupPosition = () => {
         const overlay = new google.maps.OverlayView();
-        
-        overlay.onAdd = function() {};
-        
-        overlay.draw = function() {
+
+        overlay.onAdd = function () {};
+
+        overlay.draw = function () {
           const projection = this.getProjection();
           if (projection) {
             const point = projection.fromLatLngToContainerPixel(
-              new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng)
+              new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng),
             );
-            
+
             if (point) {
               setPopupPosition({
                 x: point.x,
-                y: point.y - 60
+                y: point.y - 60,
               });
             }
           }
         };
-        
+
         overlay.setMap(map);
-        
+
         // Cleanup
         setTimeout(() => {
           overlay.setMap(null);
         }, 100);
       };
-      
+
       updatePopupPosition();
-      
-      const zoomListener = map.addListener('zoom_changed', updatePopupPosition);
-      const centerListener = map.addListener('center_changed', updatePopupPosition);
-      
+
+      const zoomListener = map.addListener("zoom_changed", updatePopupPosition);
+      const centerListener = map.addListener("center_changed", updatePopupPosition);
+
       return () => {
         google.maps.event.removeListener(zoomListener);
         google.maps.event.removeListener(centerListener);
@@ -290,7 +299,7 @@ const MapView = () => {
                   "data:image/svg+xml;charset=UTF-8," +
                   encodeURIComponent(`
                   <svg width="${isSelected ? 56 : 40}" height="${isSelected ? 56 : 40}" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                    ${isSelected ? '<circle cx="28" cy="28" r="26" fill="#14b8a6" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>' : ''}
+                    ${isSelected ? '<circle cx="28" cy="28" r="26" fill="#14b8a6" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>' : ""}
                     <circle cx="28" cy="28" r="22" fill="#14b8a6" stroke="white" stroke-width="${isSelected ? 3 : 2}"/>
                     <text x="28" y="${isSelected ? 36 : 34}" font-size="${isSelected ? 26 : 24}" text-anchor="middle" fill="white">🚲</text>
                   </svg>
@@ -328,15 +337,15 @@ const MapView = () => {
           style={{
             left: `${Math.min(Math.max(popupPosition.x, 130), window.innerWidth - 130)}px`,
             top: `${Math.max(Math.min(popupPosition.y, window.innerHeight - 300), 60)}px`,
-            transform: 'translate(-50%, -100%)',
-            maxWidth: 'calc(100vw - 32px)',
+            transform: "translate(-50%, -100%)",
+            maxWidth: "calc(100vw - 32px)",
           }}
         >
           {/* Arrow pointing to marker */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
             <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
-          
+
           <Card className="w-[240px] shadow-xl pointer-events-auto max-h-[60vh] overflow-y-auto">
             <Button
               variant="ghost"
@@ -358,7 +367,11 @@ const MapView = () => {
                     {selectedBike.images.map((image, index) => (
                       <CarouselItem key={index}>
                         <div className="aspect-video rounded overflow-hidden">
-                          <img src={image} alt={`${selectedBike.name} - ${index + 1}`} className="w-full h-full object-cover" />
+                          <img
+                            src={image}
+                            alt={`${selectedBike.name} - ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       </CarouselItem>
                     ))}
@@ -375,7 +388,10 @@ const MapView = () => {
               <div className="mb-2">
                 <div className="flex items-start justify-between gap-1 mb-1">
                   <h3 className="font-semibold text-sm leading-tight flex-1">{selectedBike.name}</h3>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4">
+                  <Badge
+                    variant="secondary"
+                    className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4"
+                  >
                     Available
                   </Badge>
                 </div>
@@ -387,9 +403,7 @@ const MapView = () => {
 
               {/* Condition and Reviews */}
               <div className="flex items-center gap-2 mb-2 text-[10px]">
-                {selectedBike.condition && (
-                  <span className="text-muted-foreground">{selectedBike.condition}</span>
-                )}
+                {selectedBike.condition && <span className="text-muted-foreground">{selectedBike.condition}</span>}
                 {selectedBike.rating && selectedBike.reviews && (
                   <div className="flex items-center gap-0.5">
                     <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
@@ -404,7 +418,9 @@ const MapView = () => {
                   <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
                   <p className="text-[9px] text-muted-foreground">per hour</p>
                 </div>
-                <Button size="sm" className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3">Rent</Button>
+                <Button size="sm" className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3">
+                  Rent
+                </Button>
               </div>
             </div>
           </Card>
