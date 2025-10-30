@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bike, Plus, Edit, Trash2, Power, MapPin } from 'lucide-react';
+import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, ImageIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+
+const libraries: ("places")[] = ["places"];
 
 interface BikeData {
   id: string;
@@ -25,9 +28,14 @@ interface BikeData {
   pricePerHour: number;
   pricePerDay: number;
   location: string;
+  address?: {
+    formatted: string;
+    lat: number;
+    lng: number;
+  };
   description: string;
   available: boolean;
-  image?: string;
+  images?: string[];
 }
 
 // Mock data
@@ -65,8 +73,16 @@ const mockBikes: BikeData[] = [
 ];
 
 const MyBikes = () => {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+  });
+
   const [bikes, setBikes] = useState<BikeData[]>(mockBikes);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -75,11 +91,54 @@ const MyBikes = () => {
     pricePerHour: '',
     pricePerDay: '',
     location: '',
+    address: null as { formatted: string; lat: number; lng: number } | null,
     description: '',
   });
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + selectedImages.length > 5) {
+      toast.error('Maximum 5 images allowed');
+      return;
+    }
+
+    setSelectedImages([...selectedImages, ...files]);
+    
+    // Create preview URLs
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews([...imagePreviews, ...newPreviews]);
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(imagePreviews[index]);
+    
+    setSelectedImages(newImages);
+    setImagePreviews(newPreviews);
+  };
+
+  const onPlaceSelected = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry?.location) {
+        setFormData({
+          ...formData,
+          location: place.formatted_address || '',
+          address: {
+            formatted: place.formatted_address || '',
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          },
+        });
+      }
+    }
+  };
+
   const handleAddBike = () => {
-    // TODO: API call to add bike
+    // TODO: API call to add bike and upload images
     const newBike: BikeData = {
       id: Date.now().toString(),
       name: formData.name,
@@ -87,20 +146,28 @@ const MyBikes = () => {
       pricePerHour: Number(formData.pricePerHour),
       pricePerDay: Number(formData.pricePerDay),
       location: formData.location,
+      address: formData.address || undefined,
       description: formData.description,
       available: true,
+      images: imagePreviews, // In production, these would be uploaded URLs
     };
 
     setBikes([...bikes, newBike]);
     setIsAddDialogOpen(false);
+    
+    // Reset form
     setFormData({
       name: '',
       category: 'City',
       pricePerHour: '',
       pricePerDay: '',
       location: '',
+      address: null,
       description: '',
     });
+    setSelectedImages([]);
+    setImagePreviews([]);
+    
     toast.success('Bike added successfully!');
   };
 
@@ -133,7 +200,7 @@ const MyBikes = () => {
               Add Bike
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Bike</DialogTitle>
               <DialogDescription>
@@ -194,13 +261,83 @@ const MyBikes = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Downtown Station"
-                />
+                <Label htmlFor="address">Address</Label>
+                {isLoaded ? (
+                  <Autocomplete
+                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                    onPlaceChanged={onPlaceSelected}
+                  >
+                    <Input
+                      id="address"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="Search for an address..."
+                      className="w-full"
+                    />
+                  </Autocomplete>
+                ) : (
+                  <Input
+                    id="address"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Loading address search..."
+                    disabled
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Start typing to search for an address
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Bike Images (Max 5)</Label>
+                <div className="space-y-3">
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {selectedImages.length < 5 && (
+                    <label
+                      htmlFor="image-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPG or WEBP (max 5 images)
+                        </p>
+                      </div>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
