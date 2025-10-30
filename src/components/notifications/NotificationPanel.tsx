@@ -70,57 +70,58 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
-  const notifications = mockNotifications; // Replace with real data
+  const notifications = mockNotifications; // Replace with real backend data
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold">Notifications</h3>
+      <div className="flex items-center justify-between p-4 border-b bg-card">
+        <h3 className="font-semibold text-base">Notifications</h3>
         {notifications.some(n => !n.read) && (
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs"
+            className="text-xs h-7 px-2 hover:bg-accent/50"
             onClick={onMarkAsRead}
           >
-            Mark all as read
+            Mark all read
           </Button>
         )}
       </div>
       
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-[420px]">
         {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-            <Bell className="h-8 w-8 mb-2 opacity-50" />
-            <p className="text-sm">No notifications yet</p>
+          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
+            <Bell className="h-10 w-10 mb-3 opacity-40" />
+            <p className="text-sm font-medium">No notifications yet</p>
+            <p className="text-xs mt-1">You're all caught up!</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
                 className={cn(
-                  'p-4 hover:bg-accent/50 transition-colors cursor-pointer',
-                  !notification.read && 'bg-accent/30'
+                  'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
+                  !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
                 )}
               >
                 <div className="flex gap-3">
-                  <div className="mt-1">
+                  <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                     {getIcon(notification.type)}
                   </div>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-sm leading-tight">
+                      <p className="font-semibold text-sm leading-tight">
                         {notification.title}
                       </p>
                       {!notification.read && (
-                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground leading-tight">
+                    <p className="text-sm text-muted-foreground leading-snug">
                       {notification.message}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground/80 font-medium">
                       {formatTime(notification.createdAt)}
                     </p>
                   </div>
@@ -133,8 +134,12 @@ const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
 
       <Separator />
       
-      <div className="p-2">
-        <Button variant="ghost" className="w-full text-sm" size="sm">
+      <div className="p-2 bg-card">
+        <Button 
+          variant="ghost" 
+          className="w-full text-sm hover:bg-accent/50 text-primary font-medium" 
+          size="sm"
+        >
           View all notifications
         </Button>
       </div>

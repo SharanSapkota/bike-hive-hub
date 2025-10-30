@@ -12,7 +12,7 @@ const DashboardLayout = () => {
       <Sidebar />
       <main className="flex-1 overflow-auto">
         {showNotifications && (
-          <div className="sticky top-0 z-10 bg-background border-b px-4 md:px-6 lg:px-8 h-14 flex items-center justify-end">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b px-4 md:px-6 lg:px-8 h-16 flex items-center justify-end shadow-sm">
             <NotificationBell />
           </div>
         )}
