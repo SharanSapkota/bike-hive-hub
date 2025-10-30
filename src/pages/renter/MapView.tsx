@@ -167,26 +167,54 @@ const MapView = () => {
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [currentAddress, setCurrentAddress] = useState<string>("");
+
+  const getAddressFromCoordinates = async (lat: number, lng: number) => {
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const response = await geocoder.geocode({
+        location: { lat, lng },
+      });
+
+      if (response.results[0]) {
+        setCurrentAddress(response.results[0].formatted_address);
+      }
+    } catch (error) {
+      console.error("Error getting address:", error);
+    }
+  };
 
   useEffect(() => {
     // Get user's current location
     if (navigator.geolocation) {
+      setIsLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCenter({
+        async (position) => {
+          const newCenter = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setCenter(newCenter);
+          
+          // Get address from coordinates
+          if (isLoaded) {
+            await getAddressFromCoordinates(newCenter.lat, newCenter.lng);
+          }
+          setIsLoadingLocation(false);
         },
         (error) => {
           console.error("Error getting location:", error);
+          setIsLoadingLocation(false);
         },
       );
+    } else {
+      setIsLoadingLocation(false);
     }
 
     // TODO: Fetch bikes from API
     // api.get('/bikes/nearby').then(response => setBikes(response.data));
-  }, []);
+  }, [isLoaded]);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -264,12 +292,21 @@ const MapView = () => {
     }
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || isLoadingLocation) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading map...</p>
+          <p className="text-muted-foreground font-medium">
+            {!isLoaded ? "Loading map..." : "Getting your location..."}
+          </p>
+          {isLoadingLocation && (
+            <div className="mt-4 w-64 mx-auto">
+              <div className="h-1 bg-muted-foreground/20 rounded-full overflow-hidden">
+                <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }}></div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -323,15 +360,25 @@ const MapView = () => {
         </Button>
       </div>
 
-      {/* Available bikes count */}
-      <Card className="absolute top-4 left-4 z-10 shadow-lg">
-        <div className="p-3 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-bold text-sm">{bikes.length}</span>
+      {/* Current location and bikes count */}
+      <div className="absolute top-4 left-4 z-10 space-y-2">
+        {currentAddress && (
+          <Card className="shadow-lg">
+            <div className="p-3 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-sm font-medium line-clamp-1">{currentAddress}</span>
+            </div>
+          </Card>
+        )}
+        <Card className="shadow-lg">
+          <div className="p-3 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">{bikes.length}</span>
+            </div>
+            <span className="text-sm font-medium">Available Bikes</span>
           </div>
-          <span className="text-sm font-medium">Available Bikes</span>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* Anchored popup emerging from marker */}
       {selectedBike && popupPosition && (
