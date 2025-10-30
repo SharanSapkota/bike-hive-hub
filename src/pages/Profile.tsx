@@ -6,8 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Camera, LogOut, Upload, FileCheck } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Camera, LogOut, CreditCard, ShieldCheck, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Mock data - replace with API calls later
+const PAYMENT_METHODS = [
+  { id: 1, type: 'Credit Card', last4: '4242', expiry: '12/25', isDefault: true },
+  { id: 2, type: 'PayPal', email: 'user@example.com', isDefault: false },
+  { id: 3, type: 'Bank', accountNumber: '****5678', bankName: 'Chase Bank', isDefault: false },
+];
+
+const VERIFICATION_DATA = {
+  name: 'John Doe',
+  address: '123 Main St, New York, NY 10001',
+  passportPhoto: '/placeholder.svg',
+  selfiePhoto: '/placeholder.svg',
+  emailVerified: true,
+  phoneVerified: false,
+  email: 'john@example.com',
+  phone: '+1 (555) 123-4567',
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -16,11 +35,8 @@ const Profile = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
-  const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,55 +56,6 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return;
-      }
-      setDocumentFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDocumentPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSelfieUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return;
-      }
-      setSelfieFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelfiePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleVerificationSubmit = async () => {
-    if (!documentFile || !selfieFile) {
-      toast.error('Please upload both documents');
-      return;
-    }
-
-    setIsVerifying(true);
-    try {
-      // TODO: Upload files and update verification status
-      toast.success('Verification submitted successfully!');
-    } catch (error) {
-      toast.error('Failed to submit verification');
-    } finally {
-      setIsVerifying(false);
-    }
   };
 
   return (
@@ -176,111 +143,46 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      {/* Verification Section */}
-      <Card>
+      {/* Identity Verification Section */}
+      <Card 
+        className="cursor-pointer hover:border-primary/50 transition-colors"
+        onClick={() => setIsVerificationModalOpen(true)}
+      >
         <CardHeader>
-          <CardTitle>Identity Verification</CardTitle>
-          <CardDescription>Upload your documents to verify your identity</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Identity Verification</CardTitle>
+                <CardDescription>View your verification status</CardDescription>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Document Upload */}
-          <div className="space-y-3">
-            <Label htmlFor="document">Residence/Passport Photo</Label>
-            <div className="flex items-start gap-4">
-              {documentPreview ? (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
-                  <img src={documentPreview} alt="Document" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => {
-                      setDocumentFile(null);
-                      setDocumentPreview(null);
-                    }}
-                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
-                  <FileCheck className="h-8 w-8 text-muted-foreground/50" />
-                </div>
-              )}
-              <div className="flex-1">
-                <Input
-                  id="document"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleDocumentUpload}
-                  className="hidden"
-                />
-                <Label htmlFor="document">
-                  <Button variant="outline" className="gap-2" asChild>
-                    <span>
-                      <Upload className="h-4 w-4" />
-                      Upload Document
-                    </span>
-                  </Button>
-                </Label>
-                <p className="text-xs text-muted-foreground mt-2">
-                  PNG, JPG up to 5MB. Must be a clear photo of your residence card or passport.
-                </p>
+      </Card>
+
+      {/* Payment Information Section */}
+      <Card 
+        className="cursor-pointer hover:border-primary/50 transition-colors"
+        onClick={() => setIsPaymentModalOpen(true)}
+      >
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <CreditCard className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Payment Information</CardTitle>
+                <CardDescription>Manage your payment methods</CardDescription>
               </div>
             </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
-
-          {/* Selfie Upload */}
-          <div className="space-y-3">
-            <Label htmlFor="selfie">Your Photo (Selfie)</Label>
-            <div className="flex items-start gap-4">
-              {selfiePreview ? (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
-                  <img src={selfiePreview} alt="Selfie" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => {
-                      setSelfieFile(null);
-                      setSelfiePreview(null);
-                    }}
-                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
-                  <Camera className="h-8 w-8 text-muted-foreground/50" />
-                </div>
-              )}
-              <div className="flex-1">
-                <Input
-                  id="selfie"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleSelfieUpload}
-                  className="hidden"
-                />
-                <Label htmlFor="selfie">
-                  <Button variant="outline" className="gap-2" asChild>
-                    <span>
-                      <Camera className="h-4 w-4" />
-                      Take/Upload Selfie
-                    </span>
-                  </Button>
-                </Label>
-                <p className="text-xs text-muted-foreground mt-2">
-                  PNG, JPG up to 5MB. Take a clear selfie showing your face.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            className="bg-gradient-primary hover:opacity-90 w-full" 
-            onClick={handleVerificationSubmit}
-            disabled={!documentFile || !selfieFile || isVerifying}
-          >
-            {isVerifying ? 'Submitting...' : 'Submit Verification'}
-          </Button>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* Logout Section */}
@@ -300,6 +202,146 @@ const Profile = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Identity Verification Modal */}
+      <Dialog open={isVerificationModalOpen} onOpenChange={setIsVerificationModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Identity Verification</DialogTitle>
+            <DialogDescription>Your identity verification details</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 mt-4">
+            {/* Name */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Full Name</Label>
+              <p className="text-base">{VERIFICATION_DATA.name}</p>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Address</Label>
+              <p className="text-base">{VERIFICATION_DATA.address}</p>
+            </div>
+
+            {/* Photos */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Passport/Citizenship Photo</Label>
+                <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
+                  <img 
+                    src={VERIFICATION_DATA.passportPhoto} 
+                    alt="Passport" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Your Photo (Selfie)</Label>
+                <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
+                  <img 
+                    src={VERIFICATION_DATA.selfiePhoto} 
+                    alt="Selfie" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Email Verification */}
+            <div className="flex items-center justify-between p-4 rounded-lg border">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Email Verification</Label>
+                <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.email}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {VERIFICATION_DATA.emailVerified ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <span className="text-sm font-medium text-green-500">Verified</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    <span className="text-sm font-medium text-destructive">Not Verified</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Phone Verification */}
+            <div className="flex items-center justify-between p-4 rounded-lg border">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Phone Verification</Label>
+                <p className="text-sm text-muted-foreground">{VERIFICATION_DATA.phone}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {VERIFICATION_DATA.phoneVerified ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <span className="text-sm font-medium text-green-500">Verified</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    <span className="text-sm font-medium text-destructive">Not Verified</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Information Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Information</DialogTitle>
+            <DialogDescription>Your saved payment methods</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {PAYMENT_METHODS.map((method) => (
+              <div 
+                key={method.id}
+                className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{method.type}</h4>
+                    {method.type === 'Credit Card' && (
+                      <p className="text-sm text-muted-foreground">
+                        •••• {method.last4} • Expires {method.expiry}
+                      </p>
+                    )}
+                    {method.type === 'PayPal' && (
+                      <p className="text-sm text-muted-foreground">{method.email}</p>
+                    )}
+                    {method.type === 'Bank' && (
+                      <p className="text-sm text-muted-foreground">
+                        {method.bankName} • {method.accountNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {method.isDefault && (
+                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    Default
+                  </span>
+                )}
+              </div>
+            ))}
+            
+            <Button className="w-full bg-gradient-primary hover:opacity-90 mt-4">
+              Add New Payment Method
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
