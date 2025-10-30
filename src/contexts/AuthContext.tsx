@@ -43,16 +43,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token: authToken, user: userData } = response.data;
+      // Mock authentication - accepts any email/password for now
+      // TODO: Replace with real API call when backend is ready
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Determine role from email pattern (for demo purposes)
+      let role: UserRole = 'renter';
+      if (email.includes('owner')) role = 'owner';
+      if (email.includes('admin')) role = 'admin';
+      
+      const mockToken = 'mock-jwt-token-' + Date.now();
+      const userData: User = {
+        id: Math.random().toString(36).substr(2, 9),
+        email,
+        name: email.split('@')[0],
+        role,
+      };
 
-      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('auth_token', mockToken);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      setToken(authToken);
+      setToken(mockToken);
       setUser(userData);
 
       toast.success('Login successful!');
+      
+      /* Real API implementation:
+      const response = await api.post('/auth/login', { email, password });
+      const { token: authToken, user: userData } = response.data;
+      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(authToken);
+      setUser(userData);
+      toast.success('Login successful!');
+      */
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Login failed. Please try again.');
       throw error;
@@ -61,16 +87,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     try {
-      const response = await api.post('/auth/register', { email, password, name, role });
-      const { token: authToken, user: userData } = response.data;
+      // Mock registration - accepts any details for now
+      // TODO: Replace with real API call when backend is ready
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const mockToken = 'mock-jwt-token-' + Date.now();
+      const userData: User = {
+        id: Math.random().toString(36).substr(2, 9),
+        email,
+        name,
+        role,
+      };
 
-      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('auth_token', mockToken);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      setToken(authToken);
+      setToken(mockToken);
       setUser(userData);
 
       toast.success('Registration successful!');
+      
+      /* Real API implementation:
+      const response = await api.post('/auth/register', { email, password, name, role });
+      const { token: authToken, user: userData } = response.data;
+      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(authToken);
+      setUser(userData);
+      toast.success('Registration successful!');
+      */
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
       throw error;
