@@ -3,7 +3,8 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-map
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Star } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
 
@@ -17,6 +18,10 @@ interface Bike {
   category: string;
   available: boolean;
   image?: string;
+  images?: string[];
+  condition?: string;
+  reviews?: number;
+  rating?: number;
 }
 
 // Mock data - will be replaced with API call
@@ -30,6 +35,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 8,
     category: "Mountain",
     available: true,
+    images: ["https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400", "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=400"],
+    condition: "Excellent",
+    reviews: 24,
+    rating: 4.8,
   },
   {
     id: "2",
@@ -40,6 +49,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 5,
     category: "City",
     available: true,
+    images: ["https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400"],
+    condition: "Good",
+    reviews: 18,
+    rating: 4.5,
   },
   {
     id: "3",
@@ -50,6 +63,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 10,
     category: "Road",
     available: true,
+    images: ["https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400", "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
+    condition: "Excellent",
+    reviews: 32,
+    rating: 4.9,
   },
   {
     id: "4",
@@ -60,6 +77,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 12,
     category: "Electric",
     available: true,
+    images: ["https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400"],
+    condition: "Excellent",
+    reviews: 41,
+    rating: 4.9,
   },
   {
     id: "5",
@@ -70,6 +91,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 7,
     category: "Hybrid",
     available: true,
+    images: ["https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
+    condition: "Good",
+    reviews: 15,
+    rating: 4.3,
   },
   {
     id: "6",
@@ -80,6 +105,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 9,
     category: "Mountain",
     available: true,
+    images: ["https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400"],
+    condition: "Very Good",
+    reviews: 28,
+    rating: 4.7,
   },
   {
     id: "7",
@@ -90,6 +119,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 6,
     category: "City",
     available: true,
+    images: ["https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400"],
+    condition: "Good",
+    reviews: 12,
+    rating: 4.4,
   },
   {
     id: "8",
@@ -100,6 +133,10 @@ const mockBikes: Bike[] = [
     pricePerHour: 11,
     category: "Electric",
     available: true,
+    images: ["https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400", "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
+    condition: "Excellent",
+    reviews: 36,
+    rating: 4.8,
   },
 ];
 
@@ -251,10 +288,31 @@ const MapView = () => {
 
       {/* Selected bike card (mobile-friendly bottom card) */}
       {selectedBike && (
-        <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-10 shadow-lg">
+        <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-10 shadow-lg">
           <div className="p-4">
+            {/* Image Carousel */}
+            {selectedBike.images && selectedBike.images.length > 0 && (
+              <Carousel className="w-full mb-4">
+                <CarouselContent>
+                  {selectedBike.images.map((image, index) => (
+                    <CarouselItem key={index}>
+                      <div className="aspect-video rounded-lg overflow-hidden">
+                        <img src={image} alt={`${selectedBike.name} - ${index + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {selectedBike.images.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </>
+                )}
+              </Carousel>
+            )}
+
             <div className="flex items-start justify-between mb-3">
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-lg">{selectedBike.name}</h3>
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <MapPin className="h-3 w-3" />
@@ -265,6 +323,23 @@ const MapView = () => {
               <Badge variant="secondary" className="bg-primary/10 text-primary">
                 Available
               </Badge>
+            </div>
+
+            {/* Condition and Reviews */}
+            <div className="flex items-center gap-4 mb-4 text-sm">
+              {selectedBike.condition && (
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Condition:</span>
+                  <span className="font-medium">{selectedBike.condition}</span>
+                </div>
+              )}
+              {selectedBike.rating && selectedBike.reviews && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-medium">{selectedBike.rating}</span>
+                  <span className="text-muted-foreground">({selectedBike.reviews})</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
