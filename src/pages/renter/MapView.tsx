@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -248,25 +248,6 @@ const MapView = () => {
             }}
           />
         ))}
-
-        {selectedBike && (
-          <InfoWindow position={selectedBike.location} onCloseClick={() => setSelectedBike(null)}>
-            <div className="p-2 min-w-[200px]">
-              <h3 className="font-semibold text-lg mb-1">{selectedBike.name}</h3>
-              <p className="text-sm text-gray-600 mb-1">{selectedBike.category}</p>
-              <p className="text-xs text-gray-500 mb-2">
-                {selectedBike.city}, {selectedBike.state}
-              </p>
-              <p className="font-bold text-teal-600 mb-2">${selectedBike.pricePerHour}/hr</p>
-              <button
-                className="w-full px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:opacity-90"
-                onClick={() => alert("Rental feature coming soon!")}
-              >
-                Rent Now
-              </button>
-            </div>
-          </InfoWindow>
-        )}
       </GoogleMap>
 
       {/* Floating controls */}
@@ -289,6 +270,13 @@ const MapView = () => {
       {/* Selected bike card (mobile-friendly bottom card) */}
       {selectedBike && (
         <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-10 shadow-lg">
+          <button
+            onClick={() => setSelectedBike(null)}
+            className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted z-10"
+            aria-label="Close"
+          >
+            <span className="text-lg">×</span>
+          </button>
           <div className="p-4">
             {/* Image Carousel */}
             {selectedBike.images && selectedBike.images.length > 0 && (
