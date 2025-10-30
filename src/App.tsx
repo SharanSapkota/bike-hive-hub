@@ -10,6 +10,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import MapView from "./pages/renter/MapView";
+import MyBikes from "./pages/owner/MyBikes";
+import Rentals from "./pages/owner/Rentals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +42,8 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
-        {/* Additional routes will be added here */}
+        <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
+        <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
