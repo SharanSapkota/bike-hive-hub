@@ -25,7 +25,7 @@ const Login = () => {
   const [registerRole, setRegisterRole] = useState<UserRole>('renter');
 
   if (isAuthenticated) {
-    navigate('/dashboard');
+    navigate('/');
     return null;
   }
 
@@ -35,7 +35,7 @@ const Login = () => {
 
     try {
       await login(loginEmail, loginPassword);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
     } finally {
@@ -49,7 +49,7 @@ const Login = () => {
 
     try {
       await register(registerEmail, registerPassword, registerName, registerRole);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Registration failed:', error);
     } finally {
