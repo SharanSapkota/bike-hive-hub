@@ -324,19 +324,20 @@ const MapView = () => {
       {/* Anchored popup emerging from marker */}
       {selectedBike && popupPosition && (
         <div
-          className="absolute z-20 animate-scale-in pointer-events-none"
+          className="fixed z-20 animate-scale-in pointer-events-none"
           style={{
-            left: `${Math.min(Math.max(popupPosition.x, 160), window.innerWidth - 160)}px`,
-            top: `${Math.max(popupPosition.y, 20)}px`,
+            left: `${Math.min(Math.max(popupPosition.x, 130), window.innerWidth - 130)}px`,
+            top: `${Math.max(Math.min(popupPosition.y, window.innerHeight - 300), 60)}px`,
             transform: 'translate(-50%, -100%)',
+            maxWidth: 'calc(100vw - 32px)',
           }}
         >
           {/* Arrow pointing to marker */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
-            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-card"></div>
+            <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
           
-          <Card className="w-[280px] sm:w-[320px] shadow-2xl pointer-events-auto max-h-[70vh] overflow-y-auto">
+          <Card className="w-[240px] shadow-xl pointer-events-auto max-h-[60vh] overflow-y-auto">
             <Button
               variant="ghost"
               size="icon"
@@ -344,19 +345,19 @@ const MapView = () => {
                 setSelectedBike(null);
                 setPopupPosition(null);
               }}
-              className="absolute top-1 right-1 h-7 w-7 rounded-full z-10 bg-background/80 hover:bg-background"
+              className="absolute top-0.5 right-0.5 h-6 w-6 rounded-full z-10 bg-background/90 hover:bg-background"
               aria-label="Close"
             >
               <X className="h-3 w-3" />
             </Button>
-            <div className="p-3">
+            <div className="p-2">
               {/* Image Carousel */}
               {selectedBike.images && selectedBike.images.length > 0 && (
-                <Carousel className="w-full mb-3">
+                <Carousel className="w-full mb-2">
                   <CarouselContent>
                     {selectedBike.images.map((image, index) => (
                       <CarouselItem key={index}>
-                        <div className="aspect-video rounded-md overflow-hidden">
+                        <div className="aspect-video rounded overflow-hidden">
                           <img src={image} alt={`${selectedBike.name} - ${index + 1}`} className="w-full h-full object-cover" />
                         </div>
                       </CarouselItem>
@@ -364,38 +365,34 @@ const MapView = () => {
                   </CarouselContent>
                   {selectedBike.images.length > 1 && (
                     <>
-                      <CarouselPrevious className="left-1 h-6 w-6" />
-                      <CarouselNext className="right-1 h-6 w-6" />
+                      <CarouselPrevious className="left-0.5 h-5 w-5" />
+                      <CarouselNext className="right-0.5 h-5 w-5" />
                     </>
                   )}
                 </Carousel>
               )}
 
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 pr-2">
-                  <h3 className="font-semibold text-base leading-tight">{selectedBike.name}</h3>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                    <MapPin className="h-3 w-3" />
-                    {selectedBike.city}, {selectedBike.state}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{selectedBike.category}</p>
+              <div className="mb-2">
+                <div className="flex items-start justify-between gap-1 mb-1">
+                  <h3 className="font-semibold text-sm leading-tight flex-1">{selectedBike.name}</h3>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4">
+                    Available
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs px-2 py-0.5 shrink-0">
-                  Available
-                </Badge>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                  <MapPin className="h-2.5 w-2.5" />
+                  {selectedBike.city}, {selectedBike.state} • {selectedBike.category}
+                </p>
               </div>
 
               {/* Condition and Reviews */}
-              <div className="flex items-center gap-3 mb-3 text-xs flex-wrap">
+              <div className="flex items-center gap-2 mb-2 text-[10px]">
                 {selectedBike.condition && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground">Condition:</span>
-                    <span className="font-medium">{selectedBike.condition}</span>
-                  </div>
+                  <span className="text-muted-foreground">{selectedBike.condition}</span>
                 )}
                 {selectedBike.rating && selectedBike.reviews && (
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  <div className="flex items-center gap-0.5">
+                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
                     <span className="font-medium">{selectedBike.rating}</span>
                     <span className="text-muted-foreground">({selectedBike.reviews})</span>
                   </div>
@@ -404,10 +401,10 @@ const MapView = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xl font-bold text-primary">${selectedBike.pricePerHour}</p>
-                  <p className="text-xs text-muted-foreground">per hour</p>
+                  <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
+                  <p className="text-[9px] text-muted-foreground">per hour</p>
                 </div>
-                <Button size="sm" className="bg-gradient-primary hover:opacity-90">Rent Now</Button>
+                <Button size="sm" className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3">Rent</Button>
               </div>
             </div>
           </Card>
