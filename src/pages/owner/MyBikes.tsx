@@ -17,12 +17,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useLoadScript, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import { Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
 import { uploadImages } from '@/lib/s3Upload';
-
-const libraries: ("places")[] = ["places"];
-const GOOGLE_MAPS_API_KEY = "AIzaSyBHwNVP7Bp6AN2TbOQBLVrLx_yfeYdF6dc";
+import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 
 const mapContainerStyle = {
   width: '100%',
@@ -86,10 +84,7 @@ const mockBikes: BikeData[] = [
 ];
 
 const MyBikes = () => {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  const { isLoaded } = useGoogleMaps();
 
   const [bikes, setBikes] = useState<BikeData[]>(mockBikes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
