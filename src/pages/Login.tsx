@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,33 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bike } from 'lucide-react';
+import { Bike, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { LoadScript, Autocomplete } from '@react-google-maps/api';
+
+const libraries: ("places")[] = ["places"];
+
+// Validation schema
+const signupSchema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters').max(50, 'First name too long'),
+  middleName: z.string().max(50, 'Middle name too long').optional(),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50, 'Last name too long'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
+  dob: z.string().refine((date) => {
+    const birthDate = new Date(date);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    return age >= 18;
+  }, 'You must be at least 18 years old'),
+  address: z.string().min(10, 'Please enter a complete address'),
+  password: z.string().min(8, 'Password must be at least 8 characters').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,10 +45,19 @@ const Login = () => {
   const [loginPassword, setLoginPassword] = useState('');
 
   // Register state
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerName, setRegisterName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
+  const [address, setAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [registerRole, setRegisterRole] = useState<UserRole>('renter');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; // User needs to replace this
 
   if (isAuthenticated) {
     navigate('/');
@@ -45,15 +80,54 @@ const Login = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     setIsLoading(true);
 
     try {
-      await register(registerEmail, registerPassword, registerName, registerRole);
+      // Validate form data
+      const formData = {
+        firstName,
+        middleName,
+        lastName,
+        email,
+        phone,
+        dob,
+        address,
+        password,
+        confirmPassword,
+      };
+
+      const result = signupSchema.safeParse(formData);
+      
+      if (!result.success) {
+        const newErrors: Record<string, string> = {};
+        result.error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+        toast.error('Please fix the validation errors');
+        return;
+      }
+
+      // TODO: Call API to register user with all fields
+      const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+      await register(email, password, fullName, registerRole);
+      toast.success('Account created successfully!');
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
+      toast.error(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      setAddress(place.formatted_address || '');
     }
   };
 
@@ -137,49 +211,137 @@ const Login = () => {
             {/* Register Tab */}
             <TabsContent value="register">
               <form onSubmit={handleRegister}>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto">
                   <CardTitle>Create Account</CardTitle>
                   <CardDescription>Fill in your details to get started</CardDescription>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="register-name">Full Name</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={registerName}
-                      onChange={(e) => setRegisterName(e.target.value)}
-                      required
-                    />
+                  {/* Name Fields */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name *</Label>
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="John"
+                      />
+                      {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="middleName">Middle Name</Label>
+                      <Input
+                        id="middleName"
+                        value={middleName}
+                        onChange={(e) => setMiddleName(e.target.value)}
+                        placeholder="M."
+                      />
+                      {errors.middleName && <p className="text-xs text-destructive">{errors.middleName}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name *</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Doe"
+                      />
+                      {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                    </div>
                   </div>
 
+                  {/* Email */}
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
-                      id="register-email"
+                      id="email"
                       type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      required
                     />
+                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                   </div>
 
+                  {/* Phone */}
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      required
-                      minLength={6}
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
                     />
+                    {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                   </div>
 
+                  {/* Date of Birth */}
                   <div className="space-y-2">
-                    <Label htmlFor="register-role">I want to</Label>
+                    <Label htmlFor="dob">Date of Birth * (Must be 18+)</Label>
+                    <Input
+                      id="dob"
+                      type="date"
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    />
+                    {errors.dob && <p className="text-xs text-destructive">{errors.dob}</p>}
+                  </div>
+
+                  {/* Address with Google Places */}
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address *</Label>
+                    <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={libraries}>
+                      <Autocomplete
+                        onLoad={setAutocomplete}
+                        onPlaceChanged={onPlaceChanged}
+                      >
+                        <div className="relative">
+                          <Input
+                            id="address"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            placeholder="Start typing your address..."
+                          />
+                          <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </Autocomplete>
+                    </LoadScript>
+                    {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Must be 8+ characters with uppercase, lowercase, and number
+                    </p>
+                    {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                    {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
+                  </div>
+
+                  {/* Role Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="register-role">I want to *</Label>
                     <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
                       <SelectTrigger id="register-role">
                         <SelectValue />
