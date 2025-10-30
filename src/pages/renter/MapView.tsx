@@ -311,24 +311,21 @@ const MapView = () => {
     autocompleteRef.current = autocomplete;
   };
 
-  if (isLoadingLocation) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-2rem)] rounded-lg bg-muted">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground font-medium">Getting your location...</p>
-          <div className="mt-4 w-64 mx-auto">
-            <div className="h-1 bg-muted-foreground/20 rounded-full overflow-hidden">
-              <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }}></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Removed the early return for loading state - now showing map with overlay
 
   return (
     <div className="relative h-[calc(100vh-2rem)] rounded-lg overflow-hidden">
+      {/* Loading Overlay */}
+      {isLoadingLocation && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+            <p className="text-foreground font-semibold text-lg">Getting your location...</p>
+            <p className="text-muted-foreground text-sm mt-2">Please wait</p>
+          </div>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
         <Card className="shadow-xl">
