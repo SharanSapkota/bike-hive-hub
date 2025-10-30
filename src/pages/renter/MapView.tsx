@@ -213,9 +213,10 @@ const MapView = () => {
             );
 
             if (point) {
+              const mapContainer = map.getDiv().getBoundingClientRect();
               setPopupPosition({
-                x: point.x,
-                y: point.y - 60,
+                x: mapContainer.left + point.x,
+                y: mapContainer.top + point.y,
               });
             }
           }
@@ -335,15 +336,15 @@ const MapView = () => {
         <div
           className="fixed z-20 animate-scale-in pointer-events-none"
           style={{
-            left: `${Math.min(Math.max(popupPosition.x, 130), window.innerWidth - 130)}px`,
-            top: `${Math.max(Math.min(popupPosition.y, window.innerHeight - 300), 60)}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${popupPosition.x}px`,
+            top: `${popupPosition.y}px`,
+            transform: "translate(-50%, calc(-100% - 35px))",
             maxWidth: "calc(100vw - 32px)",
           }}
         >
           {/* Arrow pointing to marker */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
-            <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-card"></div>
+            <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
 
           <Card className="w-[240px] shadow-xl pointer-events-auto max-h-[60vh] overflow-y-auto">
