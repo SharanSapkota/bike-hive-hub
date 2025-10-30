@@ -91,7 +91,8 @@ const MyBikes = () => {
   });
 
   const [bikes, setBikes] = useState<BikeData[]>(mockBikes);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingBike, setEditingBike] = useState<BikeData | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -106,6 +107,44 @@ const MyBikes = () => {
     address: null as { formatted: string; lat: number; lng: number } | null,
     description: '',
   });
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      category: 'City',
+      pricePerHour: '',
+      pricePerDay: '',
+      location: '',
+      address: null,
+      description: '',
+    });
+    setSelectedImages([]);
+    setImagePreviews([]);
+    setEditingBike(null);
+  };
+
+  const openAddDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (bike: BikeData) => {
+    setEditingBike(bike);
+    setFormData({
+      name: bike.name,
+      category: bike.category,
+      pricePerHour: bike.pricePerHour.toString(),
+      pricePerDay: bike.pricePerDay.toString(),
+      location: bike.location,
+      address: bike.address || null,
+      description: bike.description,
+    });
+    // Set existing images as previews
+    if (bike.images && bike.images.length > 0) {
+      setImagePreviews(bike.images);
+    }
+    setIsDialogOpen(true);
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -193,19 +232,22 @@ const MyBikes = () => {
     );
   };
 
-  const handleAddBike = async () => {
+  const handleSaveBike = async () => {
     try {
-      toast.loading('Uploading images...');
+      // Upload new images to S3 if any
+      let imageUrls = imagePreviews;
+      
+      if (selectedImages.length > 0) {
+        toast.loading('Uploading images...');
+        const newImageUrls = await uploadImages(selectedImages);
+        // Combine existing URLs (from imagePreviews that are URLs) with new uploaded URLs
+        const existingUrls = imagePreviews.filter(preview => preview.startsWith('http'));
+        imageUrls = [...existingUrls, ...newImageUrls];
+        toast.dismiss();
+      }
 
-      // Upload images to S3 and get their URLs
-      const imageUrls = selectedImages.length > 0 
-        ? await uploadImages(selectedImages)
-        : [];
+      toast.loading(editingBike ? 'Updating bike...' : 'Adding bike...');
 
-      toast.dismiss();
-      toast.loading('Adding bike...');
-
-      // Call API to create bike with image URLs
       const bikeData = {
         name: formData.name,
         category: formData.category,
@@ -217,38 +259,42 @@ const MyBikes = () => {
         images: imageUrls,
       };
 
-      const response = await api.post('/bikes', bikeData);
+      if (editingBike) {
+        // Update existing bike
+        await api.put(`/bikes/${editingBike.id}`, bikeData);
+        
+        setBikes(bikes.map(bike => 
+          bike.id === editingBike.id 
+            ? { ...bike, ...bikeData }
+            : bike
+        ));
+        
+        toast.dismiss();
+        toast.success('Bike updated successfully!');
+      } else {
+        // Create new bike
+        const response = await api.post('/bikes', bikeData);
 
-      // Add the new bike to the local state
-      const newBike: BikeData = {
-        ...bikeData,
-        id: response.data.id || Date.now().toString(),
-        available: true,
-      };
+        const newBike: BikeData = {
+          ...bikeData,
+          id: response.data.id || Date.now().toString(),
+          available: true,
+        };
 
-      setBikes([...bikes, newBike]);
-      setIsAddDialogOpen(false);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        category: 'City',
-        pricePerHour: '',
-        pricePerDay: '',
-        location: '',
-        address: null,
-        description: '',
-      });
-      setSelectedImages([]);
-      setImagePreviews([]);
-      
-      toast.dismiss();
-      toast.success('Bike added successfully!');
+        setBikes([...bikes, newBike]);
+        
+        toast.dismiss();
+        toast.success('Bike added successfully!');
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
     } catch (error: any) {
       toast.dismiss();
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to add bike';
+      const errorMessage = error.response?.data?.message || error.message || 
+        (editingBike ? 'Failed to update bike' : 'Failed to add bike');
       toast.error(errorMessage);
-      console.error('Error adding bike:', error);
+      console.error('Error saving bike:', error);
     }
   };
 
@@ -274,18 +320,21 @@ const MyBikes = () => {
           <h1 className="text-3xl font-bold mb-2">My Bikes</h1>
           <p className="text-muted-foreground">Manage your bike listings</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) resetForm();
+        }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:opacity-90 gap-2">
+            <Button className="bg-gradient-primary hover:opacity-90 gap-2" onClick={openAddDialog}>
               <Plus className="h-4 w-4" />
               Add Bike
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Bike</DialogTitle>
+              <DialogTitle>{editingBike ? 'Edit Bike' : 'Add New Bike'}</DialogTitle>
               <DialogDescription>
-                Fill in the details to list a new bike
+                {editingBike ? 'Update the bike details' : 'Fill in the details to list a new bike'}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -462,15 +511,18 @@ const MyBikes = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsDialogOpen(false);
+                resetForm();
+              }}>
                 Cancel
               </Button>
               <Button
-                onClick={handleAddBike}
+                onClick={handleSaveBike}
                 className="bg-gradient-primary hover:opacity-90"
                 disabled={!formData.name || !formData.pricePerHour}
               >
-                Add Bike
+                {editingBike ? 'Update Bike' : 'Add Bike'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -564,7 +616,11 @@ const MyBikes = () => {
                   <Power className="h-4 w-4 mr-1" />
                   {bike.available ? 'Disable' : 'Enable'}
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => openEditDialog(bike)}
+                >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
@@ -589,7 +645,10 @@ const MyBikes = () => {
             <p className="text-muted-foreground mb-4">
               Start by adding your first bike to the platform
             </p>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-gradient-primary hover:opacity-90">
+            <Button onClick={() => {
+              resetForm();
+              setIsDialogOpen(true);
+            }} className="bg-gradient-primary hover:opacity-90">
               <Plus className="h-4 w-4 mr-2" />
               Add Your First Bike
             </Button>
