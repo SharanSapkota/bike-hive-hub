@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import History from "./pages/History";
+import Install from "./pages/Install";
 import MapView from "./pages/renter/MapView";
 import Payment from "./pages/renter/Payment";
 import MyBikes from "./pages/owner/MyBikes";
@@ -24,6 +25,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/install" element={<Install />} />
       
       <Route
         path="/"
