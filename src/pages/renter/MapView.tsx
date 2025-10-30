@@ -155,6 +155,7 @@ const MapView = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     // Get user's current location
@@ -180,9 +181,71 @@ const MapView = () => {
     setMap(map);
   }, []);
 
+  const handleMarkerClick = useCallback((bike: Bike) => {
+    setSelectedBike(bike);
+    
+    if (map) {
+      const projection = map.getProjection();
+      if (projection) {
+        const point = projection.fromLatLngToPoint(new google.maps.LatLng(bike.location.lat, bike.location.lng));
+        if (point) {
+          const scale = Math.pow(2, map.getZoom() || 0);
+          const worldPoint = new google.maps.Point(
+            point.x * scale,
+            point.y * scale
+          );
+          const pixelOffset = map.getDiv().getBoundingClientRect();
+          
+          setPopupPosition({
+            x: worldPoint.x - pixelOffset.left,
+            y: worldPoint.y - pixelOffset.top - 60 // Offset above marker
+          });
+        }
+      }
+    }
+  }, [map]);
+
   const onUnmount = useCallback(() => {
     setMap(null);
   }, []);
+
+  useEffect(() => {
+    if (map && selectedBike) {
+      const updatePopupPosition = () => {
+        const projection = map.getProjection();
+        if (projection) {
+          const overlay = new google.maps.OverlayView();
+          overlay.onAdd = function() {
+            overlay.getPanes();
+          };
+          overlay.draw = function() {};
+          overlay.setMap(map);
+          
+          const point = overlay.getProjection()?.fromLatLngToContainerPixel(
+            new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng)
+          );
+          
+          if (point) {
+            setPopupPosition({
+              x: point.x,
+              y: point.y - 60
+            });
+          }
+          
+          overlay.setMap(null);
+        }
+      };
+      
+      updatePopupPosition();
+      map.addListener('zoom_changed', updatePopupPosition);
+      map.addListener('center_changed', updatePopupPosition);
+      
+      return () => {
+        google.maps.event.clearListeners(map, 'zoom_changed');
+        google.maps.event.clearListeners(map, 'center_changed');
+      };
+    }
+  }, [map, selectedBike]);
 
   const handleCenterOnUser = () => {
     if (navigator.geolocation) {
@@ -236,7 +299,7 @@ const MapView = () => {
             <Marker
               key={bike.id}
               position={bike.location}
-              onClick={() => setSelectedBike(bike)}
+              onClick={() => handleMarkerClick(bike)}
               icon={{
                 url:
                   "data:image/svg+xml;charset=UTF-8," +
@@ -273,80 +336,97 @@ const MapView = () => {
         </div>
       </Card>
 
-      {/* Selected bike card (mobile-friendly bottom card) */}
-      {selectedBike && (
-        <Card className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-10 shadow-lg">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSelectedBike(null)}
-            className="absolute top-2 right-2 h-8 w-8 rounded-full z-10"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <div className="p-4">
-            {/* Image Carousel */}
-            {selectedBike.images && selectedBike.images.length > 0 && (
-              <Carousel className="w-full mb-4">
-                <CarouselContent>
-                  {selectedBike.images.map((image, index) => (
-                    <CarouselItem key={index}>
-                      <div className="aspect-video rounded-lg overflow-hidden">
-                        <img src={image} alt={`${selectedBike.name} - ${index + 1}`} className="w-full h-full object-cover" />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                {selectedBike.images.length > 1 && (
-                  <>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </>
-                )}
-              </Carousel>
-            )}
-
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{selectedBike.name}</h3>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                  <MapPin className="h-3 w-3" />
-                  {selectedBike.city}, {selectedBike.state}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">{selectedBike.category} Bike</p>
-              </div>
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                Available
-              </Badge>
-            </div>
-
-            {/* Condition and Reviews */}
-            <div className="flex items-center gap-4 mb-4 text-sm">
-              {selectedBike.condition && (
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground">Condition:</span>
-                  <span className="font-medium">{selectedBike.condition}</span>
-                </div>
-              )}
-              {selectedBike.rating && selectedBike.reviews && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{selectedBike.rating}</span>
-                  <span className="text-muted-foreground">({selectedBike.reviews})</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-primary">${selectedBike.pricePerHour}</p>
-                <p className="text-xs text-muted-foreground">per hour</p>
-              </div>
-              <Button className="bg-gradient-primary hover:opacity-90">Rent Now</Button>
-            </div>
+      {/* Anchored popup emerging from marker */}
+      {selectedBike && popupPosition && (
+        <div
+          className="absolute z-20 animate-scale-in"
+          style={{
+            left: `${popupPosition.x}px`,
+            top: `${popupPosition.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          {/* Arrow pointing to marker */}
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
+            <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-card"></div>
           </div>
-        </Card>
+          
+          <Card className="w-80 md:w-96 shadow-2xl">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSelectedBike(null);
+                setPopupPosition(null);
+              }}
+              className="absolute top-2 right-2 h-8 w-8 rounded-full z-10 bg-background/80 hover:bg-background"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div className="p-4">
+              {/* Image Carousel */}
+              {selectedBike.images && selectedBike.images.length > 0 && (
+                <Carousel className="w-full mb-4">
+                  <CarouselContent>
+                    {selectedBike.images.map((image, index) => (
+                      <CarouselItem key={index}>
+                        <div className="aspect-video rounded-lg overflow-hidden">
+                          <img src={image} alt={`${selectedBike.name} - ${index + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {selectedBike.images.length > 1 && (
+                    <>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </>
+                  )}
+                </Carousel>
+              )}
+
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{selectedBike.name}</h3>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                    <MapPin className="h-3 w-3" />
+                    {selectedBike.city}, {selectedBike.state}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{selectedBike.category} Bike</p>
+                </div>
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  Available
+                </Badge>
+              </div>
+
+              {/* Condition and Reviews */}
+              <div className="flex items-center gap-4 mb-4 text-sm">
+                {selectedBike.condition && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">Condition:</span>
+                    <span className="font-medium">{selectedBike.condition}</span>
+                  </div>
+                )}
+                {selectedBike.rating && selectedBike.reviews && (
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium">{selectedBike.rating}</span>
+                    <span className="text-muted-foreground">({selectedBike.reviews})</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-primary">${selectedBike.pricePerHour}</p>
+                  <p className="text-xs text-muted-foreground">per hour</p>
+                </div>
+                <Button className="bg-gradient-primary hover:opacity-90">Rent Now</Button>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );
