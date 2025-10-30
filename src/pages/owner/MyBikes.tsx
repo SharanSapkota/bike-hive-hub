@@ -17,9 +17,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { useLoadScript, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 
 const libraries: ("places")[] = ["places"];
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '300px',
+};
+
+const defaultCenter = {
+  lat: 40.7128,
+  lng: -74.0060,
+};
 
 interface BikeData {
   id: string;
@@ -287,6 +297,22 @@ const MyBikes = () => {
                 <p className="text-xs text-muted-foreground">
                   Start typing to search for an address
                 </p>
+                
+                {isLoaded && (
+                  <div className="mt-3 rounded-lg overflow-hidden border">
+                    <GoogleMap
+                      mapContainerStyle={mapContainerStyle}
+                      center={formData.address ? { lat: formData.address.lat, lng: formData.address.lng } : defaultCenter}
+                      zoom={formData.address ? 15 : 12}
+                    >
+                      {formData.address && (
+                        <Marker
+                          position={{ lat: formData.address.lat, lng: formData.address.lng }}
+                        />
+                      )}
+                    </GoogleMap>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
