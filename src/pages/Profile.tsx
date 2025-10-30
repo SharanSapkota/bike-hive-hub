@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Camera, LogOut, CreditCard, ShieldCheck, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { Camera, LogOut, CreditCard, ShieldCheck, ChevronRight, CheckCircle2, XCircle, Upload, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Mock data - replace with API calls later
@@ -39,6 +39,12 @@ const Profile = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
   const [selectedPaymentType, setSelectedPaymentType] = useState<'credit' | 'paypal' | 'bank'>('credit');
+  
+  // Identity verification states
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [passportPreview, setPassportPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   // Payment form states
   const [cardNumber, setCardNumber] = useState('');
@@ -73,6 +79,56 @@ const Profile = () => {
   const handlePaymentNext = () => {
     setIsPaymentModalOpen(false);
     setIsPaymentFormOpen(true);
+  };
+
+  const handlePassportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setPassportFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPassportPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    try {
+      // TODO: Call API to send verification email
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch (error) {
+      toast.error('Failed to send verification email');
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    try {
+      // TODO: Call API to send verification SMS
+      toast.success('Verification code sent to your phone!');
+    } catch (error) {
+      toast.error('Failed to send verification code');
+    }
   };
 
   const handlePaymentFormSubmit = async (e: React.FormEvent) => {
@@ -249,7 +305,7 @@ const Profile = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Identity Verification</DialogTitle>
-            <DialogDescription>Your identity verification details</DialogDescription>
+            <DialogDescription>Complete your identity verification</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 mt-4">
@@ -265,26 +321,92 @@ const Profile = () => {
               <p className="text-base">{VERIFICATION_DATA.address}</p>
             </div>
 
-            {/* Photos */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Passport/Citizenship Photo</Label>
-                <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
-                  <img 
-                    src={VERIFICATION_DATA.passportPhoto} 
-                    alt="Passport" 
-                    className="w-full h-full object-cover"
+            {/* Passport Upload */}
+            <div className="space-y-3">
+              <Label htmlFor="passport">Passport/Citizenship Photo</Label>
+              <div className="flex items-start gap-4">
+                {passportPreview ? (
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
+                    <img src={passportPreview} alt="Passport" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        setPassportFile(null);
+                        setPassportPreview(null);
+                      }}
+                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
+                    <FileCheck className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    id="passport"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePassportUpload}
+                    className="hidden"
                   />
+                  <Label htmlFor="passport">
+                    <Button variant="outline" className="gap-2" asChild>
+                      <span>
+                        <Upload className="h-4 w-4" />
+                        Upload Passport
+                      </span>
+                    </Button>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    PNG, JPG up to 5MB. Must be a clear photo of your passport or citizenship card.
+                  </p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Your Photo (Selfie)</Label>
-                <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
-                  <img 
-                    src={VERIFICATION_DATA.selfiePhoto} 
-                    alt="Selfie" 
-                    className="w-full h-full object-cover"
+            </div>
+
+            {/* Photo Upload */}
+            <div className="space-y-3">
+              <Label htmlFor="photo">Your Photo (Selfie)</Label>
+              <div className="flex items-start gap-4">
+                {photoPreview ? (
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary">
+                    <img src={photoPreview} alt="Photo" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        setPhotoFile(null);
+                        setPhotoPreview(null);
+                      }}
+                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
+                    <Camera className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
                   />
+                  <Label htmlFor="photo">
+                    <Button variant="outline" className="gap-2" asChild>
+                      <span>
+                        <Camera className="h-4 w-4" />
+                        Take/Upload Photo
+                      </span>
+                    </Button>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    PNG, JPG up to 5MB. Take a clear selfie showing your face.
+                  </p>
                 </div>
               </div>
             </div>
@@ -302,10 +424,15 @@ const Profile = () => {
                     <span className="text-sm font-medium text-green-500">Verified</span>
                   </>
                 ) : (
-                  <>
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">Not Verified</span>
-                  </>
+                  <Button 
+                    onClick={handleVerifyEmail}
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    Verify Email
+                  </Button>
                 )}
               </div>
             </div>
@@ -323,10 +450,15 @@ const Profile = () => {
                     <span className="text-sm font-medium text-green-500">Verified</span>
                   </>
                 ) : (
-                  <>
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">Not Verified</span>
-                  </>
+                  <Button 
+                    onClick={handleVerifyPhone}
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    Verify Phone
+                  </Button>
                 )}
               </div>
             </div>
