@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import History from "./pages/History";
 import MapView from "./pages/renter/MapView";
 import MyBikes from "./pages/owner/MyBikes";
 import Rentals from "./pages/owner/Rentals";
@@ -41,6 +42,7 @@ const AppRoutes = () => {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/history" element={<History />} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
         <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
         <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />
