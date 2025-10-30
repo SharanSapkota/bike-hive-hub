@@ -70,13 +70,7 @@ const Profile = () => {
     navigate('/login');
   };
 
-  const handlePaymentMethodClick = (type: 'credit' | 'paypal' | 'bank') => {
-    setSelectedPaymentType(type);
-    setIsPaymentModalOpen(false);
-    setIsPaymentFormOpen(true);
-  };
-
-  const handleAddNewPayment = () => {
+  const handlePaymentNext = () => {
     setIsPaymentModalOpen(false);
     setIsPaymentFormOpen(true);
   };
@@ -342,56 +336,69 @@ const Profile = () => {
 
       {/* Payment Information Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Payment Information</DialogTitle>
-            <DialogDescription>Your saved payment methods</DialogDescription>
+            <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogDescription>Choose your preferred payment method</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
-            {PAYMENT_METHODS.map((method) => (
-              <div 
-                key={method.id}
-                onClick={() => handlePaymentMethodClick(
-                  method.type === 'Credit Card' ? 'credit' : 
-                  method.type === 'PayPal' ? 'paypal' : 'bank'
-                )}
-                className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{method.type}</h4>
-                    {method.type === 'Credit Card' && (
-                      <p className="text-sm text-muted-foreground">
-                        •••• {method.last4} • Expires {method.expiry}
-                      </p>
-                    )}
-                    {method.type === 'PayPal' && (
-                      <p className="text-sm text-muted-foreground">{method.email}</p>
-                    )}
-                    {method.type === 'Bank' && (
-                      <p className="text-sm text-muted-foreground">
-                        {method.bankName} • {method.accountNumber}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {method.isDefault && (
-                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
-                    Default
+          <div className="space-y-6 mt-4">
+            {/* Payment Type Selector */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Payment Type</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentType('credit')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    selectedPaymentType === 'credit' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <CreditCard className={`h-6 w-6 ${selectedPaymentType === 'credit' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className={`text-sm font-medium ${selectedPaymentType === 'credit' ? 'text-primary' : 'text-foreground'}`}>
+                    Card
                   </span>
-                )}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentType('paypal')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    selectedPaymentType === 'paypal' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <CreditCard className={`h-6 w-6 ${selectedPaymentType === 'paypal' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className={`text-sm font-medium ${selectedPaymentType === 'paypal' ? 'text-primary' : 'text-foreground'}`}>
+                    PayPal
+                  </span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentType('bank')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    selectedPaymentType === 'bank' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <CreditCard className={`h-6 w-6 ${selectedPaymentType === 'bank' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className={`text-sm font-medium ${selectedPaymentType === 'bank' ? 'text-primary' : 'text-foreground'}`}>
+                    Bank
+                  </span>
+                </button>
               </div>
-            ))}
-            
+            </div>
+
             <Button 
-              onClick={handleAddNewPayment}
-              className="w-full bg-gradient-primary hover:opacity-90 mt-4"
+              onClick={handlePaymentNext}
+              className="w-full bg-gradient-primary hover:opacity-90"
             >
-              Add New Payment Method
+              Next
             </Button>
           </div>
         </DialogContent>
