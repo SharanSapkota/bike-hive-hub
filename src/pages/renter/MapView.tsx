@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MapPin, Navigation, Star, X, Search } from "lucide-react";
+import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import api from "@/lib/api";
 
 interface Bike {
   id: string;
@@ -165,6 +166,7 @@ const MapView = () => {
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [searchValue, setSearchValue] = useState<string>("");
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -236,8 +238,20 @@ const MapView = () => {
     setMap(map);
   }, []);
 
-  const handleMarkerClick = useCallback((bike: Bike) => {
+  const handleMarkerClick = useCallback(async (bike: Bike) => {
     setSelectedBike(bike);
+    setIsLoadingDetails(true);
+    
+    try {
+      // Call API to get bike details
+      const response = await api.get(`/bikes/${bike.id}`);
+      setSelectedBike(response.data);
+    } catch (error) {
+      console.error("Error fetching bike details:", error);
+      // Keep the basic bike data if API fails
+    } finally {
+      setIsLoadingDetails(false);
+    }
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -483,80 +497,91 @@ const MapView = () => {
               onClick={() => {
                 setSelectedBike(null);
                 setPopupPosition(null);
+                setIsLoadingDetails(false);
               }}
               className="absolute top-0.5 right-0.5 h-6 w-6 rounded-full z-10 bg-background/90 hover:bg-background"
               aria-label="Close"
             >
               <X className="h-3 w-3" />
             </Button>
-            <div className="p-2">
-              {/* Image Carousel */}
-              {selectedBike.images && selectedBike.images.length > 0 && (
-                <Carousel className="w-full mb-2">
-                  <CarouselContent>
-                    {selectedBike.images.map((image, index) => (
-                      <CarouselItem key={index}>
-                        <div className="aspect-video rounded overflow-hidden">
-                          <img
-                            src={image}
-                            alt={`${selectedBike.name} - ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  {selectedBike.images.length > 1 && (
-                    <>
-                      <CarouselPrevious className="left-0.5 h-5 w-5" />
-                      <CarouselNext className="right-0.5 h-5 w-5" />
-                    </>
-                  )}
-                </Carousel>
-              )}
-
-              <div className="mb-2">
-                <div className="flex items-start justify-between gap-1 mb-1">
-                  <h3 className="font-semibold text-sm leading-tight flex-1">{selectedBike.name}</h3>
-                  <Badge
-                    variant="secondary"
-                    className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4"
-                  >
-                    Available
-                  </Badge>
+            
+            {isLoadingDetails ? (
+              <div className="p-4 flex items-center justify-center min-h-[200px]">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">Loading details...</p>
                 </div>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                  <MapPin className="h-2.5 w-2.5" />
-                  {selectedBike.city}, {selectedBike.state} • {selectedBike.category}
-                </p>
               </div>
-
-              {/* Condition and Reviews */}
-              <div className="flex items-center gap-2 mb-2 text-[10px]">
-                {selectedBike.condition && <span className="text-muted-foreground">{selectedBike.condition}</span>}
-                {selectedBike.rating && selectedBike.reviews && (
-                  <div className="flex items-center gap-0.5">
-                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{selectedBike.rating}</span>
-                    <span className="text-muted-foreground">({selectedBike.reviews})</span>
-                  </div>
+            ) : (
+              <div className="p-2">
+                {/* Image Carousel */}
+                {selectedBike.images && selectedBike.images.length > 0 && (
+                  <Carousel className="w-full mb-2">
+                    <CarouselContent>
+                      {selectedBike.images.map((image, index) => (
+                        <CarouselItem key={index}>
+                          <div className="aspect-video rounded overflow-hidden">
+                            <img
+                              src={image}
+                              alt={`${selectedBike.name} - ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {selectedBike.images.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-0.5 h-5 w-5" />
+                        <CarouselNext className="right-0.5 h-5 w-5" />
+                      </>
+                    )}
+                  </Carousel>
                 )}
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
-                  <p className="text-[9px] text-muted-foreground">per hour</p>
+                <div className="mb-2">
+                  <div className="flex items-start justify-between gap-1 mb-1">
+                    <h3 className="font-semibold text-sm leading-tight flex-1">{selectedBike.name}</h3>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4"
+                    >
+                      Available
+                    </Badge>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {selectedBike.city}, {selectedBike.state} • {selectedBike.category}
+                  </p>
                 </div>
-                <Button 
-                  size="sm" 
-                  className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3"
-                  onClick={() => navigate(`/payment/${selectedBike.id}`)}
-                >
-                  Rent
-                </Button>
+
+                {/* Condition and Reviews */}
+                <div className="flex items-center gap-2 mb-2 text-[10px]">
+                  {selectedBike.condition && <span className="text-muted-foreground">{selectedBike.condition}</span>}
+                  {selectedBike.rating && selectedBike.reviews && (
+                    <div className="flex items-center gap-0.5">
+                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium">{selectedBike.rating}</span>
+                      <span className="text-muted-foreground">({selectedBike.reviews})</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
+                    <p className="text-[9px] text-muted-foreground">per hour</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3"
+                    onClick={() => navigate(`/payment/${selectedBike.id}`)}
+                  >
+                    Rent
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </Card>
         </div>
       )}
