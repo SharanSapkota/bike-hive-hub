@@ -238,10 +238,10 @@ const MapView = () => {
   }, []);
 
   const handleMarkerClick = useCallback((bike: Bike) => {
+    setSelectedBike(bike);
     setIsLoadingDetails(true);
     // Mock timeout to simulate API call
     setTimeout(() => {
-      setSelectedBike(bike);
       setIsLoadingDetails(false);
     }, 1000);
   }, []);
