@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
-import api from "@/lib/api";
 
 interface Bike {
   id: string;
@@ -238,20 +237,13 @@ const MapView = () => {
     setMap(map);
   }, []);
 
-  const handleMarkerClick = useCallback(async (bike: Bike) => {
-    setSelectedBike(bike);
+  const handleMarkerClick = useCallback((bike: Bike) => {
     setIsLoadingDetails(true);
-    
-    try {
-      // Call API to get bike details
-      const response = await api.get(`/bikes/${bike.id}`);
-      setSelectedBike(response.data);
-    } catch (error) {
-      console.error("Error fetching bike details:", error);
-      // Keep the basic bike data if API fails
-    } finally {
+    // Mock timeout to simulate API call
+    setTimeout(() => {
+      setSelectedBike(bike);
       setIsLoadingDetails(false);
-    }
+    }, 1000);
   }, []);
 
   const onUnmount = useCallback(() => {
