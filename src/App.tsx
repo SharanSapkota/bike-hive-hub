@@ -16,6 +16,7 @@ import MapView from "./pages/renter/MapView";
 import Payment from "./pages/renter/Payment";
 import MyBikes from "./pages/owner/MyBikes";
 import Rentals from "./pages/owner/Rentals";
+import RentalRequests from "./pages/owner/RentalRequests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const AppRoutes = () => {
         <Route path="/payment/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
         <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
         <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />
+        <Route path="/rental-requests" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><RentalRequests /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

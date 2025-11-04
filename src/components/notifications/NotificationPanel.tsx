@@ -1,8 +1,11 @@
-import { Check, Clock, Bike, Bell } from 'lucide-react';
+import { Check, Clock, Bike, Bell, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface Notification {
   id: string;
@@ -67,10 +70,41 @@ const formatTime = (date: Date) => {
 
 interface NotificationPanelProps {
   onMarkAsRead?: () => void;
+  onClose?: () => void;
 }
 
-const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
-  const notifications = mockNotifications; // Replace with real backend data
+const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) => {
+  const [notifications, setNotifications] = useState(mockNotifications);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleApprove = (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNotifications(prev =>
+      prev.filter(n => n.id !== notificationId)
+    );
+    toast({
+      title: 'Request Approved',
+      description: 'The rental request has been approved successfully.',
+    });
+  };
+
+  const handleReject = (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNotifications(prev =>
+      prev.filter(n => n.id !== notificationId)
+    );
+    toast({
+      title: 'Request Rejected',
+      description: 'The rental request has been rejected.',
+      variant: 'destructive',
+    });
+  };
+
+  const handleViewAll = () => {
+    navigate('/rental-requests');
+    onClose?.();
+  };
 
   return (
     <div className="flex flex-col">
@@ -109,7 +143,7 @@ const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
                   <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                     {getIcon(notification.type)}
                   </div>
-                  <div className="flex-1 space-y-1 min-w-0">
+                  <div className="flex-1 space-y-2 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-semibold text-sm leading-tight">
                         {notification.title}
@@ -124,6 +158,28 @@ const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
                     <p className="text-xs text-muted-foreground/80 font-medium">
                       {formatTime(notification.createdAt)}
                     </p>
+                    
+                    {notification.type === 'rental_request' && (
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 h-8 text-xs"
+                          onClick={(e) => handleApprove(notification.id, e)}
+                        >
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1 h-8 text-xs"
+                          onClick={(e) => handleReject(notification.id, e)}
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -139,6 +195,7 @@ const NotificationPanel = ({ onMarkAsRead }: NotificationPanelProps) => {
           variant="ghost" 
           className="w-full text-sm hover:bg-accent/50 text-primary font-medium" 
           size="sm"
+          onClick={handleViewAll}
         >
           View all notifications
         </Button>

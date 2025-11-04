@@ -10,9 +10,10 @@ import NotificationPanel from './NotificationPanel';
 
 const NotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(3); // Mock count - replace with real backend data
+  const [open, setOpen] = useState(false);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative hover:bg-accent/10">
           <Bell className="h-5 w-5" />
@@ -24,7 +25,10 @@ const NotificationBell = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
-        <NotificationPanel onMarkAsRead={() => setUnreadCount(0)} />
+        <NotificationPanel 
+          onMarkAsRead={() => setUnreadCount(0)} 
+          onClose={() => setOpen(false)}
+        />
       </PopoverContent>
     </Popover>
   );
