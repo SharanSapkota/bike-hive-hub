@@ -1,40 +1,45 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bike } from 'lucide-react';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { api } from '@/lib/api';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bike } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { api } from "@/lib/api";
 
 // Validation schema
-const signupSchema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters').max(50, 'First name too long'),
-  middleName: z.string().max(50, 'Middle name too long').optional(),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50, 'Last name too long'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
-  dob: z.string().refine((date) => {
-    const birthDate = new Date(date);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    return age >= 18;
-  }, 'You must be at least 18 years old'),
-  country: z.string().min(2, 'Country is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().min(2, 'State/Province is required'),
-  postalCode: z.string().min(3, 'Postal code is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    firstName: z.string().min(2, "First name must be at least 2 characters").max(50, "First name too long"),
+    middleName: z.string().max(50, "Middle name too long").optional(),
+    lastName: z.string().min(2, "Last name must be at least 2 characters").max(50, "Last name too long"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
+    dob: z.string().refine((date) => {
+      const birthDate = new Date(date);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      return age >= 18;
+    }, "You must be at least 18 years old"),
+    country: z.string().min(2, "Country is required"),
+    city: z.string().min(2, "City is required"),
+    state: z.string().min(2, "State/Province is required"),
+    postalCode: z.string().min(3, "Postal code is required"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 const Login = () => {
   const navigate = useNavigate();
@@ -42,27 +47,27 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Login state
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Register state
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [dob, setDob] = useState('');
-  const [country, setCountry] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<UserRole>('renter');
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [registerRole, setRegisterRole] = useState<UserRole>("renter");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (isAuthenticated) {
-    navigate('/');
+    navigate("/");
     return null;
   }
 
@@ -72,9 +77,9 @@ const Login = () => {
 
     try {
       await login(loginEmail, loginPassword);
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +108,7 @@ const Login = () => {
       };
 
       const result = signupSchema.safeParse(formData);
-      
+
       if (!result.success) {
         const newErrors: Record<string, string> = {};
         result.error.errors.forEach((err) => {
@@ -112,12 +117,12 @@ const Login = () => {
           }
         });
         setErrors(newErrors);
-        toast.error('Please fix the validation errors');
+        toast.error("Please fix the validation errors");
         return;
       }
 
       // Call signup API
-      const response = await api.post('/signup', {
+      const response = await api.post("/signup", {
         firstName,
         middleName,
         lastName,
@@ -128,23 +133,23 @@ const Login = () => {
           country,
           city,
           state,
-          postalCode
+          postalCode,
         },
         password,
-        role: registerRole
+        role: registerRole,
       });
 
       // Store auth token if provided
       if (response.data.token) {
-        localStorage.setItem('auth_token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem("auth_token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
       }
 
-      toast.success('Account created successfully!');
-      navigate('/');
+      toast.success("Account created successfully!");
+      navigate("/");
     } catch (error: any) {
-      console.error('Registration failed:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      console.error("Registration failed:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Registration failed";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -159,7 +164,7 @@ const Login = () => {
           <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
             <Bike className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold">BikeRent</h1>
+          <h1 className="text-3xl font-bold">Gear Quest</h1>
         </div>
 
         <Card className="shadow-lg">
@@ -204,15 +209,11 @@ const Login = () => {
                 </CardContent>
 
                 <CardFooter className="flex flex-col gap-2">
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-primary hover:opacity-90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Logging in...' : 'Login'}
+                  <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Login"}
                   </Button>
                   <p className="text-sm text-muted-foreground text-center">
-                    Don't have an account?{' '}
+                    Don't have an account?{" "}
                     <button
                       type="button"
                       className="text-primary hover:underline font-medium"
@@ -303,7 +304,7 @@ const Login = () => {
                       type="date"
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
                     />
                     {errors.dob && <p className="text-xs text-destructive">{errors.dob}</p>}
                   </div>
@@ -322,12 +323,7 @@ const Login = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="city">City *</Label>
-                      <Input
-                        id="city"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="New York"
-                      />
+                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="New York" />
                       {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
                     </div>
                   </div>
@@ -335,12 +331,7 @@ const Login = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="state">State/Province *</Label>
-                      <Input
-                        id="state"
-                        value={state}
-                        onChange={(e) => setState(e.target.value)}
-                        placeholder="NY"
-                      />
+                      <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="NY" />
                       {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
                     </div>
                     <div className="space-y-2">
@@ -400,15 +391,11 @@ const Login = () => {
                 </CardContent>
 
                 <CardFooter className="flex flex-col gap-2">
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-accent hover:opacity-90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Creating account...' : 'Create Account'}
+                  <Button type="submit" className="w-full bg-gradient-accent hover:opacity-90" disabled={isLoading}>
+                    {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                   <p className="text-sm text-muted-foreground text-center">
-                    Already have an account?{' '}
+                    Already have an account?{" "}
                     <button
                       type="button"
                       className="text-primary hover:underline font-medium"
