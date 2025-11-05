@@ -18,8 +18,9 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
       manifest: {
         name: "BikeRent - Rent Bikes Anywhere",
-        short_name: "BikeRent",
-        description: "Find and rent bikes near you with BikeRent. Easy, fast, and affordable bike rentals for everyone.",
+        short_name: "Gear Quest",
+        description:
+          "Find and rent bikes near you with BikeRent. Easy, fast, and affordable bike rentals for everyone.",
         theme_color: "#14b8a6",
         background_color: "#ffffff",
         display: "standalone",
@@ -31,15 +32,15 @@ export default defineConfig(({ mode }) => ({
             src: "/pwa-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any maskable",
           },
           {
             src: "/pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable"
-          }
-        ]
+            purpose: "any maskable",
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
@@ -51,13 +52,13 @@ export default defineConfig(({ mode }) => ({
               cacheName: "google-maps-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
-          }
-        ]
-      }
-    })
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+        ],
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
