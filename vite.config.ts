@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
       manifest: {
-        name: "BikeRent - Rent Bikes Anywhere",
+        name: "Gear Quest - Rent Bikes Anywhere",
         short_name: "Gear Quest",
         description:
           "Find and rent bikes near you with BikeRent. Easy, fast, and affordable bike rentals for everyone.",

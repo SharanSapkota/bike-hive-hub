@@ -54,10 +54,8 @@ const Install = () => {
           </div>
 
           <div>
-            <h1 className="text-3xl font-bold mb-2">Install BikeRent</h1>
-            <p className="text-muted-foreground">
-              Get the full app experience on your device
-            </p>
+            <h1 className="text-3xl font-bold mb-2">Install GearQuest</h1>
+            <p className="text-muted-foreground">Get the full app experience on your device</p>
           </div>
 
           {isInstalled ? (
@@ -66,38 +64,26 @@ const Install = () => {
                 <Check className="h-5 w-5" />
                 <span className="font-medium">App is already installed!</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                You can find BikeRent on your home screen.
-              </p>
+              <p className="text-sm text-muted-foreground">You can find GearQuest on your home screen.</p>
             </div>
           ) : (
             <div className="space-y-6 w-full">
               {deferredPrompt ? (
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={handleInstallClick}
-                >
+                <Button size="lg" className="w-full" onClick={handleInstallClick}>
                   <Download className="h-5 w-5 mr-2" />
                   Install App
                 </Button>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    To install this app on your device:
-                  </p>
+                  <p className="text-sm text-muted-foreground">To install this app on your device:</p>
                   <div className="text-left space-y-3 bg-muted/50 p-4 rounded-lg">
                     <div className="flex gap-3">
                       <span className="font-bold text-primary">iOS:</span>
-                      <p className="text-sm">
-                        Tap the Share button, then "Add to Home Screen"
-                      </p>
+                      <p className="text-sm">Tap the Share button, then "Add to Home Screen"</p>
                     </div>
                     <div className="flex gap-3">
                       <span className="font-bold text-primary">Android:</span>
-                      <p className="text-sm">
-                        Tap the menu (⋮), then "Install app" or "Add to Home screen"
-                      </p>
+                      <p className="text-sm">Tap the menu (⋮), then "Install app" or "Add to Home screen"</p>
                     </div>
                   </div>
                 </div>
