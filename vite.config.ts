@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: "Gear Quest - Rent Bikes Anywhere",
         short_name: "Gear Quest",
         description:
-          "Find and rent bikes near you with BikeRent. Easy, fast, and affordable bike rentals for everyone.",
+          "Find and rent bikes near you with Gear Quest. Easy, fast, and affordable bike rentals for everyone.",
         theme_color: "#14b8a6",
         background_color: "#ffffff",
         display: "standalone",

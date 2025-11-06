@@ -80,7 +80,7 @@ const Sidebar = () => {
               <Bike className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">BikeRent</h1>
+              <h1 className="font-bold text-lg">Gear Quest</h1>
               <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
             </div>
           </div>
