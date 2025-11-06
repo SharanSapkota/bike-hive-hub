@@ -461,7 +461,7 @@ const MapView = () => {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="text-primary font-bold text-sm">{bikes.length}</span>
             </div>
-            <span className="text-sm font-medium">Available Bikes</span>
+            <span className="text-sm font-medium">Available Products</span>
           </div>
         </Card>
       </div>
