@@ -1,49 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  Map,
-  LayoutDashboard,
-  User,
-  History,
-  Bike,
-  Users,
-  Settings,
   LogOut,
   Menu,
   X,
-  Package,
+  Bike,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { fetchMenuItems, MenuItem } from '@/lib/mockMenuApi';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-  const renterMenu = [
-    { icon: Map, label: 'Map', path: '/map' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: History, label: 'Rental History', path: '/history' },
-    { icon: User, label: 'Profile', path: '/profile' },
-  ];
+  useEffect(() => {
+    const loadMenuItems = async () => {
+      if (user?.role) {
+        const items = await fetchMenuItems(user.role);
+        setMenuItems(items);
+      }
+    };
 
-  const ownerMenu = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Bike, label: 'My Bikes', path: '/bikes' },
-    { icon: Package, label: 'Rentals', path: '/rentals' },
-    { icon: User, label: 'Profile', path: '/profile' },
-  ];
-
-  const adminMenu = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Users, label: 'Users', path: '/users' },
-    { icon: Bike, label: 'Bikes', path: '/bikes' },
-    { icon: Package, label: 'Categories', path: '/categories' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-  ];
-
-  const menuItems = user?.role === 'admin' ? adminMenu : user?.role === 'owner' ? ownerMenu : renterMenu;
+    loadMenuItems();
+  }, [user?.role]);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
