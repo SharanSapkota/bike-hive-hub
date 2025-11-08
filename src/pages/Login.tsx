@@ -122,7 +122,7 @@ const Login = () => {
       }
 
       // Call signup API
-      const response = await api.post("/signup", {
+      const response = await api.post("/auth/signup", {
         firstName,
         middleName,
         lastName,
