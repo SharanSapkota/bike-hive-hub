@@ -43,10 +43,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Mock authentication - accepts any email/password for now
-      // TODO: Replace with real API call when backend is ready
       const response = await api.post('/auth/login', { email, password });
-      const { token: authToken, user: userData } = response.data;
+      const payload = response.data?.data ?? response.data;
+      const authToken = payload?.token;
+      const userData = payload?.user;
+
+      if (!authToken || !userData) {
+        throw new Error('invalid_login_response');
+      }
+
       localStorage.setItem('auth_token', authToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setToken(authToken);
@@ -63,7 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Login successful!');
       */
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+      const message =
+        error?.response?.data?.message ||
+        (error?.message === 'invalid_login_response'
+          ? 'Unexpected response from server. Please try again.'
+          : 'Login failed. Please try again.');
+      toast.error(message);
       throw error;
     }
   };
@@ -71,25 +81,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     try {
 
-      // Mock registration - accepts any details for now
-      // TODO: Replace with real API call when backend is ready
-      const response = await api.post('/auth/register', { email, password, name, role });
-      const { token: authToken, user: userData } = response.data;
-      localStorage.setItem('auth_token', authToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(authToken);
-      setUser(userData);
+      const response = await api.post('/auth/signup', { email, password, name, role });
+      const payload = response.data?.data ?? response.data;
+      const authToken = payload?.token;
+      const userData = payload?.user;
+
+      if (authToken && userData) {
+        localStorage.setItem('auth_token', authToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setToken(authToken);
+        setUser(userData);
+      }
+
       toast.success('Registration successful!');
-      
-      /* Real API implementation:
-      const response = await api.post('/auth/register', { email, password, name, role });
-      const { token: authToken, user: userData } = response.data;
-      localStorage.setItem('auth_token', authToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(authToken);
-      setUser(userData);
-      toast.success('Registration successful!');
-      */
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
       throw error;
