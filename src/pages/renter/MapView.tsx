@@ -507,20 +507,20 @@ const MapView = () => {
       {/* Anchored popup emerging from marker */}
       {selectedBike && popupPosition && (
         <div
-          className="fixed z-20 animate-scale-in pointer-events-none"
+          className="fixed z-20 animate-scale-in pointer-events-none px-2"
           style={{
-            left: `${popupPosition.x}px`,
-            top: `${popupPosition.y}px`,
+            left: `${Math.min(Math.max(popupPosition.x, 100), window.innerWidth - 100)}px`,
+            top: `${Math.max(popupPosition.y, 200)}px`,
             transform: "translate(-50%, calc(-100% - 35px))",
-            maxWidth: "calc(100vw - 32px)",
+            maxWidth: "calc(100vw - 16px)",
           }}
         >
           {/* Arrow pointing to marker */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
-            <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-card"></div>
+            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
 
-          <Card className="w-[200px] shadow-xl pointer-events-auto max-h-[50vh] overflow-y-auto">
+          <Card className="w-[180px] sm:w-[200px] shadow-xl pointer-events-auto max-h-[45vh] sm:max-h-[50vh] overflow-y-auto">
             <Button
               variant="ghost"
               size="icon"
@@ -536,17 +536,17 @@ const MapView = () => {
             </Button>
             
             {isLoadingDetails ? (
-              <div className="p-3 flex items-center justify-center min-h-[150px]">
+              <div className="p-2 sm:p-3 flex items-center justify-center min-h-[120px] sm:min-h-[150px]">
                 <div className="text-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
-                  <p className="text-[10px] text-muted-foreground">Loading...</p>
+                  <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-primary mx-auto mb-1 sm:mb-2" />
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground">Loading...</p>
                 </div>
               </div>
             ) : (
-              <div className="p-1.5">
+              <div className="p-1 sm:p-1.5">
                 {/* Image Carousel */}
                 {selectedBike?.images && selectedBike?.images.length > 0 && (
-                  <Carousel className="w-full mb-1.5">
+                  <Carousel className="w-full mb-1 sm:mb-1.5">
                     <CarouselContent>
                       {selectedBike?.images.map((image, index) => (
                         <CarouselItem key={index}>
@@ -562,31 +562,31 @@ const MapView = () => {
                     </CarouselContent>
                     {selectedBike.images.length > 1 && (
                       <>
-                        <CarouselPrevious className="left-0.5 h-4 w-4" />
-                        <CarouselNext className="right-0.5 h-4 w-4" />
+                        <CarouselPrevious className="left-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <CarouselNext className="right-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </>
                     )}
                   </Carousel>
                 )}
 
-                <div className="mb-1.5">
+                <div className="mb-1 sm:mb-1.5">
                   <div className="flex items-start justify-between gap-1 mb-0.5">
-                    <h3 className="font-semibold text-xs leading-tight flex-1">{selectedBike.name}</h3>
+                    <h3 className="font-semibold text-[11px] sm:text-xs leading-tight flex-1">{selectedBike.name}</h3>
                     <Badge
                       variant="secondary"
-                      className="bg-primary/10 text-primary text-[9px] px-1 py-0 shrink-0 h-3.5"
+                      className="bg-primary/10 text-primary text-[8px] sm:text-[9px] px-1 py-0 shrink-0 h-3.5"
                     >
                       Available
                     </Badge>
                   </div>
-                  <p className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground flex items-center gap-0.5">
                     <MapPin className="h-2 w-2" />
                     {selectedBike?.location?.city}, {selectedBike?.location?.state} • {selectedBike?.category}
                   </p>
                 </div>
 
                 {/* Condition and Reviews */}
-                <div className="flex items-center gap-1.5 mb-2 text-[9px]">
+                <div className="flex items-center gap-1 sm:gap-1.5 mb-1.5 sm:mb-2 text-[8px] sm:text-[9px]">
                   {selectedBike?.condition && <span className="text-muted-foreground">{selectedBike?.condition}</span>}
                   {selectedBike?.rating && selectedBike?.reviews && (
                     <div className="flex items-center gap-0.5">
@@ -598,14 +598,14 @@ const MapView = () => {
                 </div>
 
                 {/* Price */}
-                <div className="mb-2 pb-2 border-b">
-                  <p className="text-base font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
-                  <p className="text-[8px] text-muted-foreground">per hour</p>
+                <div className="mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b">
+                  <p className="text-sm sm:text-base font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
+                  <p className="text-[7px] sm:text-[8px] text-muted-foreground">per hour</p>
                 </div>
 
                 {/* Book Now Button */}
                 <Button 
-                  className="w-full h-7 text-[10px]"
+                  className="w-full h-6 sm:h-7 text-[9px] sm:text-[10px]"
                   onClick={() => setShowBookingDialog(true)}
                 >
                   Book Now
