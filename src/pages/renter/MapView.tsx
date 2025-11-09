@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import api from "@/lib/api";
 import { getBikeDetails } from "@/services/bike";
 import { normalizeBike } from "@/lib/bike";
+import { toast } from "@/hooks/use-toast";
 
 interface Bike {
   id: string;
@@ -165,6 +167,12 @@ const MapView = () => {
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [searchValue, setSearchValue] = useState<string>("");
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  
+  // Rental request form state
+  const [startDate, setStartDate] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -570,7 +578,7 @@ const MapView = () => {
                 </div>
 
                 {/* Condition and Reviews */}
-                <div className="flex items-center gap-2 mb-2 text-[10px]">
+                <div className="flex items-center gap-2 mb-3 text-[10px]">
                   {selectedBike?.condition && <span className="text-muted-foreground">{selectedBike?.condition}</span>}
                   {selectedBike?.rating && selectedBike?.reviews && (
                     <div className="flex items-center gap-0.5">
@@ -581,17 +589,87 @@ const MapView = () => {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-lg font-bold text-primary leading-none">$2</p>
-                    <p className="text-[9px] text-muted-foreground">per hour</p>
+                {/* Price */}
+                <div className="mb-3 pb-3 border-b">
+                  <p className="text-lg font-bold text-primary leading-none">$2</p>
+                  <p className="text-[9px] text-muted-foreground">per hour</p>
+                </div>
+
+                {/* Rental Request Form */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="start-date" className="text-xs">Start Date</Label>
+                      <Input
+                        id="start-date"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="start-time" className="text-xs">Start Time</Label>
+                      <Input
+                        id="start-time"
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="end-date" className="text-xs">End Date</Label>
+                      <Input
+                        id="end-date"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="end-time" className="text-xs">End Time</Label>
+                      <Input
+                        id="end-time"
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+
                   <Button 
-                    size="sm" 
-                    className="bg-gradient-primary hover:opacity-90 h-7 text-xs px-3"
-                    onClick={() => navigate(`/payment/${selectedBike.id}`)}
+                    className="w-full h-8 text-xs"
+                    onClick={() => {
+                      if (!startDate || !startTime || !endDate || !endTime) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please fill in all date and time fields",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      toast({
+                        title: "Request Sent",
+                        description: "Your rental request has been submitted successfully",
+                      });
+                      
+                      // Reset form
+                      setStartDate("");
+                      setStartTime("");
+                      setEndDate("");
+                      setEndTime("");
+                      setSelectedBike(null);
+                      setPopupPosition(null);
+                    }}
                   >
-                    Rent
+                    Send Request
                   </Button>
                 </div>
               </div>
