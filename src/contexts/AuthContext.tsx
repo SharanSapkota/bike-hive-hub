@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -57,16 +57,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(authToken);
       setUser(userData);
       toast.success('Login successful!');
-      
-      /* Real API implementation:
-      const response = await api.post('/auth/login', { email, password });
-      const { token: authToken, user: userData } = response.data;
-      localStorage.setItem('auth_token', authToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(authToken);
-      setUser(userData);
-      toast.success('Login successful!');
-      */
+
+      return userData;
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
