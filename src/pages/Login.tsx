@@ -127,28 +127,38 @@ const Login = () => {
         return;
       }
 
+      // MOCK SIGNUP - Comment out API call
       // Call signup API
-      const response = await api.post("/auth/signup", {
-        firstName,
-        middleName,
-        lastName,
+      // const response = await api.post("/auth/signup", {
+      //   firstName,
+      //   middleName,
+      //   lastName,
+      //   email,
+      //   phone,
+      //   dob,
+      //   address: {
+      //     country,
+      //     city,
+      //     state,
+      //     postalCode,
+      //   },
+      //   password,
+      //   role: registerRole,
+      // });
+
+      // Mock signup response
+      const mockUser = {
+        id: 'user-' + Date.now(),
         email,
-        phone,
-        dob,
-        address: {
-          country,
-          city,
-          state,
-          postalCode,
-        },
-        password,
+        name: `${firstName} ${lastName}`,
         role: registerRole,
-      });
+      };
+      const mockToken = 'mock-token-' + email;
 
       // Store auth token if provided
-      if (response.data.token) {
-        localStorage.setItem("auth_token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+      if (mockToken) {
+        localStorage.setItem("auth_token", mockToken);
+        localStorage.setItem("user", JSON.stringify(mockUser));
       }
 
       toast.success("Account created successfully!");

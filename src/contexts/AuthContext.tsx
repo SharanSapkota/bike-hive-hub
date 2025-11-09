@@ -43,10 +43,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const payload = response.data?.data ?? response.data;
-      const authToken = payload?.token;
-      const userData = payload?.user;
+      // MOCK LOGIN - Comment out API call
+      // const response = await api.post('/auth/login', { email, password });
+      // const payload = response.data?.data ?? response.data;
+      // const authToken = payload?.token;
+      // const userData = payload?.user;
+
+      // Mock credentials
+      let userData: User | null = null;
+      
+      if (email === 'renter@gmail.com') {
+        userData = {
+          id: 'renter-1',
+          email: 'renter@gmail.com',
+          name: 'Renter User',
+          role: 'renter' as UserRole,
+        };
+      } else if (email === 'owner@gmail.com') {
+        userData = {
+          id: 'owner-1',
+          email: 'owner@gmail.com',
+          name: 'Owner User',
+          role: 'owner' as UserRole,
+        };
+      } else {
+        throw new Error('Invalid credentials');
+      }
+
+      const authToken = 'mock-token-' + email;
 
       if (!authToken || !userData) {
         throw new Error('invalid_login_response');
@@ -64,6 +88,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error?.response?.data?.message ||
         (error?.message === 'invalid_login_response'
           ? 'Unexpected response from server. Please try again.'
+          : error?.message === 'Invalid credentials' 
+          ? 'Invalid email or password. Use renter@gmail.com or owner@gmail.com'
           : 'Login failed. Please try again.');
       toast.error(message);
       throw error;
@@ -72,11 +98,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     try {
+      // MOCK REGISTRATION - Comment out API call
+      // const response = await api.post('/auth/signup', { email, password, name, role });
+      // const payload = response.data?.data ?? response.data;
+      // const authToken = payload?.token;
+      // const userData = payload?.user;
 
-      const response = await api.post('/auth/signup', { email, password, name, role });
-      const payload = response.data?.data ?? response.data;
-      const authToken = payload?.token;
-      const userData = payload?.user;
+      // Mock registration
+      const userData: User = {
+        id: 'user-' + Date.now(),
+        email,
+        name,
+        role,
+      };
+      const authToken = 'mock-token-' + email;
 
       if (authToken && userData) {
         localStorage.setItem('auth_token', authToken);
