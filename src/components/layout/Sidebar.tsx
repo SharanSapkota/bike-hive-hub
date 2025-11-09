@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { fetchMenuItems, MenuItem } from '@/lib/mockMenuApi';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -57,14 +58,17 @@ const Sidebar = () => {
       >
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Bike className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <Bike className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg">Gear Quest</h1>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-lg">Gear Quest</h1>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-            </div>
+            <NotificationBell />
           </div>
         </div>
 
