@@ -12,9 +12,9 @@ import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 interface Bike {
   id: string;
   name: string;
-  location: { lat: number; lng: number };
-  city: string;
-  state: string;
+  location: { lat: number; lng: number, city: string, state: string };
+  // city: string;
+  // state: string;
   pricePerHour: number;
   category: string;
   available: boolean;
@@ -30,9 +30,9 @@ const mockBikes: Bike[] = [
   {
     id: "1",
     name: "Mountain Explorer Pro",
-    location: { lat: 65.0593, lng: 25.4663 },
-    city: "Oulu",
-    state: "NY",
+    location: { lat: 65.0593, lng: 25.4663, city: "Oulu", state: "Oulu" },
+    // city: "Oulu",
+    // state: "NY",
     pricePerHour: 8,
     category: "Mountain",
     available: true,
@@ -47,9 +47,9 @@ const mockBikes: Bike[] = [
   {
     id: "2",
     name: "City Cruiser Deluxe",
-    location: { lat: 65.0591, lng: 25.4653 },
-    city: "Oulu",
-    state: "NY",
+    location: { lat: 65.0591, lng: 25.4653, city: "Oulu", state: "Oulu" },
+    // city: "Oulu",
+    // state: "NY",
     pricePerHour: 5,
     category: "City",
     available: true,
@@ -61,9 +61,9 @@ const mockBikes: Bike[] = [
   {
     id: "3",
     name: "Road Racer Speed",
-    location: { lat: 65.1591, lng: 25.465 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 65.1591, lng: 25.465, city: "Oulu", state: "Oulu" },
+    // city: "New York",
+    // state: "NY",
     pricePerHour: 10,
     category: "Road",
     available: true,
@@ -78,9 +78,7 @@ const mockBikes: Bike[] = [
   {
     id: "4",
     name: "Electric Bolt",
-    location: { lat: 40.7158, lng: -74.009 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 40.7158, lng: -74.009, city: "New York", state: "NY" },
     pricePerHour: 12,
     category: "Electric",
     available: true,
@@ -92,9 +90,7 @@ const mockBikes: Bike[] = [
   {
     id: "5",
     name: "Hybrid Comfort",
-    location: { lat: 40.7098, lng: -74.003 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 40.7098, lng: -74.003, city: "New York", state: "NY" },
     pricePerHour: 7,
     category: "Hybrid",
     available: true,
@@ -106,9 +102,8 @@ const mockBikes: Bike[] = [
   {
     id: "6",
     name: "Mountain Trail",
-    location: { lat: 40.7108, lng: -74.007 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 40.7108, lng: -74.007, city: "New York", state: "NY" },
+    // state: "NY",
     pricePerHour: 9,
     category: "Mountain",
     available: true,
@@ -120,9 +115,9 @@ const mockBikes: Bike[] = [
   {
     id: "7",
     name: "City Commuter",
-    location: { lat: 40.7148, lng: -74.005 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 40.7148, lng: -74.005, city: "New York", state: "NY" },
+    // city: "New York",
+    // state: "NY",
     pricePerHour: 6,
     category: "City",
     available: true,
@@ -134,9 +129,7 @@ const mockBikes: Bike[] = [
   {
     id: "8",
     name: "Electric Cruiser",
-    location: { lat: 40.7168, lng: -74.0065 },
-    city: "New York",
-    state: "NY",
+    location: { lat: 40.7168, lng: -74.0065, city: "New York", state: "NY" },
     pricePerHour: 11,
     category: "Electric",
     available: true,
@@ -543,7 +536,7 @@ const MapView = () => {
                   </div>
                   <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                     <MapPin className="h-2.5 w-2.5" />
-                    {selectedBike.city}, {selectedBike.state} • {selectedBike.category}
+                    {selectedBike.location.city}, {selectedBike.location.state} • {selectedBike.category}
                   </p>
                 </div>
 
