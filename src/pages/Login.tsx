@@ -11,6 +11,7 @@ import { Bike } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "@/lib/api";
+import { fetchMenuItems } from "@/lib/mockMenuApi";
 
 // Validation schema
 const signupSchema = z
@@ -65,6 +66,7 @@ const Login = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [registerRole, setRegisterRole] = useState<UserRole>("renter");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isMenuLoading, setIsMenuLoading] = useState(false);
 
   if (isAuthenticated) {
     navigate("/");
@@ -74,14 +76,18 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setIsMenuLoading(true);
 
     try {
-      await login(loginEmail, loginPassword);
-      navigate("/");
+      const authenticatedUser = await login(loginEmail, loginPassword);
+      const menuItems = fetchMenuItems(authenticatedUser.role);
+      const redirectPath = menuItems[0]?.path || "/";
+      navigate(redirectPath);
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
       setIsLoading(false);
+      setIsMenuLoading(false);
     }
   };
 
@@ -155,6 +161,14 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  if (isMenuLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 p-4">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 p-4">

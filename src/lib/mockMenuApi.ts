@@ -17,9 +17,9 @@ export interface MenuItem {
 }
 
 // Mock API function to fetch menu items based on user role
-export const fetchMenuItems = async (role: UserRole): Promise<MenuItem[]> => {
+export const fetchMenuItems = (role: UserRole): MenuItem[] => {
+  role = role.toLowerCase() as UserRole;
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
 
   const menuData: Record<UserRole, MenuItem[]> = {
     renter: [
