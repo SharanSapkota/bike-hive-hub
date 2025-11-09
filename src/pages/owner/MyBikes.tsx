@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
@@ -54,6 +55,7 @@ interface BikeData {
   address?: BikeAddress;
   description: string;
   available: boolean;
+  autoAccept: boolean;
   images?: string[];
   rawImages?: string[];
   ownerId: number | null;
@@ -90,6 +92,7 @@ const MyBikes = () => {
     location: '',
     address: null as { formatted: string; lat: number; lng: number } | null,
     description: '',
+    autoAccept: false,
   });
 
   const mediaBaseUrl = useMemo(() => {
@@ -122,6 +125,7 @@ const MyBikes = () => {
         : undefined,
       description: bike.description || '',
       available: bike.status ? bike.status === 'AVAILABLE' : true,
+      autoAccept: bike.autoAccept || false,
       images: imagesSource.map((img: any) => {
         if (!img?.imageUrl) return '';
         return img.imageUrl.startsWith('http') ? img.imageUrl : `${mediaBaseUrl}${img.imageUrl}`;
@@ -165,6 +169,7 @@ const MyBikes = () => {
       location: '',
       address: null,
       description: '',
+      autoAccept: false,
     });
     setExistingImages([]);
     setExistingImagePreviews([]);
@@ -194,6 +199,7 @@ const MyBikes = () => {
       location: bike.location,
       address: bike.address || null,
       description: bike.description,
+      autoAccept: bike.autoAccept,
     });
     // Set existing images
     setExistingImagePreviews(bike.images || []);
@@ -624,6 +630,22 @@ const MyBikes = () => {
                   rows={3}
                 />
               </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="autoAccept" className="text-base cursor-pointer">
+                    Auto Accept Requests
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically approve rental requests for this bike
+                  </p>
+                </div>
+                <Switch
+                  id="autoAccept"
+                  checked={formData.autoAccept}
+                  onCheckedChange={(checked) => setFormData({ ...formData, autoAccept: checked })}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => {
@@ -729,7 +751,14 @@ const MyBikes = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Badge variant="outline">{bike.category}</Badge>
+                <div className="flex gap-2">
+                  <Badge variant="outline">{bike.category}</Badge>
+                  {bike.autoAccept && (
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20">
+                      Auto Accept
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mt-2">{bike.description}</p>
               </div>
 
