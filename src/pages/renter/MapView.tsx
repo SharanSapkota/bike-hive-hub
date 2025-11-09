@@ -14,6 +14,7 @@ import api from "@/lib/api";
 import { getBikeDetails } from "@/services/bike";
 import { normalizeBike } from "@/lib/bike";
 import { toast } from "@/hooks/use-toast";
+import { format, addDays } from "date-fns";
 
 interface Bike {
   id: string;
@@ -175,6 +176,10 @@ const MapView = () => {
   const [startTime, setStartTime] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
+
+  // Calculate date constraints
+  const today = format(new Date(), "yyyy-MM-dd");
+  const maxStartDate = format(addDays(new Date(), 5), "yyyy-MM-dd");
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -629,9 +634,12 @@ const MapView = () => {
                 <Input
                   id="booking-start-date"
                   type="date"
+                  min={today}
+                  max={maxStartDate}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">Within 5 days from today</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="booking-start-time">Start Time</Label>
@@ -672,6 +680,31 @@ const MapView = () => {
                   toast({
                     title: "Missing Information",
                     description: "Please fill in all date and time fields",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                // Validate start date is within 5 days
+                const selectedStartDate = new Date(startDate);
+                const todayDate = new Date();
+                const maxDate = addDays(todayDate, 5);
+                
+                if (selectedStartDate > maxDate) {
+                  toast({
+                    title: "Invalid Start Date",
+                    description: "Start date cannot exceed 5 days from today",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                // Validate end date is after start date
+                const selectedEndDate = new Date(endDate);
+                if (selectedEndDate < selectedStartDate) {
+                  toast({
+                    title: "Invalid End Date",
+                    description: "End date must be after start date",
                     variant: "destructive",
                   });
                   return;
