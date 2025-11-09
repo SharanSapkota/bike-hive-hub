@@ -196,7 +196,6 @@ const MapView = () => {
     try {
       // const response = await api.get("/bikes");
       const response = {data:{data: mockBikes}};
-      // const payload = response?.data;
       const payload = response?.data;
       const bikeList = Array.isArray(payload?.data)
         ? payload.data
@@ -220,10 +219,10 @@ const MapView = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      await getBikes();
-    }
-    fetchData();
+    // const fetchData = async () => {
+    //   await getBikes();
+    // }
+    // fetchData();
     // Check if we have a cached location
     const cachedLocation = sessionStorage.getItem('userLocation');
     const cachedAddress = sessionStorage.getItem('userAddress');
@@ -275,8 +274,8 @@ const MapView = () => {
     // setSelectedBike(bike);
     console.log(bike);
     setIsLoadingDetails(true);
-    const bikeDetails = await getBikeDetails(bike.id);
-    setSelectedBike(normalizeBike(bikeDetails));
+    // const bikeDetails = await getBikeDetails(bike.id);
+    setSelectedBike(bike);
     // Mock timeout to simulate  API call
     setTimeout(() => {
       setIsLoadingDetails(false);
