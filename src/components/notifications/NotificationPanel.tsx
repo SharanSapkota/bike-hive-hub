@@ -11,18 +11,18 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'rental_request' | 'rental_approved' | 'rental_rejected' | 'rental_cancelled' | 'payment';
+  type: 'rental_request' | 'rental_approved' | 'rental_rejected' | 'rental_cancelled' | 'payment' | 'ride_completed';
   title: string;
   message: string;
   read: boolean;
   createdAt: Date;
   bikeId?: string;
   bookingId?: string;
-  status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+  status?: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed' | 'disputed';
 }
 
 // Mock API call
-const mockApiCall = (action: 'approve' | 'reject'): Promise<void> => {
+const mockApiCall = (action: 'approve' | 'reject' | 'confirm_complete' | 'dispute_complete'): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve();
@@ -81,6 +81,17 @@ const getMockNotifications = (role: string): Notification[] => {
         createdAt: new Date(Date.now() - 1000 * 60 * 120),
         bookingId: 'booking-2',
       },
+      {
+        id: '6',
+        type: 'ride_completed',
+        title: 'Ride Completed',
+        message: 'The ride for Mountain Explorer Pro has been completed. Please confirm.',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 15),
+        bikeId: '1',
+        bookingId: 'booking-1',
+        status: 'pending',
+      },
     ];
   } else {
     // Owner notifications
@@ -127,6 +138,17 @@ const getMockNotifications = (role: string): Notification[] => {
         createdAt: new Date(Date.now() - 1000 * 60 * 120),
         bookingId: 'booking-2',
       },
+      {
+        id: '6',
+        type: 'ride_completed',
+        title: 'Ride Completed',
+        message: 'The ride for Mountain Bike has been completed by John Doe. Please confirm.',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 15),
+        bikeId: '1',
+        bookingId: 'booking-1',
+        status: 'pending',
+      },
     ];
   }
 };
@@ -142,6 +164,8 @@ const getIcon = (type: Notification['type']) => {
       return <XCircle className="h-4 w-4 text-destructive" />;
     case 'payment':
       return <CreditCard className="h-4 w-4 text-blue-500" />;
+    case 'ride_completed':
+      return <CheckCircle className="h-4 w-4 text-orange-500" />;
   }
 };
 
@@ -180,7 +204,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
         n.type === 'rental_request' || 
         n.type === 'rental_approved' || 
         n.type === 'rental_rejected' ||
-        n.type === 'rental_cancelled'
+        n.type === 'rental_cancelled' ||
+        n.type === 'ride_completed'
       );
     } else {
       return notifications.filter(n => n.type === 'payment');
@@ -248,6 +273,65 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
       });
     } finally {
       // Clear loading state
+      setLoadingNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleConfirmComplete = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setLoadingNotifications(prev => new Set([...prev, notificationId]));
+    
+    try {
+      await mockApiCall('confirm_complete');
+      
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId
+            ? { ...n, status: 'completed', read: true }
+            : n
+        )
+      );
+      
+      toast({
+        title: 'Ride Confirmed',
+        description: 'The ride has been marked as completed successfully.',
+      });
+    } finally {
+      setLoadingNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleDisputeComplete = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setLoadingNotifications(prev => new Set([...prev, notificationId]));
+    
+    try {
+      await mockApiCall('dispute_complete');
+      
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId
+            ? { ...n, status: 'disputed', read: true }
+            : n
+        )
+      );
+      
+      toast({
+        title: 'Completion Disputed',
+        description: 'The ride completion has been disputed. Our team will review.',
+        variant: 'destructive',
+      });
+    } finally {
       setLoadingNotifications(prev => {
         const newSet = new Set(prev);
         newSet.delete(notificationId);
@@ -346,6 +430,59 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
                   <CreditCard className="h-3 w-3 mr-1" />
                   Proceed to Payment
                 </Button>
+              </div>
+            )}
+
+            {/* Both Owner and Renter: Completed/Not Completed buttons for ride completion */}
+            {notification.type === 'ride_completed' && notification.status === 'pending' && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700"
+                  onClick={(e) => handleConfirmComplete(notification.id, e)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Completed
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 h-8 text-xs"
+                  onClick={(e) => handleDisputeComplete(notification.id, e)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <XCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Not Completed
+                </Button>
+              </div>
+            )}
+
+            {/* Show status after completion confirmation */}
+            {notification.type === 'ride_completed' && notification.status === 'completed' && (
+              <div className="pt-2">
+                <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                  <CheckCircle className="h-3 w-3" />
+                  Confirmed as completed
+                </div>
+              </div>
+            )}
+
+            {/* Show status after dispute */}
+            {notification.type === 'ride_completed' && notification.status === 'disputed' && (
+              <div className="pt-2">
+                <div className="flex items-center gap-1.5 text-xs text-orange-600 font-medium">
+                  <Clock className="h-3 w-3" />
+                  Under review
+                </div>
               </div>
             )}
           </div>
