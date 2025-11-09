@@ -520,7 +520,7 @@ const MapView = () => {
             <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-card"></div>
           </div>
 
-          <Card className="w-[240px] shadow-xl pointer-events-auto max-h-[60vh] overflow-y-auto">
+          <Card className="w-[200px] shadow-xl pointer-events-auto max-h-[50vh] overflow-y-auto">
             <Button
               variant="ghost"
               size="icon"
@@ -529,24 +529,24 @@ const MapView = () => {
                 setPopupPosition(null);
                 setIsLoadingDetails(false);
               }}
-              className="absolute top-0.5 right-0.5 h-6 w-6 rounded-full z-10 bg-background/90 hover:bg-background"
+              className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full z-10 bg-background/90 hover:bg-background"
               aria-label="Close"
             >
-              <X className="h-3 w-3" />
+              <X className="h-2.5 w-2.5" />
             </Button>
             
             {isLoadingDetails ? (
-              <div className="p-4 flex items-center justify-center min-h-[200px]">
+              <div className="p-3 flex items-center justify-center min-h-[150px]">
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground">Loading details...</p>
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+                  <p className="text-[10px] text-muted-foreground">Loading...</p>
                 </div>
               </div>
             ) : (
-              <div className="p-2">
+              <div className="p-1.5">
                 {/* Image Carousel */}
                 {selectedBike?.images && selectedBike?.images.length > 0 && (
-                  <Carousel className="w-full mb-2">
+                  <Carousel className="w-full mb-1.5">
                     <CarouselContent>
                       {selectedBike?.images.map((image, index) => (
                         <CarouselItem key={index}>
@@ -562,35 +562,35 @@ const MapView = () => {
                     </CarouselContent>
                     {selectedBike.images.length > 1 && (
                       <>
-                        <CarouselPrevious className="left-0.5 h-5 w-5" />
-                        <CarouselNext className="right-0.5 h-5 w-5" />
+                        <CarouselPrevious className="left-0.5 h-4 w-4" />
+                        <CarouselNext className="right-0.5 h-4 w-4" />
                       </>
                     )}
                   </Carousel>
                 )}
 
-                <div className="mb-2">
-                  <div className="flex items-start justify-between gap-1 mb-1">
-                    <h3 className="font-semibold text-sm leading-tight flex-1">{selectedBike.name}</h3>
+                <div className="mb-1.5">
+                  <div className="flex items-start justify-between gap-1 mb-0.5">
+                    <h3 className="font-semibold text-xs leading-tight flex-1">{selectedBike.name}</h3>
                     <Badge
                       variant="secondary"
-                      className="bg-primary/10 text-primary text-[10px] px-1.5 py-0 shrink-0 h-4"
+                      className="bg-primary/10 text-primary text-[9px] px-1 py-0 shrink-0 h-3.5"
                     >
                       Available
                     </Badge>
                   </div>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                    <MapPin className="h-2.5 w-2.5" />
+                  <p className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                    <MapPin className="h-2 w-2" />
                     {selectedBike?.location?.city}, {selectedBike?.location?.state} • {selectedBike?.category}
                   </p>
                 </div>
 
                 {/* Condition and Reviews */}
-                <div className="flex items-center gap-2 mb-3 text-[10px]">
+                <div className="flex items-center gap-1.5 mb-2 text-[9px]">
                   {selectedBike?.condition && <span className="text-muted-foreground">{selectedBike?.condition}</span>}
                   {selectedBike?.rating && selectedBike?.reviews && (
                     <div className="flex items-center gap-0.5">
-                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                      <Star className="h-2 w-2 fill-yellow-400 text-yellow-400" />
                       <span className="font-medium">{selectedBike?.rating}</span>
                       <span className="text-muted-foreground">({selectedBike?.reviews})</span>
                     </div>
@@ -598,14 +598,14 @@ const MapView = () => {
                 </div>
 
                 {/* Price */}
-                <div className="mb-3 pb-3 border-b">
-                  <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
-                  <p className="text-[9px] text-muted-foreground">per hour</p>
+                <div className="mb-2 pb-2 border-b">
+                  <p className="text-base font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
+                  <p className="text-[8px] text-muted-foreground">per hour</p>
                 </div>
 
                 {/* Book Now Button */}
                 <Button 
-                  className="w-full h-8 text-xs"
+                  className="w-full h-7 text-[10px]"
                   onClick={() => setShowBookingDialog(true)}
                 >
                   Book Now
