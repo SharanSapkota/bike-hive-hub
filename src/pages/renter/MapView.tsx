@@ -198,7 +198,12 @@ const MapView = () => {
         console.warn("Unexpected bikes response shape:", payload);
       }
 
+      if(!bikeList || bikeList?.length == 0) {
+        setBikes(mockBikes);
+        return;
+      } else {
       setBikes(bikeList);
+      }
     } catch (error) {
       console.error("Failed to fetch bikes:", error);
     }
