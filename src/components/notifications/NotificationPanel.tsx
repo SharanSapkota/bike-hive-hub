@@ -1,4 +1,4 @@
-import { Check, Clock, Bike, Bell, CheckCircle, XCircle } from 'lucide-react';
+import { Check, Clock, Bike, Bell, CheckCircle, XCircle, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Notification {
   id: string;
@@ -14,44 +15,83 @@ interface Notification {
   message: string;
   read: boolean;
   createdAt: Date;
+  bikeId?: string;
+  bookingId?: string;
 }
 
 // Mock data - replace with real data from your backend
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'rental_request',
-    title: 'New Rental Request',
-    message: 'John Doe requested to rent your Mountain Bike',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 5),
-  },
-  {
-    id: '2',
-    type: 'rental_request',
-    title: 'New Rental Request',
-    message: 'Sarah Smith requested to rent your Road Bike',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30),
-  },
-  {
-    id: '3',
-    type: 'rental_request',
-    title: 'New Rental Request',
-    message: 'Mike Johnson requested to rent your City Bike',
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60),
-  },
-];
+const getMockNotifications = (role: string): Notification[] => {
+  if (role === 'renter') {
+    return [
+      {
+        id: '1',
+        type: 'rental_approved',
+        title: 'Request Accepted',
+        message: 'Your rental request for Mountain Explorer Pro has been accepted',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 5),
+        bikeId: '1',
+        bookingId: 'booking-1',
+      },
+      {
+        id: '2',
+        type: 'rental_rejected',
+        title: 'Request Rejected',
+        message: 'Your rental request for City Cruiser Deluxe was rejected',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 30),
+        bikeId: '2',
+      },
+      {
+        id: '3',
+        type: 'rental_approved',
+        title: 'Request Accepted',
+        message: 'Your rental request for Road Racer Speed has been accepted',
+        read: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60),
+        bikeId: '3',
+        bookingId: 'booking-3',
+      },
+    ];
+  } else {
+    // Owner notifications
+    return [
+      {
+        id: '1',
+        type: 'rental_request',
+        title: 'New Rental Request',
+        message: 'John Doe requested to rent your Mountain Bike',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 5),
+      },
+      {
+        id: '2',
+        type: 'rental_request',
+        title: 'New Rental Request',
+        message: 'Sarah Smith requested to rent your Road Bike',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 30),
+      },
+      {
+        id: '3',
+        type: 'rental_request',
+        title: 'New Rental Request',
+        message: 'Mike Johnson requested to rent your City Bike',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60),
+      },
+    ];
+  }
+};
 
 const getIcon = (type: Notification['type']) => {
   switch (type) {
     case 'rental_request':
       return <Bike className="h-4 w-4 text-primary" />;
     case 'rental_approved':
-      return <Check className="h-4 w-4 text-green-500" />;
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
     case 'rental_rejected':
-      return <Clock className="h-4 w-4 text-destructive" />;
+      return <XCircle className="h-4 w-4 text-destructive" />;
   }
 };
 
@@ -74,7 +114,10 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) => {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>(
+    getMockNotifications(user?.role || 'renter')
+  );
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -101,8 +144,18 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     });
   };
 
+  const handlePayment = (notificationId: string, bookingId?: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    navigate(`/payment?bookingId=${bookingId}`);
+    onClose?.();
+  };
+
   const handleViewAll = () => {
-    navigate('/rental-requests');
+    if (user?.role === 'owner') {
+      navigate('/rental-requests');
+    } else {
+      navigate('/history');
+    }
     onClose?.();
   };
 
@@ -159,7 +212,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
                       {formatTime(notification.createdAt)}
                     </p>
                     
-                    {notification.type === 'rental_request' && (
+                    {/* Owner: Accept/Reject buttons for rental requests */}
+                    {user?.role === 'owner' && notification.type === 'rental_request' && (
                       <div className="flex gap-2 pt-2">
                         <Button
                           size="sm"
@@ -177,6 +231,20 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
                         >
                           <XCircle className="h-3 w-3 mr-1" />
                           Reject
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Renter: Payment button for approved requests */}
+                    {user?.role === 'renter' && notification.type === 'rental_approved' && (
+                      <div className="pt-2">
+                        <Button
+                          size="sm"
+                          className="w-full h-8 text-xs"
+                          onClick={(e) => handlePayment(notification.id, notification.bookingId, e)}
+                        >
+                          <CreditCard className="h-3 w-3 mr-1" />
+                          Proceed to Payment
                         </Button>
                       </div>
                     )}
