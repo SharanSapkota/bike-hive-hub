@@ -1,17 +1,52 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CreditCard } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, CreditCard, Calendar, Clock, Bike } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Mock booking data - replace with real API call
+const mockBookingData: Record<string, any> = {
+  "booking-1": {
+    bikeName: "Mountain Explorer Pro",
+    bikeImage: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400",
+    pricePerHour: 8,
+    startDate: "2025-01-15",
+    startTime: "10:00",
+    endDate: "2025-01-15",
+    endTime: "14:00",
+    totalHours: 4,
+    totalAmount: 32,
+  },
+  "booking-3": {
+    bikeName: "Road Racer Speed",
+    bikeImage: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400",
+    pricePerHour: 10,
+    startDate: "2025-01-16",
+    startTime: "09:00",
+    endDate: "2025-01-16",
+    endTime: "17:00",
+    totalHours: 8,
+    totalAmount: 80,
+  },
+};
+
 const Payment = () => {
-  const { bikeId } = useParams();
+  const [searchParams] = useSearchParams();
+  const bookingId = searchParams.get("bookingId");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
+
+  useEffect(() => {
+    if (bookingId && mockBookingData[bookingId]) {
+      setBookingDetails(mockBookingData[bookingId]);
+    }
+  }, [bookingId]);
 
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
@@ -61,8 +96,21 @@ const Payment = () => {
     }, 2000);
   };
 
+  if (!bookingDetails) {
+    return (
+      <div className="container max-w-2xl mx-auto p-4 md:p-6">
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">Booking not found</p>
+          <Button onClick={() => navigate("/map")} className="mt-4">
+            Back to Map
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="container max-w-2xl mx-auto p-4 md:p-6">
+    <div className="container max-w-3xl mx-auto p-4 md:p-6">
       <Button
         variant="ghost"
         onClick={() => navigate("/map")}
@@ -72,7 +120,82 @@ const Payment = () => {
         Back to Map
       </Button>
 
-      <Card className="p-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Booking Summary */}
+        <Card className="p-6 h-fit">
+          <h2 className="text-xl font-bold mb-4">Booking Summary</h2>
+          
+          {/* Bike Details */}
+          <div className="mb-4">
+            <img 
+              src={bookingDetails.bikeImage} 
+              alt={bookingDetails.bikeName}
+              className="w-full h-40 object-cover rounded-lg mb-3"
+            />
+            <div className="flex items-center gap-2 mb-2">
+              <Bike className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold">{bookingDetails.bikeName}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              ${bookingDetails.pricePerHour}/hour
+            </p>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* Rental Period */}
+          <div className="space-y-3 mb-4">
+            <div className="flex items-start gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Start</p>
+                <p className="text-sm text-muted-foreground">
+                  {bookingDetails.startDate} at {bookingDetails.startTime}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">End</p>
+                <p className="text-sm text-muted-foreground">
+                  {bookingDetails.endDate} at {bookingDetails.endTime}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Duration</p>
+                <p className="text-sm text-muted-foreground">
+                  {bookingDetails.totalHours} hours
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* Price Breakdown */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Rental ({bookingDetails.totalHours} hours)</span>
+              <span>${bookingDetails.totalAmount}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Service fee</span>
+              <span>$0</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between font-bold text-lg">
+              <span>Total</span>
+              <span className="text-primary">${bookingDetails.totalAmount}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Payment Form */}
+        <Card className="p-6 h-fit">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <CreditCard className="h-6 w-6 text-primary" />
@@ -161,7 +284,7 @@ const Payment = () => {
             className="w-full h-12 text-base"
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : "Pay Now"}
+            {isProcessing ? "Processing..." : `Pay $${bookingDetails.totalAmount}`}
           </Button>
         </form>
 
@@ -170,6 +293,7 @@ const Payment = () => {
           🔒 Your payment information is encrypted and secure
         </p>
       </Card>
+      </div>
     </div>
   );
 };

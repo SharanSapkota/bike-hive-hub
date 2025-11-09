@@ -49,7 +49,7 @@ const AppRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/history" element={<History />} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
-        <Route path="/payment/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
+        <Route path="/payment" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
         <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
         <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />
         <Route path="/rental-requests" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><RentalRequests /></ProtectedRoute>} />
