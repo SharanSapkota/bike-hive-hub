@@ -362,24 +362,24 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
       <div
         key={notification.id}
         className={cn(
-          'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
+          'p-3 sm:p-4 hover:bg-accent/30 transition-all cursor-pointer group',
           !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
         )}
       >
-        <div className="flex gap-3">
-          <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+        <div className="flex gap-2 sm:gap-3">
+          <div className="mt-0.5 p-1.5 sm:p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
             {getIcon(notification.type)}
           </div>
-          <div className="flex-1 space-y-2 min-w-0">
+          <div className="flex-1 space-y-2 min-w-0 overflow-hidden">
             <div className="flex items-start justify-between gap-2">
-              <p className="font-semibold text-sm leading-tight">
+              <p className="font-semibold text-sm leading-tight truncate">
                 {notification.title}
               </p>
               {!notification.read && (
                 <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
               )}
             </div>
-            <p className="text-sm text-muted-foreground leading-snug">
+            <p className="text-xs sm:text-sm text-muted-foreground leading-snug break-words">
               {notification.message}
             </p>
             <p className="text-xs text-muted-foreground/80 font-medium">
@@ -388,33 +388,35 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             
             {/* Owner: Accept/Reject buttons for rental requests */}
             {user?.role === 'owner' && notification.type === 'rental_request' && (
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   size="sm"
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-9 text-xs font-medium"
                   onClick={(e) => handleApprove(notification.id, e)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
                   ) : (
-                    <CheckCircle className="h-3 w-3 mr-1" />
+                    <CheckCircle className="h-3 w-3 sm:mr-1" />
                   )}
-                  Accept
+                  <span className="hidden sm:inline">Accept</span>
+                  <span className="sm:hidden">✓</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-9 text-xs font-medium"
                   onClick={(e) => handleReject(notification.id, e)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
                   ) : (
-                    <XCircle className="h-3 w-3 mr-1" />
+                    <XCircle className="h-3 w-3 sm:mr-1" />
                   )}
-                  Reject
+                  <span className="hidden sm:inline">Reject</span>
+                  <span className="sm:hidden">✗</span>
                 </Button>
               </div>
             )}
@@ -424,10 +426,10 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
               <div className="pt-2">
                 <Button
                   size="sm"
-                  className="w-full h-8 text-xs"
+                  className="w-full h-9 text-xs font-medium"
                   onClick={(e) => handlePayment(notification.id, notification.bookingId, e)}
                 >
-                  <CreditCard className="h-3 w-3 mr-1" />
+                  <CreditCard className="h-3 w-3 mr-1.5" />
                   Proceed to Payment
                 </Button>
               </div>
@@ -435,33 +437,35 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
 
             {/* Both Owner and Renter: Completed/Not Completed buttons for ride completion */}
             {notification.type === 'ride_completed' && notification.status === 'pending' && (
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   size="sm"
-                  className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700"
+                  className="flex-1 h-9 text-xs font-medium bg-green-600 hover:bg-green-700"
                   onClick={(e) => handleConfirmComplete(notification.id, e)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
                   ) : (
-                    <CheckCircle className="h-3 w-3 mr-1" />
+                    <CheckCircle className="h-3 w-3 sm:mr-1" />
                   )}
-                  Completed
+                  <span className="hidden sm:inline">Completed</span>
+                  <span className="sm:hidden">✓ Complete</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-9 text-xs font-medium"
                   onClick={(e) => handleDisputeComplete(notification.id, e)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
                   ) : (
-                    <XCircle className="h-3 w-3 mr-1" />
+                    <XCircle className="h-3 w-3 sm:mr-1" />
                   )}
-                  Not Completed
+                  <span className="hidden sm:inline">Not Completed</span>
+                  <span className="sm:hidden">✗ Not Done</span>
                 </Button>
               </div>
             )}
@@ -492,38 +496,40 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b bg-card">
-        <h3 className="font-semibold text-base">Notifications</h3>
+    <div className="flex flex-col w-full max-w-full">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-card">
+        <h3 className="font-semibold text-sm sm:text-base truncate">Notifications</h3>
         {notifications.some(n => !n.read) && (
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs h-7 px-2 hover:bg-accent/50"
+            className="text-xs h-7 px-2 hover:bg-accent/50 flex-shrink-0"
             onClick={onMarkAsRead}
           >
-            Mark all read
+            <span className="hidden sm:inline">Mark all read</span>
+            <span className="sm:hidden">Mark read</span>
           </Button>
         )}
       </div>
       
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'requests' | 'payments')} className="flex-1">
-        <TabsList className="w-full grid grid-cols-2 h-11 mx-0 rounded-none border-b">
-          <TabsTrigger value="requests" className="data-[state=active]:bg-primary/5">
-            Rental Requests
+        <TabsList className="w-full grid grid-cols-2 h-10 sm:h-11 mx-0 rounded-none border-b">
+          <TabsTrigger value="requests" className="data-[state=active]:bg-primary/5 text-xs sm:text-sm px-2">
+            <span className="hidden sm:inline">Rental Requests</span>
+            <span className="sm:hidden">Requests</span>
           </TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-primary/5">
+          <TabsTrigger value="payments" className="data-[state=active]:bg-primary/5 text-xs sm:text-sm px-2">
             Payments
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="requests" className="mt-0">
-          <ScrollArea className="h-[360px]">
+          <ScrollArea className="h-[360px] sm:h-[400px]">
             {filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
-                <Bell className="h-10 w-10 mb-3 opacity-40" />
-                <p className="text-sm font-medium">No rental notifications</p>
-                <p className="text-xs mt-1">You're all caught up!</p>
+                <Bell className="h-8 w-8 sm:h-10 sm:w-10 mb-3 opacity-40" />
+                <p className="text-xs sm:text-sm font-medium">No rental notifications</p>
+                <p className="text-xs mt-1">You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -534,12 +540,12 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
         </TabsContent>
         
         <TabsContent value="payments" className="mt-0">
-          <ScrollArea className="h-[360px]">
+          <ScrollArea className="h-[360px] sm:h-[400px]">
             {filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
-                <CreditCard className="h-10 w-10 mb-3 opacity-40" />
-                <p className="text-sm font-medium">No payment notifications</p>
-                <p className="text-xs mt-1">You're all caught up!</p>
+                <CreditCard className="h-8 w-8 sm:h-10 sm:w-10 mb-3 opacity-40" />
+                <p className="text-xs sm:text-sm font-medium">No payment notifications</p>
+                <p className="text-xs mt-1">You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -555,7 +561,7 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
       <div className="p-2 bg-card">
         <Button 
           variant="ghost" 
-          className="w-full text-sm hover:bg-accent/50 text-primary font-medium" 
+          className="w-full text-xs sm:text-sm hover:bg-accent/50 text-primary font-medium h-9" 
           size="sm"
           onClick={handleViewAll}
         >
