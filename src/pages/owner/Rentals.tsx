@@ -2,8 +2,17 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, Clock, DollarSign, User, CheckCircle, XCircle } from 'lucide-react';
+import { Package, Clock, DollarSign, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Mock API call to complete rental
+const mockCompleteRental = (rentalId: string): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 1500);
+  });
+};
 
 interface Rental {
   id: string;
@@ -56,6 +65,7 @@ const mockRentals: Rental[] = [
 
 const Rentals = () => {
   const [rentals, setRentals] = useState<Rental[]>(mockRentals);
+  const [completingRental, setCompletingRental] = useState<string | null>(null);
 
   const getStatusColor = (status: Rental['status']) => {
     switch (status) {
@@ -88,6 +98,23 @@ const Rentals = () => {
       )
     );
     toast.success('Rental rejected');
+  };
+
+  const handleComplete = async (rentalId: string) => {
+    setCompletingRental(rentalId);
+    try {
+      await mockCompleteRental(rentalId);
+      setRentals(
+        rentals.map((rental) =>
+          rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
+        )
+      );
+      toast.success('Rental marked as completed');
+    } catch (error) {
+      toast.error('Failed to complete rental');
+    } finally {
+      setCompletingRental(null);
+    }
   };
 
   const stats = {
@@ -210,6 +237,28 @@ const Rentals = () => {
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
+                  </Button>
+                </div>
+              )}
+
+              {rental.status === 'active' && (
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    onClick={() => handleComplete(rental.id)}
+                    disabled={completingRental === rental.id}
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    {completingRental === rental.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Completing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Complete
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

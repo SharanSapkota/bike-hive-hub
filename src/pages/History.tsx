@@ -1,7 +1,19 @@
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Clock, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, MapPin, Clock, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+// Mock API call to complete rental
+const mockCompleteRental = (rentalId: string): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 1500);
+  });
+};
 
 interface RentalHistory {
   id: string;
@@ -16,9 +28,10 @@ interface RentalHistory {
 
 const History = () => {
   const { user } = useAuth();
+  const [completingRental, setCompletingRental] = useState<string | null>(null);
 
   // Mock data - replace with actual API call
-  const rentalHistory: RentalHistory[] = [
+  const initialRentalHistory: RentalHistory[] = [
     {
       id: '1',
       bikeName: 'Mountain Bike Pro',
@@ -48,8 +61,37 @@ const History = () => {
       duration: '2 days',
       cost: 120,
       status: 'completed'
+    },
+    {
+      id: '4',
+      bikeName: 'Road Racer',
+      location: 'Uptown',
+      startDate: '2025-02-01',
+      endDate: '2025-02-03',
+      duration: '2 days',
+      cost: 80,
+      status: 'active'
     }
   ];
+
+  const [rentalHistory, setRentalHistory] = useState<RentalHistory[]>(initialRentalHistory);
+
+  const handleComplete = async (rentalId: string) => {
+    setCompletingRental(rentalId);
+    try {
+      await mockCompleteRental(rentalId);
+      setRentalHistory(
+        rentalHistory.map((rental) =>
+          rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
+        )
+      );
+      toast.success('Rental marked as completed');
+    } catch (error) {
+      toast.error('Failed to complete rental');
+    } finally {
+      setCompletingRental(null);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -114,6 +156,28 @@ const History = () => {
                   </div>
                 </div>
               </div>
+
+              {rental.status === 'active' && (
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    onClick={() => handleComplete(rental.id)}
+                    disabled={completingRental === rental.id}
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    {completingRental === rental.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Completing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Complete
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
