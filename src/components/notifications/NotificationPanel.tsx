@@ -2,6 +2,7 @@ import { Check, Clock, Bike, Bell, CheckCircle, XCircle, CreditCard, Loader2 } f
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +63,24 @@ const getMockNotifications = (role: string): Notification[] => {
         bikeId: '3',
         bookingId: 'booking-3',
       },
+      {
+        id: '4',
+        type: 'payment',
+        title: 'Payment Successful',
+        message: 'Your payment of $150 for Mountain Explorer Pro has been processed',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 90),
+        bookingId: 'booking-1',
+      },
+      {
+        id: '5',
+        type: 'payment',
+        title: 'Payment Pending',
+        message: 'Your payment for City Cruiser is being processed',
+        read: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 120),
+        bookingId: 'booking-2',
+      },
     ];
   } else {
     // Owner notifications
@@ -89,6 +108,24 @@ const getMockNotifications = (role: string): Notification[] => {
         message: 'Mike Johnson requested to rent your City Bike',
         read: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60),
+      },
+      {
+        id: '4',
+        type: 'payment',
+        title: 'Payment Received',
+        message: 'You received $150 from John Doe for Mountain Bike rental',
+        read: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 90),
+        bookingId: 'booking-1',
+      },
+      {
+        id: '5',
+        type: 'payment',
+        title: 'Payment Received',
+        message: 'You received $120 from Sarah Smith for Road Bike rental',
+        read: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 120),
+        bookingId: 'booking-2',
       },
     ];
   }
@@ -132,8 +169,25 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     getMockNotifications(user?.role || 'renter')
   );
   const [loadingNotifications, setLoadingNotifications] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'requests' | 'payments'>('requests');
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Filter notifications based on active tab
+  const getFilteredNotifications = () => {
+    if (activeTab === 'requests') {
+      return notifications.filter(n => 
+        n.type === 'rental_request' || 
+        n.type === 'rental_approved' || 
+        n.type === 'rental_rejected' ||
+        n.type === 'rental_cancelled'
+      );
+    } else {
+      return notifications.filter(n => n.type === 'payment');
+    }
+  };
+
+  const filteredNotifications = getFilteredNotifications();
 
   const handleApprove = async (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -217,6 +271,89 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     onClose?.();
   };
 
+  const renderNotificationItem = (notification: Notification) => {
+    const isLoading = loadingNotifications.has(notification.id);
+    
+    return (
+      <div
+        key={notification.id}
+        className={cn(
+          'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
+          !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
+        )}
+      >
+        <div className="flex gap-3">
+          <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+            {getIcon(notification.type)}
+          </div>
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-semibold text-sm leading-tight">
+                {notification.title}
+              </p>
+              {!notification.read && (
+                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground leading-snug">
+              {notification.message}
+            </p>
+            <p className="text-xs text-muted-foreground/80 font-medium">
+              {formatTime(notification.createdAt)}
+            </p>
+            
+            {/* Owner: Accept/Reject buttons for rental requests */}
+            {user?.role === 'owner' && notification.type === 'rental_request' && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                  onClick={(e) => handleApprove(notification.id, e)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1 h-8 text-xs"
+                  onClick={(e) => handleReject(notification.id, e)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <XCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Reject
+                </Button>
+              </div>
+            )}
+
+            {/* Renter: Payment button for approved requests */}
+            {user?.role === 'renter' && notification.type === 'rental_approved' && (
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  onClick={(e) => handlePayment(notification.id, notification.bookingId, e)}
+                >
+                  <CreditCard className="h-3 w-3 mr-1" />
+                  Proceed to Payment
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between p-4 border-b bg-card">
@@ -233,188 +370,48 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
         )}
       </div>
       
-      <ScrollArea className="h-[420px]">
-        {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
-            <Bell className="h-10 w-10 mb-3 opacity-40" />
-            <p className="text-sm font-medium">No notifications yet</p>
-            <p className="text-xs mt-1">You're all caught up!</p>
-          </div>
-        ) : user?.role === 'owner' ? (
-          // Owner view - separate sections
-          <div>
-            {/* Rental Requests Section */}
-            {notifications.some(n => n.type === 'rental_request') && (
-              <div>
-                <div className="px-4 py-2 bg-muted/30">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Rental Requests</h4>
-                </div>
-                <div className="divide-y divide-border">
-                  {notifications
-                    .filter(n => n.type === 'rental_request')
-                    .map((notification) => {
-                      const isLoading = loadingNotifications.has(notification.id);
-                      return (
-                        <div
-                          key={notification.id}
-                          className={cn(
-                            'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
-                            !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
-                          )}
-                        >
-                          <div className="flex gap-3">
-                            <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                              {getIcon(notification.type)}
-                            </div>
-                            <div className="flex-1 space-y-2 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className="font-semibold text-sm leading-tight">
-                                  {notification.title}
-                                </p>
-                                {!notification.read && (
-                                  <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground leading-snug">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-muted-foreground/80 font-medium">
-                                {formatTime(notification.createdAt)}
-                              </p>
-                              
-                              <div className="flex gap-2 pt-2">
-                                <Button
-                                  size="sm"
-                                  className="flex-1 h-8 text-xs"
-                                  onClick={(e) => handleApprove(notification.id, e)}
-                                  disabled={isLoading}
-                                >
-                                  {isLoading ? (
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  ) : (
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                  )}
-                                  Accept
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="flex-1 h-8 text-xs"
-                                  onClick={(e) => handleReject(notification.id, e)}
-                                  disabled={isLoading}
-                                >
-                                  {isLoading ? (
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  ) : (
-                                    <XCircle className="h-3 w-3 mr-1" />
-                                  )}
-                                  Reject
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'requests' | 'payments')} className="flex-1">
+        <TabsList className="w-full grid grid-cols-2 h-11 mx-0 rounded-none border-b">
+          <TabsTrigger value="requests" className="data-[state=active]:bg-primary/5">
+            Rental Requests
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="data-[state=active]:bg-primary/5">
+            Payments
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="requests" className="mt-0">
+          <ScrollArea className="h-[360px]">
+            {filteredNotifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
+                <Bell className="h-10 w-10 mb-3 opacity-40" />
+                <p className="text-sm font-medium">No rental notifications</p>
+                <p className="text-xs mt-1">You're all caught up!</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filteredNotifications.map(renderNotificationItem)}
               </div>
             )}
-
-            {/* Processed Requests Section */}
-            {notifications.some(n => n.type === 'rental_approved' || n.type === 'rental_rejected') && (
-              <div>
-                <div className="px-4 py-2 bg-muted/30">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Processed Requests</h4>
-                </div>
-                <div className="divide-y divide-border">
-                  {notifications
-                    .filter(n => n.type === 'rental_approved' || n.type === 'rental_rejected')
-                    .map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={cn(
-                          'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
-                          !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
-                        )}
-                      >
-                        <div className="flex gap-3">
-                          <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            {getIcon(notification.type)}
-                          </div>
-                          <div className="flex-1 space-y-2 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="font-semibold text-sm leading-tight">
-                                {notification.title}
-                              </p>
-                              {!notification.read && (
-                                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-snug">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground/80 font-medium">
-                              {formatTime(notification.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="payments" className="mt-0">
+          <ScrollArea className="h-[360px]">
+            {filteredNotifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4">
+                <CreditCard className="h-10 w-10 mb-3 opacity-40" />
+                <p className="text-sm font-medium">No payment notifications</p>
+                <p className="text-xs mt-1">You're all caught up!</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filteredNotifications.map(renderNotificationItem)}
               </div>
             )}
-          </div>
-        ) : (
-          // Renter view - single list
-          <div className="divide-y divide-border">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={cn(
-                  'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
-                  !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
-                )}
-              >
-                <div className="flex gap-3">
-                  <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    {getIcon(notification.type)}
-                  </div>
-                  <div className="flex-1 space-y-2 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold text-sm leading-tight">
-                        {notification.title}
-                      </p>
-                      {!notification.read && (
-                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-snug">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-muted-foreground/80 font-medium">
-                      {formatTime(notification.createdAt)}
-                    </p>
-                    
-                    {/* Renter: Payment button for approved requests */}
-                    {notification.type === 'rental_approved' && (
-                      <div className="pt-2">
-                        <Button
-                          size="sm"
-                          className="w-full h-8 text-xs"
-                          onClick={(e) => handlePayment(notification.id, notification.bookingId, e)}
-                        >
-                          <CreditCard className="h-3 w-3 mr-1" />
-                          Proceed to Payment
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
 
       <Separator />
       
