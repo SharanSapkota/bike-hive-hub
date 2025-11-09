@@ -194,7 +194,9 @@ const MapView = () => {
 
   const getBikes = async () => {
     try {
-      const response = await api.get("/bikes");
+      // const response = await api.get("/bikes");
+      const response = {data:{data: mockBikes}};
+      // const payload = response?.data;
       const payload = response?.data;
       const bikeList = Array.isArray(payload?.data)
         ? payload.data
