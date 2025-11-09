@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
@@ -168,7 +169,8 @@ const MapView = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   
-  // Rental request form state
+  // Booking dialog state
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [startDate, setStartDate] = useState<string>("");
   const [startTime, setStartTime] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -597,92 +599,104 @@ const MapView = () => {
 
                 {/* Price */}
                 <div className="mb-3 pb-3 border-b">
-                  <p className="text-lg font-bold text-primary leading-none">$2</p>
+                  <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
                   <p className="text-[9px] text-muted-foreground">per hour</p>
                 </div>
 
-                {/* Rental Request Form */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="start-date" className="text-xs">Start Date</Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="start-time" className="text-xs">Start Time</Label>
-                      <Input
-                        id="start-time"
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="end-date" className="text-xs">End Date</Label>
-                      <Input
-                        id="end-date"
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="end-time" className="text-xs">End Time</Label>
-                      <Input
-                        id="end-time"
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    className="w-full h-8 text-xs"
-                    onClick={() => {
-                      if (!startDate || !startTime || !endDate || !endTime) {
-                        toast({
-                          title: "Missing Information",
-                          description: "Please fill in all date and time fields",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      
-                      toast({
-                        title: "Request Sent",
-                        description: "Your rental request has been submitted successfully",
-                      });
-                      
-                      // Reset form
-                      setStartDate("");
-                      setStartTime("");
-                      setEndDate("");
-                      setEndTime("");
-                      setSelectedBike(null);
-                      setPopupPosition(null);
-                    }}
-                  >
-                    Send Request
-                  </Button>
-                </div>
+                {/* Book Now Button */}
+                <Button 
+                  className="w-full h-8 text-xs"
+                  onClick={() => setShowBookingDialog(true)}
+                >
+                  Book Now
+                </Button>
               </div>
             )}
           </Card>
         </div>
       )}
+
+      {/* Booking Dialog */}
+      <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book {selectedBike?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="booking-start-date">Start Date</Label>
+                <Input
+                  id="booking-start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="booking-start-time">Start Time</Label>
+                <Input
+                  id="booking-start-time"
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="booking-end-date">End Date</Label>
+                <Input
+                  id="booking-end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="booking-end-time">End Time</Label>
+                <Input
+                  id="booking-end-time"
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="w-full"
+              onClick={() => {
+                if (!startDate || !startTime || !endDate || !endTime) {
+                  toast({
+                    title: "Missing Information",
+                    description: "Please fill in all date and time fields",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                toast({
+                  title: "Request Sent",
+                  description: "Your rental request has been submitted successfully",
+                });
+                
+                // Reset form
+                setStartDate("");
+                setStartTime("");
+                setEndDate("");
+                setEndTime("");
+                setShowBookingDialog(false);
+                setSelectedBike(null);
+                setPopupPosition(null);
+              }}
+            >
+              Send Request
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
