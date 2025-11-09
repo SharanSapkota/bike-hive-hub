@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, ImageIcon, Locate } from 'lucide-react';
+import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, Locate, ImageIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
-import { uploadImages } from '@/lib/s3Upload';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const mapContainerStyle = {
   width: '100%',
@@ -32,67 +32,54 @@ const defaultCenter = {
   lng: -74.0060,
 };
 
+const MAX_IMAGES = 5;
+
+interface BikeAddress {
+  formatted: string;
+  lat: number;
+  lng: number;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+}
+
 interface BikeData {
-  id: string;
+  id: number;
   name: string;
   category: string;
   pricePerHour: number;
   pricePerDay: number;
   location: string;
-  address?: {
-    formatted: string;
-    lat: number;
-    lng: number;
-  };
+  address?: BikeAddress;
   description: string;
   available: boolean;
   images?: string[];
+  rawImages?: string[];
+  ownerId: number | null;
 }
-
-// Mock data
-const mockBikes: BikeData[] = [
-  {
-    id: '1',
-    name: 'Mountain Explorer Pro',
-    category: 'Mountain',
-    pricePerHour: 8,
-    pricePerDay: 50,
-    location: 'Downtown Station',
-    description: 'Perfect for mountain trails and rough terrain',
-    available: true,
-  },
-  {
-    id: '2',
-    name: 'City Cruiser Deluxe',
-    category: 'City',
-    pricePerHour: 5,
-    pricePerDay: 30,
-    location: 'Central Park',
-    description: 'Comfortable city bike for urban riding',
-    available: true,
-  },
-  {
-    id: '3',
-    name: 'Road Racer Speed',
-    category: 'Road',
-    pricePerHour: 10,
-    pricePerDay: 60,
-    location: 'North Terminal',
-    description: 'High-performance road bike',
-    available: false,
-  },
-];
 
 const MyBikes = () => {
   const { isLoaded } = useGoogleMaps();
+  const { user } = useAuth();
 
-  const [bikes, setBikes] = useState<BikeData[]>(mockBikes);
+  const [bikes, setBikes] = useState<BikeData[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeData | null>(null);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingImagePreviews, setExistingImagePreviews] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [isMapLoading, setIsMapLoading] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const revokeNewImagePreviews = () => {
+    newImagePreviews.forEach((preview) => {
+      if (preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -105,6 +92,70 @@ const MyBikes = () => {
     description: '',
   });
 
+  const mediaBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_BASE_API_URL || 'http://localhost:4000/api';
+    return base.replace(/\/api\/?$/, '');
+  }, []);
+
+  const combinedImagePreviews = [...existingImagePreviews, ...newImagePreviews];
+
+  const mapBikeResponse = (bike: any): BikeData => {
+    const addressSource = Array.isArray(bike.bikeAddress) ? bike.bikeAddress[0] : bike.bikeAddress;
+    const imagesSource = Array.isArray(bike.bikeImages) ? bike.bikeImages : [];
+    return {
+      id: bike.id,
+      name: bike.name,
+      category: bike.category?.name || 'General',
+      pricePerHour: typeof bike.pricePerHour === 'number' ? bike.pricePerHour : bike.rentAmount || 0,
+      pricePerDay: typeof bike.pricePerDay === 'number' ? bike.pricePerDay : 0,
+      location: addressSource?.address || 'Not specified',
+      address: addressSource
+        ? {
+            formatted: addressSource.address,
+            lat: addressSource.latitude,
+            lng: addressSource.longitude,
+            city: addressSource.city,
+            state: addressSource.state,
+            country: addressSource.country,
+            postalCode: addressSource.postalCode,
+          }
+        : undefined,
+      description: bike.description || '',
+      available: bike.status ? bike.status === 'AVAILABLE' : true,
+      images: imagesSource.map((img: any) => {
+        if (!img?.imageUrl) return '';
+        return img.imageUrl.startsWith('http') ? img.imageUrl : `${mediaBaseUrl}${img.imageUrl}`;
+      }),
+      rawImages: imagesSource.map((img: any) => img.imageUrl),
+      ownerId: bike.ownerId ?? bike.owner?.id ?? null,
+    };
+  };
+
+  const loadBikes = useCallback(async () => {
+    if (!user) {
+      setBikes([]);
+      return;
+    }
+
+    try {
+      const response = await api.get('/bikes', {
+        params: { ownerId: user.id },
+      });
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      const mapped = data
+        .map(mapBikeResponse)
+        .filter((bike) => bike.ownerId === user.id);
+      setBikes(mapped);
+    } catch (error) {
+      console.error('Failed to load bikes', error);
+      toast.error('Unable to load bikes. Please try again later.');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadBikes();
+  }, [loadBikes]);
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -115,8 +166,11 @@ const MyBikes = () => {
       address: null,
       description: '',
     });
-    setSelectedImages([]);
-    setImagePreviews([]);
+    setExistingImages([]);
+    setExistingImagePreviews([]);
+    revokeNewImagePreviews();
+    setNewImages([]);
+    setNewImagePreviews([]);
     setEditingBike(null);
   };
 
@@ -141,10 +195,12 @@ const MyBikes = () => {
       address: bike.address || null,
       description: bike.description,
     });
-    // Set existing images as previews
-    if (bike.images && bike.images.length > 0) {
-      setImagePreviews(bike.images);
-    }
+    // Set existing images
+    setExistingImagePreviews(bike.images || []);
+    setExistingImages(bike.rawImages || []);
+    revokeNewImagePreviews();
+    setNewImages([]);
+    setNewImagePreviews([]);
     // Show map loading while setting up the previous location
     setIsMapLoading(true);
     setIsDialogOpen(true);
@@ -156,27 +212,30 @@ const MyBikes = () => {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + selectedImages.length > 5) {
-      toast.error('Maximum 5 images allowed');
+    if (existingImagePreviews.length + newImagePreviews.length + files.length > MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images allowed`);
       return;
     }
 
-    setSelectedImages([...selectedImages, ...files]);
-    
-    // Create preview URLs
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews([...imagePreviews, ...newPreviews]);
+    setNewImages((prev) => [...prev, ...files]);
+
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setNewImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const handleRemoveImage = (index: number) => {
-    const newImages = selectedImages.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    
-    // Revoke the URL to free memory
-    URL.revokeObjectURL(imagePreviews[index]);
-    
-    setSelectedImages(newImages);
-    setImagePreviews(newPreviews);
+    if (index < existingImagePreviews.length) {
+      setExistingImagePreviews((prev) => prev.filter((_, i) => i !== index));
+      setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const localIndex = index - existingImagePreviews.length;
+      const previewToRemove = newImagePreviews[localIndex];
+      if (previewToRemove?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewToRemove);
+      }
+      setNewImagePreviews((prev) => prev.filter((_, i) => i !== localIndex));
+      setNewImages((prev) => prev.filter((_, i) => i !== localIndex));
+    }
   };
 
   const onPlaceSelected = () => {
@@ -247,72 +306,93 @@ const MyBikes = () => {
   };
 
   const handleSaveBike = async () => {
+    let loadingId: string | number | undefined;
     try {
-      // Upload new images to S3 if any
-      let imageUrls = imagePreviews;
-      
-      if (selectedImages.length > 0) {
-        toast.loading('Uploading images...');
-        const newImageUrls = await uploadImages(selectedImages);
-        // Combine existing URLs (from imagePreviews that are URLs) with new uploaded URLs
-        const existingUrls = imagePreviews.filter(preview => preview.startsWith('http'));
-        imageUrls = [...existingUrls, ...newImageUrls];
-        toast.dismiss();
+      if (!formData.name.trim()) {
+        toast.error('Bike name is required');
+        return;
       }
 
-      toast.loading(editingBike ? 'Updating bike...' : 'Adding bike...');
+      if (!formData.pricePerHour) {
+        toast.error('Please provide an hourly price');
+        return;
+      }
 
-      const bikeData = {
-        name: formData.name,
-        category: formData.category,
-        pricePerHour: Number(formData.pricePerHour),
-        pricePerDay: Number(formData.pricePerDay),
-        location: formData.location,
-        address: formData.address,
-        description: formData.description,
-        images: imageUrls,
-      };
+      if (!formData.address) {
+        toast.error('Please choose a location for the bike');
+        return;
+      }
+
+      loadingId = toast.loading(editingBike ? 'Updating bike...' : 'Adding bike...');
+
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('category', formData.category);
+      payload.append('pricePerHour', formData.pricePerHour);
+      if (formData.pricePerDay) {
+        payload.append('pricePerDay', formData.pricePerDay);
+      }
+      payload.append('location', formData.location);
+      payload.append('description', formData.description);
+      payload.append('rentAmount', formData.pricePerHour);
+      payload.append('latitude', String(formData.address.lat));
+      payload.append('longitude', String(formData.address.lng));
+      payload.append(
+        'address',
+        JSON.stringify({
+          formatted: formData.address.formatted || formData.location,
+          lat: formData.address.lat,
+          lng: formData.address.lng,
+        })
+      );
+
+      payload.append('existingImages', JSON.stringify(existingImages));
+      payload.append('status', editingBike && !editingBike.available ? 'MAINTENANCE' : 'AVAILABLE');
+      payload.append('categoryName', formData.category);
+
+      newImages.forEach((file) => {
+        payload.append('images', file);
+      });
 
       if (editingBike) {
-        // Update existing bike
-        await api.put(`/bikes/${editingBike.id}`, bikeData);
-        
-        setBikes(bikes.map(bike => 
-          bike.id === editingBike.id 
-            ? { ...bike, ...bikeData }
-            : bike
-        ));
-        
-        toast.dismiss();
+        await api.put(`/bikes/${editingBike.id}`, payload, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        await loadBikes();
         toast.success('Bike updated successfully!');
       } else {
-        // Create new bike
-        const response = await api.post('/bikes', bikeData);
+        const response = await api.post('/bikes', payload, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
 
-        const newBike: BikeData = {
-          ...bikeData,
-          id: response.data.id || Date.now().toString(),
-          available: true,
-        };
-
-        setBikes([...bikes, newBike]);
-        
-        toast.dismiss();
+        const created = mapBikeResponse(response.data);
+        if (user && created.ownerId === user.id) {
+          setBikes((prev) => [...prev, created]);
+        }
         toast.success('Bike added successfully!');
       }
 
       setIsDialogOpen(false);
       resetForm();
     } catch (error: any) {
-      toast.dismiss();
-      const errorMessage = error.response?.data?.message || error.message || 
-        (editingBike ? 'Failed to update bike' : 'Failed to add bike');
-      toast.error(errorMessage);
       console.error('Error saving bike:', error);
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        (editingBike ? 'Failed to update bike' : 'Failed to add bike');
+      toast.error(message);
+    } finally {
+      if (loadingId !== undefined) {
+        toast.dismiss(loadingId);
+      }
     }
   };
 
-  const handleToggleAvailability = (bikeId: string) => {
+  const handleToggleAvailability = (bikeId: number) => {
     setBikes(
       bikes.map((bike) =>
         bike.id === bikeId ? { ...bike, available: !bike.available } : bike
@@ -321,9 +401,22 @@ const MyBikes = () => {
     toast.success('Bike availability updated');
   };
 
-  const handleDeleteBike = (bikeId: string) => {
-    setBikes(bikes.filter((bike) => bike.id !== bikeId));
-    toast.success('Bike deleted successfully');
+  const handleDeleteBike = async (bikeId: number) => {
+    const loadingId = toast.loading('Deleting bike...');
+    try {
+      await api.delete(`/bikes/${bikeId}`);
+      setBikes((prev) => prev.filter((bike) => bike.id !== bikeId));
+      toast.success('Bike deleted successfully');
+    } catch (error: any) {
+      console.error('Failed to delete bike:', error);
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        'Failed to delete bike';
+      toast.error(message);
+    } finally {
+      toast.dismiss(loadingId);
+    }
   };
 
   return (
@@ -471,11 +564,11 @@ const MyBikes = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Bike Images (Max 5)</Label>
+                <Label>Bike Images (Max {MAX_IMAGES})</Label>
                 <div className="space-y-3">
-                  {imagePreviews.length > 0 && (
+                  {combinedImagePreviews.length > 0 && (
                     <div className="grid grid-cols-3 gap-3">
-                      {imagePreviews.map((preview, index) => (
+                      {combinedImagePreviews.map((preview, index) => (
                         <div key={index} className="relative group">
                           <img
                             src={preview}
@@ -494,7 +587,7 @@ const MyBikes = () => {
                     </div>
                   )}
                   
-                  {selectedImages.length < 5 && (
+                  {combinedImagePreviews.length < MAX_IMAGES && (
                     <label
                       htmlFor="image-upload"
                       className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
@@ -505,7 +598,7 @@ const MyBikes = () => {
                           <span className="font-semibold">Click to upload</span> or drag and drop
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          PNG, JPG or WEBP (max 5 images)
+                          PNG, JPG or WEBP (max {MAX_IMAGES} images)
                         </p>
                       </div>
                       <input
@@ -598,7 +691,26 @@ const MyBikes = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bikes.map((bike) => (
           <Card key={bike.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
+            <CardHeader className="space-y-4">
+              {bike.images && bike.images.length > 0 ? (
+                <div className="relative w-full h-40 overflow-hidden rounded-lg border bg-muted">
+                  <img
+                    src={bike.images[0]}
+                    alt={bike.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {bike.images.length > 1 && (
+                    <Badge className="absolute top-3 right-3 bg-background/80 backdrop-blur border">
+                      +{bike.images.length - 1} more
+                    </Badge>
+                  )}
+                </div>
+              ) : (
+                <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed bg-muted/40 text-muted-foreground">
+                  <ImageIcon className="h-8 w-8" />
+                </div>
+              )}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardTitle className="text-lg">{bike.name}</CardTitle>
