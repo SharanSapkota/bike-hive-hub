@@ -713,10 +713,10 @@ const MyBikes = () => {
               )}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{bike.name}</CardTitle>
+                  <CardTitle className="text-lg">{bike?.name}</CardTitle>
                   <CardDescription className="flex items-center gap-1 mt-1">
                     <MapPin className="h-3 w-3" />
-                    {bike.location}
+                    {bike?.location}
                   </CardDescription>
                 </div>
                 <Badge

@@ -9,6 +9,8 @@ import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import api from "@/lib/api";
+import { getBikeDetails } from "@/services/bike";
+import { normalizeBike } from "@/lib/bike";
 
 interface Bike {
   id: string;
@@ -183,11 +185,30 @@ const MapView = () => {
   };
 
   const getBikes = async () => {
-    const response = await api.get('/bikes');
-    setBikes(response.data.data);
+    try {
+      const response = await api.get("/bikes");
+      const payload = response?.data;
+      const bikeList = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+        ? payload
+        : [];
+
+      if (!Array.isArray(payload?.data) && !Array.isArray(payload)) {
+        console.warn("Unexpected bikes response shape:", payload);
+      }
+
+      setBikes(bikeList);
+    } catch (error) {
+      console.error("Failed to fetch bikes:", error);
+    }
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      await getBikes();
+    }
+    fetchData();
     // Check if we have a cached location
     const cachedLocation = sessionStorage.getItem('userLocation');
     const cachedAddress = sessionStorage.getItem('userAddress');
@@ -229,18 +250,19 @@ const MapView = () => {
       setIsLoadingLocation(false);
     }
 
-    // TODO: Fetch bikes from API
-    // api.get('/bikes/nearby').then(response => setBikes(response.data));
   }, []);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
   }, []);
 
-  const handleMarkerClick = useCallback((bike: Bike) => {
-    setSelectedBike(bike);
+  const handleMarkerClick = useCallback(async (bike: Bike) => {
+    // setSelectedBike(bike);
+    console.log(bike);
     setIsLoadingDetails(true);
-    // Mock timeout to simulate API call
+    const bikeDetails = await getBikeDetails(bike.id);
+    setSelectedBike(normalizeBike(bikeDetails));
+    // Mock timeout to simulate  API call
     setTimeout(() => {
       setIsLoadingDetails(false);
     }, 1000);
@@ -261,7 +283,7 @@ const MapView = () => {
           const projection = this.getProjection();
           if (projection) {
             const point = projection.fromLatLngToContainerPixel(
-              new google.maps.LatLng(selectedBike.location.lat, selectedBike.location.lng),
+              new google.maps.LatLng(selectedBike?.location?.lat, selectedBike?.location?.lng),
             );
 
             if (point) {
@@ -507,15 +529,15 @@ const MapView = () => {
             ) : (
               <div className="p-2">
                 {/* Image Carousel */}
-                {selectedBike.images && selectedBike.images.length > 0 && (
+                {selectedBike?.images && selectedBike?.images.length > 0 && (
                   <Carousel className="w-full mb-2">
                     <CarouselContent>
-                      {selectedBike.images.map((image, index) => (
+                      {selectedBike?.images.map((image, index) => (
                         <CarouselItem key={index}>
                           <div className="aspect-video rounded overflow-hidden">
                             <img
                               src={image}
-                              alt={`${selectedBike.name} - ${index + 1}`}
+                              alt={`${selectedBike?.name} - ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -543,25 +565,25 @@ const MapView = () => {
                   </div>
                   <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                     <MapPin className="h-2.5 w-2.5" />
-                    {selectedBike.location.city}, {selectedBike.location.state} • {selectedBike.category}
+                    {selectedBike?.location?.city}, {selectedBike?.location?.state} • {selectedBike?.category}
                   </p>
                 </div>
 
                 {/* Condition and Reviews */}
                 <div className="flex items-center gap-2 mb-2 text-[10px]">
-                  {selectedBike.condition && <span className="text-muted-foreground">{selectedBike.condition}</span>}
-                  {selectedBike.rating && selectedBike.reviews && (
+                  {selectedBike?.condition && <span className="text-muted-foreground">{selectedBike?.condition}</span>}
+                  {selectedBike?.rating && selectedBike?.reviews && (
                     <div className="flex items-center gap-0.5">
                       <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{selectedBike.rating}</span>
-                      <span className="text-muted-foreground">({selectedBike.reviews})</span>
+                      <span className="font-medium">{selectedBike?.rating}</span>
+                      <span className="text-muted-foreground">({selectedBike?.reviews})</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-lg font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
+                    <p className="text-lg font-bold text-primary leading-none">$2</p>
                     <p className="text-[9px] text-muted-foreground">per hour</p>
                   </div>
                   <Button 
