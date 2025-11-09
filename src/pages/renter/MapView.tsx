@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import api from "@/lib/api";
 
 interface Bike {
   id: string;
@@ -152,7 +153,7 @@ const MapView = () => {
   const navigate = useNavigate();
   const { isLoaded, loadError } = useGoogleMaps();
 
-  const [bikes, setBikes] = useState<Bike[]>(mockBikes);
+  const [bikes, setBikes] = useState<Bike[]>([]);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
@@ -181,6 +182,11 @@ const MapView = () => {
     }
   };
 
+  const getBikes = async () => {
+    const response = await api.get('/bikes');
+    setBikes(response.data.data);
+  };
+
   useEffect(() => {
     // Check if we have a cached location
     const cachedLocation = sessionStorage.getItem('userLocation');
@@ -192,6 +198,7 @@ const MapView = () => {
       setCenter(location);
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
+      getBikes();
       return;
     }
 

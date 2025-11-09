@@ -370,7 +370,7 @@ const MyBikes = () => {
         });
 
         const created = mapBikeResponse(response.data);
-        if (user && created.ownerId === user.id) {
+        if (user && created?.ownerId === Number(user?.id)) {
           setBikes((prev) => [...prev, created]);
         }
         toast.success('Bike added successfully!');
