@@ -1,4 +1,4 @@
-import { Check, Clock, Bike, Bell, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { Check, Clock, Bike, Bell, CheckCircle, XCircle, CreditCard, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -10,14 +10,24 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'rental_request' | 'rental_approved' | 'rental_rejected';
+  type: 'rental_request' | 'rental_approved' | 'rental_rejected' | 'rental_cancelled' | 'payment';
   title: string;
   message: string;
   read: boolean;
   createdAt: Date;
   bikeId?: string;
   bookingId?: string;
+  status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
 }
+
+// Mock API call
+const mockApiCall = (action: 'approve' | 'reject'): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 1500); // 1.5 second delay
+  });
+};
 
 // Mock data - replace with real data from your backend
 const getMockNotifications = (role: string): Notification[] => {
@@ -91,7 +101,10 @@ const getIcon = (type: Notification['type']) => {
     case 'rental_approved':
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     case 'rental_rejected':
+    case 'rental_cancelled':
       return <XCircle className="h-4 w-4 text-destructive" />;
+    case 'payment':
+      return <CreditCard className="h-4 w-4 text-blue-500" />;
   }
 };
 
@@ -118,30 +131,75 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
   const [notifications, setNotifications] = useState<Notification[]>(
     getMockNotifications(user?.role || 'renter')
   );
+  const [loadingNotifications, setLoadingNotifications] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleApprove = (notificationId: string, e: React.MouseEvent) => {
+  const handleApprove = async (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications(prev =>
-      prev.filter(n => n.id !== notificationId)
-    );
-    toast({
-      title: 'Request Approved',
-      description: 'The rental request has been approved successfully.',
-    });
+    
+    // Set loading state
+    setLoadingNotifications(prev => new Set([...prev, notificationId]));
+    
+    try {
+      // Call mock API
+      await mockApiCall('approve');
+      
+      // Update notification status
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId
+            ? { ...n, type: 'rental_approved' as const, title: 'Request Accepted', status: 'accepted' }
+            : n
+        )
+      );
+      
+      toast({
+        title: 'Request Approved',
+        description: 'The rental request has been approved successfully.',
+      });
+    } finally {
+      // Clear loading state
+      setLoadingNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
+    }
   };
 
-  const handleReject = (notificationId: string, e: React.MouseEvent) => {
+  const handleReject = async (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications(prev =>
-      prev.filter(n => n.id !== notificationId)
-    );
-    toast({
-      title: 'Request Rejected',
-      description: 'The rental request has been rejected.',
-      variant: 'destructive',
-    });
+    
+    // Set loading state
+    setLoadingNotifications(prev => new Set([...prev, notificationId]));
+    
+    try {
+      // Call mock API
+      await mockApiCall('reject');
+      
+      // Update notification status
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId
+            ? { ...n, type: 'rental_rejected' as const, title: 'Request Rejected', status: 'rejected' }
+            : n
+        )
+      );
+      
+      toast({
+        title: 'Request Rejected',
+        description: 'The rental request has been rejected.',
+        variant: 'destructive',
+      });
+    } finally {
+      // Clear loading state
+      setLoadingNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
+    }
   };
 
   const handlePayment = (notificationId: string, bookingId?: string, e?: React.MouseEvent) => {
@@ -182,7 +240,132 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             <p className="text-sm font-medium">No notifications yet</p>
             <p className="text-xs mt-1">You're all caught up!</p>
           </div>
+        ) : user?.role === 'owner' ? (
+          // Owner view - separate sections
+          <div>
+            {/* Rental Requests Section */}
+            {notifications.some(n => n.type === 'rental_request') && (
+              <div>
+                <div className="px-4 py-2 bg-muted/30">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Rental Requests</h4>
+                </div>
+                <div className="divide-y divide-border">
+                  {notifications
+                    .filter(n => n.type === 'rental_request')
+                    .map((notification) => {
+                      const isLoading = loadingNotifications.has(notification.id);
+                      return (
+                        <div
+                          key={notification.id}
+                          className={cn(
+                            'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
+                            !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
+                          )}
+                        >
+                          <div className="flex gap-3">
+                            <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                              {getIcon(notification.type)}
+                            </div>
+                            <div className="flex-1 space-y-2 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="font-semibold text-sm leading-tight">
+                                  {notification.title}
+                                </p>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground leading-snug">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-muted-foreground/80 font-medium">
+                                {formatTime(notification.createdAt)}
+                              </p>
+                              
+                              <div className="flex gap-2 pt-2">
+                                <Button
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={(e) => handleApprove(notification.id, e)}
+                                  disabled={isLoading}
+                                >
+                                  {isLoading ? (
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                  )}
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={(e) => handleReject(notification.id, e)}
+                                  disabled={isLoading}
+                                >
+                                  {isLoading ? (
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                  )}
+                                  Reject
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Processed Requests Section */}
+            {notifications.some(n => n.type === 'rental_approved' || n.type === 'rental_rejected') && (
+              <div>
+                <div className="px-4 py-2 bg-muted/30">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Processed Requests</h4>
+                </div>
+                <div className="divide-y divide-border">
+                  {notifications
+                    .filter(n => n.type === 'rental_approved' || n.type === 'rental_rejected')
+                    .map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={cn(
+                          'p-4 hover:bg-accent/30 transition-all cursor-pointer group',
+                          !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
+                        )}
+                      >
+                        <div className="flex gap-3">
+                          <div className="mt-0.5 p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                            {getIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 space-y-2 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-semibold text-sm leading-tight">
+                                {notification.title}
+                              </p>
+                              {!notification.read && (
+                                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5 animate-pulse" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-snug">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground/80 font-medium">
+                              {formatTime(notification.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
+          // Renter view - single list
           <div className="divide-y divide-border">
             {notifications.map((notification) => (
               <div
@@ -212,31 +395,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
                       {formatTime(notification.createdAt)}
                     </p>
                     
-                    {/* Owner: Accept/Reject buttons for rental requests */}
-                    {user?.role === 'owner' && notification.type === 'rental_request' && (
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 h-8 text-xs"
-                          onClick={(e) => handleApprove(notification.id, e)}
-                        >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1 h-8 text-xs"
-                          onClick={(e) => handleReject(notification.id, e)}
-                        >
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
-
                     {/* Renter: Payment button for approved requests */}
-                    {user?.role === 'renter' && notification.type === 'rental_approved' && (
+                    {notification.type === 'rental_approved' && (
                       <div className="pt-2">
                         <Button
                           size="sm"
