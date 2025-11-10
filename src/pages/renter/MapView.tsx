@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
+import { MapPin, Navigation, Star, X, Search, Loader2, CalendarIcon } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import api from "@/lib/api";
 import { getBikeDetails } from "@/services/bike";
@@ -173,14 +176,8 @@ const MapView = () => {
   
   // Booking dialog state
   const [showBookingDialog, setShowBookingDialog] = useState(false);
-  const [startDate, setStartDate] = useState<string>("");
-  const [startTime, setStartTime] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
-
-  // Calculate date constraints
-  const today = format(new Date(), "yyyy-MM-dd");
-  const maxStartDate = format(addDays(new Date(), 5), "yyyy-MM-dd");
+  const [fromDate, setFromDate] = useState<Date>();
+  const [toDate, setToDate] = useState<Date>();
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -280,35 +277,20 @@ const MapView = () => {
 
   const sendRequest = async() => {
   
-      if (!startDate || !startTime || !endDate || !endTime) {
+      if (!fromDate || !toDate) {
         toast({
           title: "Missing Information",
-          description: "Please fill in all date and time fields",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate start date is within 5 days
-      const selectedStartDate = new Date(startDate);
-      const todayDate = new Date();
-      const maxDate = addDays(todayDate, 5);
-      
-      if (selectedStartDate > maxDate) {
-        toast({
-          title: "Invalid Start Date",
-          description: "Start date cannot exceed 5 days from today",
+          description: "Please select both from and to dates",
           variant: "destructive",
         });
         return;
       }
 
       // Validate end date is after start date
-      const selectedEndDate = new Date(endDate);
-      if (selectedEndDate < selectedStartDate) {
+      if (toDate < fromDate) {
         toast({
-          title: "Invalid End Date",
-          description: "End date must be after start date",
+          title: "Invalid Date Range",
+          description: "To date must be after from date",
           variant: "destructive",
         });
         return;
@@ -319,17 +301,31 @@ const MapView = () => {
         description: "Your rental request has been submitted successfully",
       });
       
-      const booking = await createBooking({bike: selectedBike.id, startDate, endDate})
+      const startDateStr = format(fromDate, "yyyy-MM-dd");
+      const endDateStr = format(toDate, "yyyy-MM-dd");
+      const booking = await createBooking({bike: selectedBike.id, startDate: startDateStr, endDate: endDateStr})
+      
       // Reset form
-      setStartDate("");
-      setStartTime("");
-      setEndDate("");
-      setEndTime("");
+      setFromDate(undefined);
+      setToDate(undefined);
       setShowBookingDialog(false);
       setSelectedBike(null);
       setPopupPosition(null);
     
   }
+
+  // Calculate rental days and total price
+  const calculateRentalPrice = () => {
+    if (!fromDate || !toDate || !selectedBike) return { days: 0, total: 0 };
+    
+    const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const days = diffDays === 0 ? 1 : diffDays; // Minimum 1 day
+    const pricePerDay = selectedBike.pricePerHour * 24; // Calculate daily rate from hourly
+    const total = days * pricePerDay;
+    
+    return { days, total };
+  };
 
   const handleMarkerClick = useCallback(async (bike: Bike) => {
     // setSelectedBike(bike);
@@ -685,52 +681,86 @@ const MapView = () => {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="booking-start-date">Start Date</Label>
-                <Input
-                  id="booking-start-date"
-                  type="date"
-                  min={today}
-                  max={maxStartDate}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">Within 5 days from today</p>
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !fromDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ? format(fromDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={setFromDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="booking-start-time">Start Time</Label>
-                <Input
-                  id="booking-start-time"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !toDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDate ? format(toDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={toDate}
+                      onSelect={setToDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="booking-end-date">End Date</Label>
-                <Input
-                  id="booking-end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+            {/* Price Display */}
+            {fromDate && toDate && (
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Rental Duration:</span>
+                  <span className="font-semibold">{calculateRentalPrice().days} {calculateRentalPrice().days === 1 ? 'day' : 'days'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Price per day:</span>
+                  <span className="font-semibold">${selectedBike?.pricePerHour ? selectedBike.pricePerHour * 24 : 0}</span>
+                </div>
+                <div className="pt-2 border-t border-border">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">Total Price:</span>
+                    <span className="text-xl font-bold text-primary">${calculateRentalPrice().total}</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="booking-end-time">End Time</Label>
-                <Input
-                  id="booking-end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
-              </div>
-            </div>
+            )}
 
             <Button 
               className="w-full"
-              onClick = {sendRequest}
+              onClick={sendRequest}
+              disabled={!fromDate || !toDate}
             >
               Send Request
             </Button>
