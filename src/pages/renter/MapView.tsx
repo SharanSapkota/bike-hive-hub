@@ -202,10 +202,18 @@ const MapView = () => {
     }
   };
 
-  const getBikes = async () => {
+  const getBikes = useCallback(async (coords?: { lat: number; lng: number }) => {
     try {
-      // const response = await api.get("/bikes");
-      const response = {data:{data: mockBikes}};
+      const params = coords
+        ? {
+            lat: coords.lat,
+            lng: coords.lng,
+            latitude: coords.lat,
+            longitude: coords.lng,
+          }
+        : undefined;
+
+      const response = await api.get("/bikes", params ? { params } : undefined);
       const payload = response?.data;
       const bikeList = Array.isArray(payload?.data)
         ? payload.data
@@ -217,22 +225,24 @@ const MapView = () => {
         console.warn("Unexpected bikes response shape:", payload);
       }
 
-      if(!bikeList || bikeList?.length == 0) {
+      if (!bikeList || bikeList.length === 0) {
         setBikes(mockBikes);
         return;
-      } else {
-      setBikes(bikeList);
       }
+
+      const normalized = bikeList.map((bike: any) => normalizeBike(bike));
+      setBikes(normalized);
     } catch (error) {
       console.error("Failed to fetch bikes:", error);
+      setBikes(mockBikes);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // const fetchData = async () => {
-    //   await getBikes();
-    // }
-    // fetchData();
+    if (!isLoaded) {
+      return;
+    }
+
     // Check if we have a cached location
     const cachedLocation = sessionStorage.getItem('userLocation');
     const cachedAddress = sessionStorage.getItem('userAddress');
@@ -243,7 +253,7 @@ const MapView = () => {
       setCenter(location);
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
-      getBikes();
+      getBikes(location);
       return;
     }
 
@@ -266,7 +276,7 @@ const MapView = () => {
           setIsLoadingLocation(false);
           
           // Load bikes after location is set
-          getBikes();
+          getBikes(newCenter);
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -281,7 +291,7 @@ const MapView = () => {
       getBikes();
     }
 
-  }, []);
+  }, [getBikes, isLoaded]);
 
   // Calculate price when dates change
   useEffect(() => {
@@ -388,9 +398,9 @@ const MapView = () => {
     // setSelectedBike(bike);
     console.log(bike);
     // setIsLoadingDetails(true);
-    // const bikeDetails = await getBikeDetails(bike.id);
-    setSelectedBike(bike);
-    // setSelectedBike(normalizeBike(bikeDetails));
+    const bikeDetails = await getBikeDetails(bike.id);
+    // setSelectedBike(bike);
+    setSelectedBike(normalizeBike(bikeDetails));
     // Mock timeout to simulate  API call
     setTimeout(() => {
       setIsLoadingDetails(false);
