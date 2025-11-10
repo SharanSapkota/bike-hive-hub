@@ -19,6 +19,7 @@ import { normalizeBike } from "@/lib/bike";
 import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 import { createBooking } from "@/services/booking";
+import { calculatePrice } from "@/services/pricing";
 
 interface Bike {
   id: string;
@@ -178,6 +179,8 @@ const MapView = () => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -278,6 +281,38 @@ const MapView = () => {
 
   }, []);
 
+  // Calculate price when dates change
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (fromDate && toDate && selectedBike) {
+        setIsCalculatingPrice(true);
+        setCalculatedPrice(null);
+        try {
+          const price = await calculatePrice(
+            selectedBike.id,
+            fromDate,
+            toDate,
+            selectedBike.pricePerHour
+          );
+          setCalculatedPrice(price);
+        } catch (error) {
+          console.error("Failed to calculate price:", error);
+          toast({
+            title: "Error",
+            description: "Failed to calculate price. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsCalculatingPrice(false);
+        }
+      } else {
+        setCalculatedPrice(null);
+      }
+    };
+
+    fetchPrice();
+  }, [fromDate, toDate, selectedBike]);
+
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
   }, []);
@@ -315,6 +350,8 @@ const MapView = () => {
       // Reset form
       setFromDate(undefined);
       setToDate(undefined);
+      setCalculatedPrice(null);
+      setIsCalculatingPrice(false);
       setShowBookingDialog(false);
       setSelectedBike(null);
       setPopupPosition(null);
@@ -734,10 +771,31 @@ const MapView = () => {
             {/* Price Display */}
             {fromDate && toDate && (
               <div className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-center items-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Calculating price...</span>
-                </div>
+                {isCalculatingPrice ? (
+                  <div className="flex justify-center items-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="ml-2 text-sm text-muted-foreground">Calculating price...</span>
+                  </div>
+                ) : calculatedPrice !== null ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Price per hour:</span>
+                      <span className="font-medium">${selectedBike?.pricePerHour}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration:</span>
+                      <span className="font-medium">
+                        {Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Total Price:</span>
+                        <span className="text-2xl font-bold text-primary">${calculatedPrice}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 
