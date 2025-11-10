@@ -319,10 +319,11 @@ const MyBikes = () => {
         return;
       }
 
-      if (!formData.pricePerHour) {
-        toast.error('Please provide an hourly price');
-        return;
-      }
+      // Commented out: Price per hour validation
+      // if (!formData.pricePerHour) {
+      //   toast.error('Please provide an hourly price');
+      //   return;
+      // }
 
       if (!formData.address) {
         toast.error('Please choose a location for the bike');
@@ -480,7 +481,8 @@ const MyBikes = () => {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Commented out: Price per hour input */}
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="pricePerHour">Price/Hour ($)</Label>
                   <Input
@@ -490,7 +492,7 @@ const MyBikes = () => {
                     onChange={(e) => setFormData({ ...formData, pricePerHour: e.target.value })}
                     placeholder="8"
                   />
-                </div>
+                </div> */}
                 <div className="space-y-2">
                   <Label htmlFor="pricePerDay">Price/Day ($)</Label>
                   <Input
@@ -501,7 +503,7 @@ const MyBikes = () => {
                     placeholder="50"
                   />
                 </div>
-              </div>
+              {/* </div> */}
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
