@@ -58,46 +58,41 @@ const Sidebar = () => {
       >
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Bike className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <Bike className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg">Gear Quest</h1>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-lg">Gear Quest</h1>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-            </div>
+            <NotificationBell />
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
-            {menuItems.map((item, index) => (
-              <>
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    onClick={() => setIsOpen(false)}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                        isActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                          : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
-                      )
-                    }
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                </li>
-                {/* Add notification bell after Dashboard menu item */}
-                {item.path === '/dashboard' && (
-                  <li key="notifications" className="px-4 py-2">
-                    <NotificationBell />
-                  </li>
-                )}
-              </>
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                        : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
+                    )
+                  }
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </NavLink>
+              </li>
             ))}
           </ul>
         </nav>
