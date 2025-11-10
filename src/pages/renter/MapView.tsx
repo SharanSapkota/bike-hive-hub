@@ -15,6 +15,7 @@ import { getBikeDetails } from "@/services/bike";
 import { normalizeBike } from "@/lib/bike";
 import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
+import { createBooking } from "@/services/booking";
 
 interface Bike {
   id: string;
@@ -277,12 +278,66 @@ const MapView = () => {
     setMap(map);
   }, []);
 
+  const sendRequest = async() => {
+  
+      if (!startDate || !startTime || !endDate || !endTime) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all date and time fields",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate start date is within 5 days
+      const selectedStartDate = new Date(startDate);
+      const todayDate = new Date();
+      const maxDate = addDays(todayDate, 5);
+      
+      if (selectedStartDate > maxDate) {
+        toast({
+          title: "Invalid Start Date",
+          description: "Start date cannot exceed 5 days from today",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate end date is after start date
+      const selectedEndDate = new Date(endDate);
+      if (selectedEndDate < selectedStartDate) {
+        toast({
+          title: "Invalid End Date",
+          description: "End date must be after start date",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Request Sent",
+        description: "Your rental request has been submitted successfully",
+      });
+      
+      const booking = await createBooking({bike: selectedBike.id, startDate, endDate})
+      // Reset form
+      setStartDate("");
+      setStartTime("");
+      setEndDate("");
+      setEndTime("");
+      setShowBookingDialog(false);
+      setSelectedBike(null);
+      setPopupPosition(null);
+    
+  }
+
   const handleMarkerClick = useCallback(async (bike: Bike) => {
     // setSelectedBike(bike);
     console.log(bike);
-    setIsLoadingDetails(true);
+    // setIsLoadingDetails(true);
     // const bikeDetails = await getBikeDetails(bike.id);
     setSelectedBike(bike);
+    // setSelectedBike(normalizeBike(bikeDetails));
     // Mock timeout to simulate  API call
     setTimeout(() => {
       setIsLoadingDetails(false);
@@ -675,55 +730,7 @@ const MapView = () => {
 
             <Button 
               className="w-full"
-              onClick={() => {
-                if (!startDate || !startTime || !endDate || !endTime) {
-                  toast({
-                    title: "Missing Information",
-                    description: "Please fill in all date and time fields",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                // Validate start date is within 5 days
-                const selectedStartDate = new Date(startDate);
-                const todayDate = new Date();
-                const maxDate = addDays(todayDate, 5);
-                
-                if (selectedStartDate > maxDate) {
-                  toast({
-                    title: "Invalid Start Date",
-                    description: "Start date cannot exceed 5 days from today",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                // Validate end date is after start date
-                const selectedEndDate = new Date(endDate);
-                if (selectedEndDate < selectedStartDate) {
-                  toast({
-                    title: "Invalid End Date",
-                    description: "End date must be after start date",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                
-                toast({
-                  title: "Request Sent",
-                  description: "Your rental request has been submitted successfully",
-                });
-                
-                // Reset form
-                setStartDate("");
-                setStartTime("");
-                setEndDate("");
-                setEndTime("");
-                setShowBookingDialog(false);
-                setSelectedBike(null);
-                setPopupPosition(null);
-              }}
+              onClick = {sendRequest}
             >
               Send Request
             </Button>
