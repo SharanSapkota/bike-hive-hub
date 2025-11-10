@@ -6,17 +6,25 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   MapPin,
   Star,
   Phone,
   Mail,
-  Calendar,
+  Calendar as CalendarIcon,
   Bike,
   Shield,
   Award,
   Clock,
+  Loader2,
 } from "lucide-react";
 import {
   Carousel,
@@ -25,6 +33,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { calculatePrice } from "@/services/pricing";
 
 interface Owner {
   id: string;
@@ -224,6 +233,14 @@ const BikeDetails = () => {
   const [bike, setBike] = useState<BikeDetails | null>(null);
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
   const [ownerBikes, setOwnerBikes] = useState(mockOwnerBikes);
+  
+  // Booking dialog state
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [fromDate, setFromDate] = useState<Date>();
+  const [toDate, setToDate] = useState<Date>();
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
 
   useEffect(() => {
     // Simulate API call
@@ -231,6 +248,95 @@ const BikeDetails = () => {
       setBike(mockBikeDetails[bikeId]);
     }
   }, [bikeId]);
+
+  // Calculate price when dates change
+  useEffect(() => {
+    if (!fromDate || !toDate || !bike) {
+      setCalculatedPrice(null);
+      return;
+    }
+
+    const fetchPrice = async () => {
+      setIsCalculatingPrice(true);
+      try {
+        const price = await calculatePrice(
+          bike.id,
+          fromDate,
+          toDate,
+          bike.pricePerHour
+        );
+        setCalculatedPrice(price);
+      } catch (error) {
+        console.error("Error calculating price:", error);
+        toast({
+          title: "Error",
+          description: "Failed to calculate price. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCalculatingPrice(false);
+      }
+    };
+
+    fetchPrice();
+  }, [fromDate, toDate, bike]);
+
+  const handleBookNow = () => {
+    setShowBookingDialog(true);
+  };
+
+  const sendRequest = async () => {
+    if (!fromDate || !toDate) {
+      toast({
+        title: "Missing Information",
+        description: "Please select both from and to dates",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate end date is after start date
+    if (toDate <= fromDate) {
+      toast({
+        title: "Invalid Date Range",
+        description: "End date must be after start date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Set loading state
+    setIsSendingRequest(true);
+
+    try {
+      // Mock API call with delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Show success message
+      toast({
+        title: "✅ Request Sent Successfully",
+        description: "Your rental request has been submitted. The owner will respond shortly.",
+      });
+
+      // Reset form and close modal
+      setFromDate(undefined);
+      setToDate(undefined);
+      setCalculatedPrice(null);
+      setIsCalculatingPrice(false);
+      setShowBookingDialog(false);
+      
+      // Navigate back to map
+      navigate("/map");
+    } catch (error) {
+      toast({
+        title: "Request Failed",
+        description: "Failed to submit rental request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingRequest(false);
+    }
+  };
 
   if (!bike) {
     return (
@@ -361,7 +467,7 @@ const BikeDetails = () => {
                 </div>
               </div>
 
-              <Button size="lg" className="w-full mt-4">
+              <Button size="lg" className="w-full mt-4" onClick={handleBookNow}>
                 Book Now
               </Button>
             </CardContent>
@@ -510,6 +616,125 @@ const BikeDetails = () => {
           </Card>
         </div>
       </div>
+
+      {/* Booking Dialog */}
+      <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book {bike?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !fromDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ? format(fromDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={setFromDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !toDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDate ? format(toDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={toDate}
+                      onSelect={setToDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="pointer-events-auto"
+                      modifiers={fromDate ? { startDate: fromDate } : undefined}
+                      modifiersClassNames={{
+                        startDate: "bg-primary/20 text-primary font-semibold ring-1 ring-primary"
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Price Display */}
+            {fromDate && toDate && (
+              <div className="p-4 bg-muted rounded-lg">
+                {isCalculatingPrice ? (
+                  <div className="flex justify-center items-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="ml-2 text-sm text-muted-foreground">Calculating price...</span>
+                  </div>
+                ) : calculatedPrice !== null ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Price per hour:</span>
+                      <span className="font-medium">${bike?.pricePerHour}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration:</span>
+                      <span className="font-medium">
+                        {Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                      </span>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="pt-2 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Total Price:</span>
+                        <span className="text-2xl font-bold text-primary">${calculatedPrice}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            <Button 
+              className="w-full"
+              onClick={sendRequest}
+              disabled={!fromDate || !toDate || isSendingRequest}
+            >
+              {isSendingRequest ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending Request...
+                </>
+              ) : (
+                "Send Request"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
