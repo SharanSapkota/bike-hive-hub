@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOwnerNotifications } from '@/hooks/useOwnerNotifications';
 
 interface Notification {
   id: string;
@@ -189,6 +190,11 @@ interface NotificationPanelProps {
 
 const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) => {
   const { user } = useAuth();
+  const isOwner = user?.role === 'owner';
+  const {
+    notifications: socketNotifications,
+    markAsRead: markSocketNotificationAsRead,
+  } = useOwnerNotifications();
   const [notifications, setNotifications] = useState<Notification[]>(
     getMockNotifications(user?.role || 'renter')
   );
@@ -196,6 +202,48 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
   const [activeTab, setActiveTab] = useState<'requests' | 'payments'>('requests');
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isOwner) {
+      return;
+    }
+
+    if (!socketNotifications.length) {
+      return;
+    }
+
+    setNotifications((prev) => {
+      const entryMap = new Map(prev.map((notification) => [notification.id, notification]));
+      const mapped = socketNotifications.map<Notification>((notification) => ({
+        id: notification.id,
+        type: (notification.type as Notification['type']) ?? 'rental_request',
+        title: notification.title,
+        message: notification.message,
+        read: notification.read,
+        createdAt: new Date(notification.createdAt),
+        bikeId: notification.data?.bikeId,
+        bookingId: notification.data?.bookingId,
+        status: notification.data?.status,
+      }));
+
+      mapped.forEach((notification) => {
+        if (entryMap.has(notification.id)) {
+          const existing = entryMap.get(notification.id)!;
+          entryMap.set(notification.id, {
+            ...existing,
+            ...notification,
+            createdAt: existing.createdAt || notification.createdAt,
+          });
+        } else {
+          entryMap.set(notification.id, notification);
+        }
+      });
+
+      return Array.from(entryMap.values()).sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
+    });
+  }, [isOwner, socketNotifications]);
 
   // Filter notifications based on active tab
   const getFilteredNotifications = () => {
@@ -346,6 +394,18 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     onClose?.();
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item.id === notification.id ? { ...item, read: true } : item,
+      ),
+    );
+
+    if (isOwner) {
+      markSocketNotificationAsRead(notification.id);
+    }
+  };
+
   const handleViewAll = () => {
     if (user?.role === 'owner') {
       navigate('/rental-requests');
@@ -365,6 +425,7 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
           'p-2 sm:p-3 hover:bg-accent/30 transition-all cursor-pointer group overflow-hidden',
           !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
         )}
+        onClick={() => handleNotificationClick(notification)}
       >
         <div className="flex gap-1.5 sm:gap-2 w-full">
           <div className="mt-0.5 p-1 sm:p-1.5 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
@@ -524,7 +585,16 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             variant="ghost" 
             size="sm" 
             className="text-[10px] sm:text-xs h-6 px-1.5 sm:px-2 hover:bg-accent/50 flex-shrink-0 whitespace-nowrap"
-            onClick={onMarkAsRead}
+            onClick={() => {
+              setNotifications((prev) => {
+                prev
+                  .filter((notification) => !notification.read && isOwner)
+                  .forEach((notification) => markSocketNotificationAsRead(notification.id));
+
+                return prev.map((notification) => ({ ...notification, read: true }));
+              });
+              onMarkAsRead?.();
+            }}
           >
             <span className="hidden sm:inline">Mark all read</span>
             <span className="sm:hidden">Mark</span>
