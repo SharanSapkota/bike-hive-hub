@@ -259,14 +259,21 @@ const MapView = () => {
           // Get address from coordinates
           await getAddressFromCoordinates(newCenter.lat, newCenter.lng);
           setIsLoadingLocation(false);
+          
+          // Load bikes after location is set
+          getBikes();
         },
         (error) => {
           console.error("Error getting location:", error);
           setIsLoadingLocation(false);
+          // Load bikes even if location fails
+          getBikes();
         },
       );
     } else {
       setIsLoadingLocation(false);
+      // Load bikes even if geolocation not supported
+      getBikes();
     }
 
   }, []);
