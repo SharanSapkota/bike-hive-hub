@@ -25,6 +25,7 @@ export const fetchMenuItems = (role: UserRole): MenuItem[] => {
   const menuData: Record<UserRole, MenuItem[]> = {
     renter: [
       { icon: Map, label: 'Map', path: '/map' },
+      { icon: Bell, label: 'Notifications', path: '/notifications' },
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
       { icon: History, label: 'Rental History', path: '/history' },
       { icon: User, label: 'Profile', path: '/profile' },

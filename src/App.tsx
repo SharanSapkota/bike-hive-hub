@@ -50,7 +50,7 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/history" element={<History />} />
-        <Route path="/notifications" element={<ProtectedRoute allowedRoles={['owner']}><Notifications /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute allowedRoles={['owner', 'renter']}><Notifications /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
         <Route path="/bike/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><BikeDetails /></ProtectedRoute>} />
         <Route path="/payment" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
