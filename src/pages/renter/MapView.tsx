@@ -658,7 +658,12 @@ const MapView = () => {
 
                 <div className="mb-1 sm:mb-1.5">
                   <div className="flex items-start justify-between gap-1 mb-0.5">
-                    <h3 className="font-semibold text-[11px] sm:text-xs leading-tight flex-1">{selectedBike.name}</h3>
+                    <h3 
+                      className="font-semibold text-[11px] sm:text-xs leading-tight flex-1 cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-2"
+                      onClick={() => navigate(`/bike/${selectedBike.id}`)}
+                    >
+                      {selectedBike.name}
+                    </h3>
                     <Badge
                       variant="secondary"
                       className="bg-primary/10 text-primary text-[8px] sm:text-[9px] px-1 py-0 shrink-0 h-3.5"

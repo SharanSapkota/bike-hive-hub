@@ -14,6 +14,7 @@ import History from "./pages/History";
 import Install from "./pages/Install";
 import MapView from "./pages/renter/MapView";
 import Payment from "./pages/renter/Payment";
+import BikeDetails from "./pages/renter/BikeDetails";
 import MyBikes from "./pages/owner/MyBikes";
 import Rentals from "./pages/owner/Rentals";
 import RentalRequests from "./pages/owner/RentalRequests";
@@ -49,6 +50,7 @@ const AppRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/history" element={<History />} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
+        <Route path="/bike/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><BikeDetails /></ProtectedRoute>} />
         <Route path="/payment" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
         <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
         <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />
