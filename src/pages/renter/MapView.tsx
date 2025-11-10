@@ -329,10 +329,10 @@ const MapView = () => {
       }
 
       // Validate end date is after start date
-      if (toDate < fromDate) {
+      if (toDate <= fromDate) {
         toast({
           title: "Invalid Date Range",
-          description: "To date must be after from date",
+          description: "End date must be after start date",
           variant: "destructive",
         });
         return;
