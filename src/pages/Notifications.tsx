@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, CheckCheck, Check, X } from "lucide-react";
+import { Bell, Clock, CheckCheck, Check, X, Star, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
 import { useNotificationContext } from "@/contexts/NotificationContext";
@@ -155,6 +155,44 @@ const Notifications = () => {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* User Details Section - Only for rental requests */}
+                {notification.type === "rental_request" && notification.data && (
+                  <div className="mb-4 p-4 rounded-lg bg-muted/50 border border-border">
+                    <div className="flex items-start gap-3">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm mb-1">
+                          {notification.data.userName || "Renter"}
+                        </h4>
+                        <div className="flex items-center gap-3 text-sm">
+                          {/* Rating Display */}
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${
+                                  star <= (notification.data.userRating || 0)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-muted-foreground"
+                                }`}
+                              />
+                            ))}
+                            <span className="ml-1 font-medium">
+                              {notification.data.userRating?.toFixed(1) || "N/A"}
+                            </span>
+                          </div>
+                          {/* Review Count */}
+                          <span className="text-muted-foreground">
+                            ({notification.data.userReviewCount || 0} reviews)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
