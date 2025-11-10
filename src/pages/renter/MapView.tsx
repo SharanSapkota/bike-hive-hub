@@ -603,10 +603,10 @@ const MapView = () => {
                 </div>
 
                 {/* Price */}
-                <div className="mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b">
+                {/* <div className="mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b">
                   <p className="text-sm sm:text-base font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
                   <p className="text-[7px] sm:text-[8px] text-muted-foreground">per hour</p>
-                </div>
+                </div> */}
 
                 {/* Book Now Button */}
                 <Button 

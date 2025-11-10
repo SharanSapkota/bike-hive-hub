@@ -762,12 +762,12 @@ const MyBikes = () => {
                 <p className="text-sm text-muted-foreground mt-2">{bike.description}</p>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
+              {/* <div className="flex items-center justify-between text-sm">
                 <div>
                   <p className="font-semibold text-primary">${bike.pricePerHour}/hr</p>
                   <p className="text-muted-foreground">${bike.pricePerDay}/day</p>
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex gap-2 pt-2 border-t">
                 <Button
