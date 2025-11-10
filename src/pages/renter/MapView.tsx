@@ -35,6 +35,7 @@ interface Bike {
   condition?: string;
   reviews?: number;
   rating?: number;
+  myBooking?: boolean;
 }
 
 // Mock data - will be replaced with API call
@@ -182,7 +183,6 @@ const MapView = () => {
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
-  const [requestedBikeIds, setRequestedBikeIds] = useState<Set<string>>(new Set());
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -351,15 +351,20 @@ const MapView = () => {
         const endDateStr = format(toDate, "yyyy-MM-dd");
         const booking = await createBooking({bike: selectedBike.id, startDate: startDateStr, endDate: endDateStr})
         
-        // Add bike to requested bikes
-        setRequestedBikeIds(prev => new Set([...prev, selectedBike.id]));
+        // Update bike's myBooking flag
+        setBikes(prev => prev.map(bike => 
+          bike.id === selectedBike.id 
+            ? { ...bike, myBooking: true }
+            : bike
+        ));
         
+        // Show success message
         toast({
-          title: "Request Sent",
-          description: "Your rental request has been submitted successfully",
+          title: "✅ Request Sent Successfully",
+          description: "Your rental request has been submitted. The owner will respond shortly.",
         });
         
-        // Reset form
+        // Reset form and close modal
         setFromDate(undefined);
         setToDate(undefined);
         setCalculatedPrice(null);
@@ -561,8 +566,8 @@ const MapView = () => {
       >
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
-          const isRequested = requestedBikeIds.has(bike.id);
-          const markerColor = isRequested ? "#eab308" : "#14b8a6"; // yellow for requested, teal for available
+          const isMyBooking = bike.myBooking === true;
+          const markerColor = isMyBooking ? "#3b82f6" : "#14b8a6"; // blue for my bookings, teal for available
           
           return (
             <Marker
