@@ -310,13 +310,10 @@ const BikeDetails = () => {
 
     try {
       // Mock API call with delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Show success message
-      toast({
-        title: "✅ Request Sent Successfully",
-        description: "Your rental request has been submitted. The owner will respond shortly.",
-      });
+      
 
       // Reset form and close modal
       setFromDate(undefined);

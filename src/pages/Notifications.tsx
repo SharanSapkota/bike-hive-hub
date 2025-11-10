@@ -57,9 +57,7 @@ const Notifications = () => {
     }
   };
 
-  const bookingNotifications = notifications.filter(
-    (n) => n.type === "rental_request" || n.type === "rental_approved" || n.type === "rental_rejected"
-  );
+  const bookingNotifications = notifications;
 
   const getNotificationIcon = (type: string) => {
     return <Bell className="h-5 w-5" />;
@@ -110,7 +108,7 @@ const Notifications = () => {
         </Card>
       ) : (
         <div className="space-y-3 sm:space-y-4">
-          {bookingNotifications.map((notification) => (
+          {bookingNotifications.map((notification: any) => (
             <Card
               key={notification.id}
               className={`transition-colors ${
@@ -156,7 +154,7 @@ const Notifications = () => {
               </CardHeader>
               <CardContent>
                 {/* Compact User Details - Only for rental requests */}
-                {notification.type === "rental_request" && notification.data && (
+                {/* {notification.type === "rental_request" && notification.data && ( */}
                   <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
                     <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -187,7 +185,7 @@ const Notifications = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                {/* )} */}
 
                 {/* Payment Status */}
                 {notification.data?.paymentStatus && (
@@ -218,7 +216,8 @@ const Notifications = () => {
                       })}
                     </span>
                   </div>
-                  {notification.type === "rental_request" && !notification.read && (
+
+                  {notification?.data?.booking?.status.toLowerCase() === "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="default"
@@ -248,6 +247,20 @@ const Notifications = () => {
                         <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
                         <span className="hidden sm:inline">Reject</span>
                       </Button>
+                    </div>
+                  )}
+
+                  {notification?.data?.booking?.status.toLowerCase()!== "pending" && (
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1 sm:flex-none text-xs h-8"
+                      >
+                        <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">{notification?.data?.booking?.status.toLowerCase()}</span>
+                      </Button>
+                  
                     </div>
                   )}
                 </div>
