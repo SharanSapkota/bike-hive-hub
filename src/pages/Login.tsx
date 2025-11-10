@@ -10,9 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bike } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { api } from "@/lib/api";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
-
 // Validation schema
 const signupSchema = z
   .object({

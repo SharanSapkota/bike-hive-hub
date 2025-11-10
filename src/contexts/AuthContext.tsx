@@ -44,37 +44,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       // MOCK LOGIN - Comment out API call
-      // const response = await api.post('/auth/login', { email, password });
-      // const payload = response.data?.data ?? response.data;
-      // const authToken = payload?.token;
-      // const userData = payload?.user;
+      const response = await api.post('/auth/login', { email, password });
+      const payload = response.data?.data ?? response.data;
+      const authToken = payload?.token;
+      const userData = payload?.user;
 
       // Mock credentials
-      let userData: User | null = null;
+      // let userData: User | null = null;
       
-      if (email === 'renter@gmail.com') {
-        userData = {
-          id: 'renter-1',
-          email: 'renter@gmail.com',
-          name: 'Renter User',
-          role: 'renter' as UserRole,
-        };
-      } else if (email === 'owner@gmail.com') {
-        userData = {
-          id: 'owner-1',
-          email: 'owner@gmail.com',
-          name: 'Owner User',
-          role: 'owner' as UserRole,
-        };
-      } else {
-        throw new Error('Invalid credentials');
-      }
+      // if (email === 'renter@gmail.com') {
+      //   userData = {
+      //     id: 'renter-1',
+      //     email: 'renter@gmail.com',
+      //     name: 'Renter User',
+      //     role: 'renter' as UserRole,
+      //   };
+      // } else if (email === 'owner@gmail.com') {
+      //   userData = {
+      //     id: 'owner-1',
+      //     email: 'owner@gmail.com',
+      //     name: 'Owner User',
+      //     role: 'owner' as UserRole,
+      //   };
+      // } else {
+      //   throw new Error('Invalid credentials');
+      // }
 
-      const authToken = 'mock-token-' + email;
+      // const authToken = 'mock-token-' + email;
 
-      if (!authToken || !userData) {
-        throw new Error('invalid_login_response');
-      }
+      // if (!authToken || !userData) {
+      //   throw new Error('invalid_login_response');
+      // }
 
       localStorage.setItem('auth_token', authToken);
       localStorage.setItem('user', JSON.stringify(userData));

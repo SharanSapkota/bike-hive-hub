@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOwnerNotifications } from '@/hooks/useOwnerNotifications';
+import { useNotificationContext } from '@/contexts/NotificationContext';
 
 interface Notification {
   id: string;
@@ -16,7 +16,7 @@ interface Notification {
   title: string;
   message: string;
   read: boolean;
-  createdAt: Date;
+  createdAt: string;
   bikeId?: string;
   bookingId?: string;
   status?: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed' | 'disputed';
@@ -29,129 +29,6 @@ const mockApiCall = (action: 'approve' | 'reject' | 'confirm_complete' | 'disput
       resolve();
     }, 1500); // 1.5 second delay
   });
-};
-
-// Mock data - replace with real data from your backend
-const getMockNotifications = (role: string): Notification[] => {
-  if (role === 'renter') {
-    return [
-      {
-        id: '1',
-        type: 'rental_approved',
-        title: 'Request Accepted',
-        message: 'Your rental request for Mountain Explorer Pro has been accepted',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 5),
-        bikeId: '1',
-        bookingId: 'booking-1',
-      },
-      {
-        id: '2',
-        type: 'rental_rejected',
-        title: 'Request Rejected',
-        message: 'Your rental request for City Cruiser Deluxe was rejected',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 30),
-        bikeId: '2',
-      },
-      {
-        id: '3',
-        type: 'rental_approved',
-        title: 'Request Accepted',
-        message: 'Your rental request for Road Racer Speed has been accepted',
-        read: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60),
-        bikeId: '3',
-        bookingId: 'booking-3',
-      },
-      {
-        id: '4',
-        type: 'payment',
-        title: 'Payment Successful',
-        message: 'Your payment of $150 for Mountain Explorer Pro has been processed',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 90),
-        bookingId: 'booking-1',
-      },
-      {
-        id: '5',
-        type: 'payment',
-        title: 'Payment Pending',
-        message: 'Your payment for City Cruiser is being processed',
-        read: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 120),
-        bookingId: 'booking-2',
-      },
-      {
-        id: '6',
-        type: 'ride_completed',
-        title: 'Ride Completed',
-        message: 'The ride for Mountain Explorer Pro has been completed. Please confirm.',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 15),
-        bikeId: '1',
-        bookingId: 'booking-1',
-        status: 'pending',
-      },
-    ];
-  } else {
-    // Owner notifications
-    return [
-      {
-        id: '1',
-        type: 'rental_request',
-        title: 'New Rental Request',
-        message: 'John Doe requested to rent your Mountain Bike',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 5),
-      },
-      {
-        id: '2',
-        type: 'rental_request',
-        title: 'New Rental Request',
-        message: 'Sarah Smith requested to rent your Road Bike',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 30),
-      },
-      {
-        id: '3',
-        type: 'rental_request',
-        title: 'New Rental Request',
-        message: 'Mike Johnson requested to rent your City Bike',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60),
-      },
-      {
-        id: '4',
-        type: 'payment',
-        title: 'Payment Received',
-        message: 'You received $150 from John Doe for Mountain Bike rental',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 90),
-        bookingId: 'booking-1',
-      },
-      {
-        id: '5',
-        type: 'payment',
-        title: 'Payment Received',
-        message: 'You received $120 from Sarah Smith for Road Bike rental',
-        read: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 120),
-        bookingId: 'booking-2',
-      },
-      {
-        id: '6',
-        type: 'ride_completed',
-        title: 'Ride Completed',
-        message: 'The ride for Mountain Bike has been completed by John Doe. Please confirm.',
-        read: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 15),
-        bikeId: '1',
-        bookingId: 'booking-1',
-        status: 'pending',
-      },
-    ];
-  }
 };
 
 const getIcon = (type: Notification['type']) => {
@@ -170,7 +47,8 @@ const getIcon = (type: Notification['type']) => {
   }
 };
 
-const formatTime = (date: Date) => {
+const formatTime = (dateInput: string) => {
+  const date = new Date(dateInput);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 1000 / 60);
@@ -184,89 +62,102 @@ const formatTime = (date: Date) => {
 };
 
 interface NotificationPanelProps {
-  onMarkAsRead?: () => void;
   onClose?: () => void;
 }
 
-const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) => {
+const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const { user } = useAuth();
   const isOwner = user?.role === 'owner';
   const {
-    notifications: socketNotifications,
-    markAsRead: markSocketNotificationAsRead,
-  } = useOwnerNotifications();
-  const [notifications, setNotifications] = useState<Notification[]>(
-    getMockNotifications(user?.role || 'renter')
-  );
+    notifications: contextNotifications,
+    markAsRead: markNotificationAsRead,
+    markAllAsRead: markAllNotificationsAsRead,
+    isLoading: isContextLoading,
+    hasLoaded,
+  } = useNotificationContext();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'requests' | 'payments'>('requests');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const shownToastIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoading = isContextLoading && !hasLoaded;
+
+  const mapContextNotification = useCallback((notification: any): Notification => {
+    const data = notification?.data ?? {};
+    return {
+      id: notification.id,
+      type: (notification.type as Notification['type']) ?? 'rental_request',
+      title: notification.title,
+      message: notification.message,
+      read: notification.read,
+      createdAt: notification.createdAt,
+      bikeId: data?.bikeId ?? data?.bike_id ?? notification.bikeId,
+      bookingId: data?.bookingId ?? data?.booking_id ?? notification.bookingId,
+      status: (data?.status ?? notification.status) as Notification['status'],
+    };
+  }, []);
 
   useEffect(() => {
-    if (!isOwner) {
+    if (!hasLoaded) {
       return;
     }
 
-    if (!socketNotifications.length) {
-      return;
-    }
-
+    const mapped = contextNotifications.map(mapContextNotification);
     setNotifications((prev) => {
       const entryMap = new Map(prev.map((notification) => [notification.id, notification]));
-      const mapped = socketNotifications.map<Notification>((notification) => ({
-        id: notification.id,
-        type: (notification.type as Notification['type']) ?? 'rental_request',
-        title: notification.title,
-        message: notification.message,
-        read: notification.read,
-        createdAt: new Date(notification.createdAt),
-        bikeId: notification.data?.bikeId,
-        bookingId: notification.data?.bookingId,
-        status: notification.data?.status,
-      }));
-
       mapped.forEach((notification) => {
-        if (entryMap.has(notification.id)) {
-          const existing = entryMap.get(notification.id)!;
-          entryMap.set(notification.id, {
-            ...existing,
-            ...notification,
-            createdAt: existing.createdAt || notification.createdAt,
-          });
-        } else {
-          entryMap.set(notification.id, notification);
-        }
+        const existing = entryMap.get(notification.id);
+        entryMap.set(
+          notification.id,
+          existing
+            ? { ...existing, ...notification }
+            : notification,
+        );
       });
 
       return Array.from(entryMap.values()).sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     });
-  }, [isOwner, socketNotifications]);
+  }, [contextNotifications, hasLoaded, mapContextNotification]);
 
   // Show toast notifications for renters when they receive approved/rejected notifications
   useEffect(() => {
-    if (user?.role === 'renter') {
-      notifications.forEach(notification => {
-        if (!notification.read) {
-          if (notification.type === 'rental_approved') {
-            toast({
-              title: "🎉 Booking Accepted!",
-              description: notification.message,
-              duration: 5000,
-            });
-          } else if (notification.type === 'rental_rejected') {
-            toast({
-              title: "❌ Booking Rejected",
-              description: notification.message,
-              variant: "destructive",
-              duration: 5000,
-            });
-          }
-        }
-      });
+    if (user?.role !== 'renter') {
+      return;
     }
+
+    notifications.forEach((notification) => {
+      if (notification.read) {
+        return;
+      }
+
+      if (shownToastIdsRef.current.has(notification.id)) {
+        return;
+      }
+
+      if (notification.type === 'rental_approved') {
+        toast({
+          title: "🎉 Booking Accepted!",
+          description: notification.message,
+          duration: 5000,
+        });
+        shownToastIdsRef.current.add(notification.id);
+        return;
+      }
+
+      if (notification.type === 'rental_rejected') {
+        toast({
+          title: "❌ Booking Rejected",
+          description: notification.message,
+          variant: "destructive",
+          duration: 5000,
+        });
+        shownToastIdsRef.current.add(notification.id);
+      }
+    });
   }, [notifications, user?.role, toast]);
 
   // Filter notifications based on active tab
@@ -304,6 +195,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             : n
         )
       );
+
+      markNotificationAsRead(notificationId);
       
       toast({
         title: 'Request Approved',
@@ -337,6 +230,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             : n
         )
       );
+
+      markNotificationAsRead(notificationId);
       
       toast({
         title: 'Request Rejected',
@@ -368,6 +263,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             : n
         )
       );
+
+      markNotificationAsRead(notificationId);
       
       toast({
         title: 'Ride Confirmed',
@@ -397,6 +294,8 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             : n
         )
       );
+
+      markNotificationAsRead(notificationId);
       
       toast({
         title: 'Completion Disputed',
@@ -416,6 +315,7 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     e?.stopPropagation();
     navigate(`/payment?bookingId=${bookingId}`);
     onClose?.();
+    markNotificationAsRead(notificationId);
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -425,9 +325,7 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
       ),
     );
 
-    if (isOwner) {
-      markSocketNotificationAsRead(notification.id);
-    }
+    markNotificationAsRead(notification.id);
   };
 
   const handleViewAll = () => {
@@ -608,20 +506,16 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     <div className="flex flex-col w-full max-w-md overflow-hidden">
       <div className="flex items-center justify-between p-2 sm:p-3 border-b bg-card flex-shrink-0">
         <h3 className="font-semibold text-xs sm:text-sm truncate mr-2">Notifications</h3>
-        {notifications.some(n => !n.read) && (
+        {notifications.some((notification) => !notification.read) && (
           <Button 
             variant="ghost" 
             size="sm" 
             className="text-[10px] sm:text-xs h-6 px-1.5 sm:px-2 hover:bg-accent/50 flex-shrink-0 whitespace-nowrap"
             onClick={() => {
-              setNotifications((prev) => {
-                prev
-                  .filter((notification) => !notification.read && isOwner)
-                  .forEach((notification) => markSocketNotificationAsRead(notification.id));
-
-                return prev.map((notification) => ({ ...notification, read: true }));
-              });
-              onMarkAsRead?.();
+              setNotifications((prev) =>
+                prev.map((notification) => ({ ...notification, read: true })),
+              );
+              markAllNotificationsAsRead();
             }}
           >
             <span className="hidden sm:inline">Mark all read</span>
@@ -643,7 +537,12 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
         
         <TabsContent value="requests" className="mt-0 overflow-hidden">
           <ScrollArea className="h-[320px] sm:h-[360px]">
-            {filteredNotifications.length === 0 ? (
+            {isInitialLoading ? (
+              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground px-3">
+                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 mb-2 animate-spin" />
+                <p className="text-[10px] sm:text-xs font-medium">Loading notifications...</p>
+              </div>
+            ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-muted-foreground px-3">
                 <Bell className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-40" />
                 <p className="text-[10px] sm:text-xs font-medium">No rental notifications</p>
@@ -659,7 +558,12 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
         
         <TabsContent value="payments" className="mt-0 overflow-hidden">
           <ScrollArea className="h-[320px] sm:h-[360px]">
-            {filteredNotifications.length === 0 ? (
+            {isInitialLoading ? (
+              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground px-3">
+                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 mb-2 animate-spin" />
+                <p className="text-[10px] sm:text-xs font-medium">Loading notifications...</p>
+              </div>
+            ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-muted-foreground px-3">
                 <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-40" />
                 <p className="text-[10px] sm:text-xs font-medium">No payment notifications</p>

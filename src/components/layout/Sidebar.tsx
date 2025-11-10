@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { fetchMenuItems, MenuItem } from '@/lib/mockMenuApi';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useNotificationContext } from '@/contexts/NotificationContext';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const { unreadCount } = useNotificationContext();
 
   useEffect(() => {
     const loadMenuItems = async () => {
@@ -60,8 +62,13 @@ const Sidebar = () => {
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
+              <div className="relative w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
                 <Bike className="h-6 w-6 text-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold flex items-center justify-center shadow-lg">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </div>
               <div>
                 <h1 className="font-bold text-lg">Gear Quest</h1>

@@ -1,11 +1,22 @@
-import { useOwnerNotifications } from "@/hooks/useOwnerNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect } from "react";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 const Notifications = () => {
-  const { notifications, markAsRead } = useOwnerNotifications();
+  const {
+    notifications,
+    markAsRead,
+    loadNotifications,
+    isLoading,
+    hasLoaded,
+  } = useNotificationContext();
+
+  useEffect(() => {
+    loadNotifications(true);
+  }, [loadNotifications]);
 
   const getNotificationIcon = (type: string) => {
     return <Bell className="h-5 w-5" />;
@@ -37,7 +48,14 @@ const Notifications = () => {
         </p>
       </div>
 
-      {notifications.length === 0 ? (
+      {isLoading && !hasLoaded ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
+            <Bell className="h-12 w-12 animate-pulse" />
+            <p className="font-medium">Loading notifications...</p>
+          </CardContent>
+        </Card>
+      ) : notifications.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Bell className="h-12 w-12 text-muted-foreground mb-4" />

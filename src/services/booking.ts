@@ -1,7 +1,13 @@
-import api from "@/lib/api"
+import { api } from "@/lib/api"
 
-export const createBooking = async (payload: any) => {
-    const response = await api.post(`${import.meta.env.VITE_BASE_API_URL}/bookings`, {bikeId: payload.id, startTime: payload.startTime, endTime: payload.endTime});
+interface CreateBookingPayload {
+  bikeId: string | number;
+  startTime: string;
+  endTime: string;
+}
+
+export const createBooking = async (payload: CreateBookingPayload) => {
+    const response = await api.post(`/bookings`, payload);
 
     return response.data.data;
 }

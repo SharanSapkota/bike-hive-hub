@@ -329,7 +329,8 @@ const MapView = () => {
     setMap(map);
   }, []);
 
-  const sendRequest = async() => {
+  const sendRequest = async(event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
   
       if (!fromDate || !toDate) {
         toast({
@@ -355,11 +356,15 @@ const MapView = () => {
       
       try {
         // Mock API call with delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // await new Promise((resolve) => setTimeout(resolve, 2000));
         
         const startDateStr = format(fromDate, "yyyy-MM-dd");
         const endDateStr = format(toDate, "yyyy-MM-dd");
-        const booking = await createBooking({bike: selectedBike.id, startDate: startDateStr, endDate: endDateStr})
+        const booking = await createBooking({
+          bikeId: selectedBike.id,
+          startTime: fromDate.toISOString(),
+          endTime: toDate.toISOString(),
+        });
         
         // Update bike's myBooking flag
         setBikes(prev => prev.map(bike => 
@@ -849,7 +854,7 @@ const MapView = () => {
 
             <Button 
               className="w-full"
-              onClick={sendRequest}
+              onClick={(event: any) => sendRequest(event)}
               disabled={!fromDate || !toDate || isSendingRequest}
             >
               {isSendingRequest ? (

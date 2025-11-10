@@ -7,20 +7,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import NotificationPanel from "./NotificationPanel";
-import { useOwnerNotifications } from "@/hooks/useOwnerNotifications";
-import { useAuth } from "@/contexts/AuthContext";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 const NotificationBell = () => {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
-  const { unreadCount, markAllAsRead } = useOwnerNotifications();
+  const { unreadCount, loadNotifications } = useNotificationContext();
 
   useEffect(() => {
-    if (!open || user?.role !== "owner") {
+    if (!open) {
       return;
     }
-    markAllAsRead();
-  }, [open, user?.role, markAllAsRead]);
+    loadNotifications();
+  }, [open, loadNotifications]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -35,10 +33,7 @@ const NotificationBell = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
-        <NotificationPanel 
-          onMarkAsRead={markAllAsRead} 
-          onClose={() => setOpen(false)}
-        />
+        <NotificationPanel onClose={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
   );
