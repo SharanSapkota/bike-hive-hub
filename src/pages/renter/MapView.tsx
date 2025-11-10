@@ -181,6 +181,8 @@ const MapView = () => {
   const [toDate, setToDate] = useState<Date>();
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [requestedBikeIds, setRequestedBikeIds] = useState<Set<string>>(new Set());
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -338,23 +340,42 @@ const MapView = () => {
         return;
       }
       
-      toast({
-        title: "Request Sent",
-        description: "Your rental request has been submitted successfully",
-      });
+      // Set loading state
+      setIsSendingRequest(true);
       
-      const startDateStr = format(fromDate, "yyyy-MM-dd");
-      const endDateStr = format(toDate, "yyyy-MM-dd");
-      const booking = await createBooking({bike: selectedBike.id, startDate: startDateStr, endDate: endDateStr})
-      
-      // Reset form
-      setFromDate(undefined);
-      setToDate(undefined);
-      setCalculatedPrice(null);
-      setIsCalculatingPrice(false);
-      setShowBookingDialog(false);
-      setSelectedBike(null);
-      setPopupPosition(null);
+      try {
+        // Mock API call with delay
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        const startDateStr = format(fromDate, "yyyy-MM-dd");
+        const endDateStr = format(toDate, "yyyy-MM-dd");
+        const booking = await createBooking({bike: selectedBike.id, startDate: startDateStr, endDate: endDateStr})
+        
+        // Add bike to requested bikes
+        setRequestedBikeIds(prev => new Set([...prev, selectedBike.id]));
+        
+        toast({
+          title: "Request Sent",
+          description: "Your rental request has been submitted successfully",
+        });
+        
+        // Reset form
+        setFromDate(undefined);
+        setToDate(undefined);
+        setCalculatedPrice(null);
+        setIsCalculatingPrice(false);
+        setShowBookingDialog(false);
+        setSelectedBike(null);
+        setPopupPosition(null);
+      } catch (error) {
+        toast({
+          title: "Request Failed",
+          description: "Failed to submit rental request. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSendingRequest(false);
+      }
     
   }
 
@@ -540,6 +561,9 @@ const MapView = () => {
       >
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
+          const isRequested = requestedBikeIds.has(bike.id);
+          const markerColor = isRequested ? "#eab308" : "#14b8a6"; // yellow for requested, teal for available
+          
           return (
             <Marker
               key={bike.id}
@@ -550,8 +574,8 @@ const MapView = () => {
                   "data:image/svg+xml;charset=UTF-8," +
                   encodeURIComponent(`
                   <svg width="${isSelected ? 56 : 40}" height="${isSelected ? 56 : 40}" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                    ${isSelected ? '<circle cx="28" cy="28" r="26" fill="#14b8a6" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>' : ""}
-                    <circle cx="28" cy="28" r="22" fill="#14b8a6" stroke="white" stroke-width="${isSelected ? 3 : 2}"/>
+                    ${isSelected ? `<circle cx="28" cy="28" r="26" fill="${markerColor}" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>` : ""}
+                    <circle cx="28" cy="28" r="22" fill="${markerColor}" stroke="white" stroke-width="${isSelected ? 3 : 2}"/>
                     <text x="28" y="${isSelected ? 36 : 34}" font-size="${isSelected ? 26 : 24}" text-anchor="middle" fill="white">🚲</text>
                   </svg>
                 `),
@@ -811,9 +835,16 @@ const MapView = () => {
             <Button 
               className="w-full"
               onClick={sendRequest}
-              disabled={!fromDate || !toDate}
+              disabled={!fromDate || !toDate || isSendingRequest}
             >
-              Send Request
+              {isSendingRequest ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending Request...
+                </>
+              ) : (
+                "Send Request"
+              )}
             </Button>
           </div>
         </DialogContent>
