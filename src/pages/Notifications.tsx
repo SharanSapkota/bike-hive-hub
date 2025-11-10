@@ -83,10 +83,10 @@ const Notifications = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Booking Notifications</h1>
-        <p className="text-muted-foreground">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-4xl">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Booking Notifications</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Manage your rental booking requests
         </p>
       </div>
@@ -109,7 +109,7 @@ const Notifications = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {bookingNotifications.map((notification) => (
             <Card
               key={notification.id}
@@ -117,94 +117,93 @@ const Notifications = () => {
                 notification.read ? "opacity-70" : "border-primary/50"
               }`}
             >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-1">
+              <CardHeader className="p-3 sm:p-6">
+                <div className="flex items-start justify-between gap-2 sm:gap-4">
+                  <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className="mt-0.5 sm:mt-1 flex-shrink-0">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        {notification.title}
+                    <div className="flex-1 space-y-0.5 sm:space-y-1 min-w-0">
+                      <CardTitle className="text-sm sm:text-base flex items-center gap-1.5 sm:gap-2">
+                        <span className="truncate">{notification.title}</span>
                         {!notification.read && (
-                          <span className="h-2 w-2 rounded-full bg-primary" />
+                          <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary flex-shrink-0" />
                         )}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                         {notification.message}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getNotificationBadgeVariant(notification.type)}>
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <Badge variant={getNotificationBadgeVariant(notification.type)} className="text-[10px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 hidden sm:inline-flex">
                       {notification.type.replace(/_/g, " ")}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-7 w-7 sm:h-8 sm:w-8"
                       onClick={() => markAsRead(notification.id)}
                     >
                       {notification.read ? (
-                        <CheckCheck className="h-4 w-4 text-muted-foreground" />
+                        <CheckCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                       ) : (
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       )}
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* User Details Section - Only for rental requests */}
+                {/* Compact User Details - Only for rental requests */}
                 {notification.type === "rental_request" && notification.data && (
-                  <div className="mb-4 p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-sm mb-1">
-                          {notification.data.userName || "Renter"}
-                        </h4>
-                        <div className="flex items-center gap-3 text-sm">
-                          {/* Rating Display */}
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${
-                                  star <= (notification.data.userRating || 0)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-muted-foreground"
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-1 font-medium">
-                              {notification.data.userRating?.toFixed(1) || "N/A"}
-                            </span>
-                          </div>
-                          {/* Review Count */}
-                          <span className="text-muted-foreground">
-                            ({notification.data.userReviewCount || 0} reviews)
+                  <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                      <span className="font-semibold text-xs sm:text-sm whitespace-nowrap">
+                        {notification.data.userName || "Renter"}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3 w-3 ${
+                                star <= (notification.data.userRating || 0)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground/40"
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-0.5 font-medium text-foreground">
+                            {notification.data.userRating?.toFixed(1) || "N/A"}
                           </span>
                         </div>
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">
+                          ({notification.data.userReviewCount || 0})
+                        </span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(notification.createdAt), {
-                      addSuffix: true,
-                    })}
+                    <span className="truncate">
+                      {formatDistanceToNow(new Date(notification.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
                   </div>
                   {notification.type === "rental_request" && !notification.read && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="default"
                         size="sm"
+                        className="flex-1 sm:flex-none text-xs h-8"
                         onClick={() =>
                           handleAcceptBooking(
                             notification.id,
@@ -212,12 +211,13 @@ const Notifications = () => {
                           )
                         }
                       >
-                        <Check className="h-4 w-4 mr-1" />
-                        Accept
+                        <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Accept</span>
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
+                        className="flex-1 sm:flex-none text-xs h-8"
                         onClick={() =>
                           handleRejectBooking(
                             notification.id,
@@ -225,8 +225,8 @@ const Notifications = () => {
                           )
                         }
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Reject
+                        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Reject</span>
                       </Button>
                     </div>
                   )}
