@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, CheckCheck, Check, X, Star, User } from "lucide-react";
+import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
 import { useNotificationContext } from "@/contexts/NotificationContext";
@@ -185,6 +185,26 @@ const Notifications = () => {
                           ({notification.data.userReviewCount || 0})
                         </span>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Status */}
+                {notification.data?.paymentStatus && (
+                  <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Payment Status</span>
+                      <span className="font-semibold text-xs sm:text-sm capitalize">
+                        {notification.data.paymentStatus}
+                      </span>
+                      {notification.data.amount && (
+                        <span className="text-xs text-muted-foreground">
+                          ${notification.data.amount}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
