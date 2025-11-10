@@ -314,19 +314,6 @@ const MapView = () => {
     
   }
 
-  // Calculate rental days and total price
-  const calculateRentalPrice = () => {
-    if (!fromDate || !toDate || !selectedBike) return { days: 0, total: 0 };
-    
-    const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const days = diffDays === 0 ? 1 : diffDays; // Minimum 1 day
-    const pricePerDay = selectedBike.pricePerHour * 24; // Calculate daily rate from hourly
-    const total = days * pricePerDay;
-    
-    return { days, total };
-  };
-
   const handleMarkerClick = useCallback(async (bike: Bike) => {
     // setSelectedBike(bike);
     console.log(bike);
@@ -739,20 +726,10 @@ const MapView = () => {
 
             {/* Price Display */}
             {fromDate && toDate && (
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Rental Duration:</span>
-                  <span className="font-semibold">{calculateRentalPrice().days} {calculateRentalPrice().days === 1 ? 'day' : 'days'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Price per day:</span>
-                  <span className="font-semibold">${selectedBike?.pricePerHour ? selectedBike.pricePerHour * 24 : 0}</span>
-                </div>
-                <div className="pt-2 border-t border-border">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Total Price:</span>
-                    <span className="text-xl font-bold text-primary">${calculateRentalPrice().total}</span>
-                  </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="flex justify-center items-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-sm text-muted-foreground">Calculating price...</span>
                 </div>
               </div>
             )}
