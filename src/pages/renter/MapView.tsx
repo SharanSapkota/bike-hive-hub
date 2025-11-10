@@ -762,6 +762,10 @@ const MapView = () => {
                       disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                       initialFocus
                       className="pointer-events-auto"
+                      modifiers={fromDate ? { startDate: fromDate } : undefined}
+                      modifiersClassNames={{
+                        startDate: "bg-primary/20 text-primary font-semibold ring-1 ring-primary"
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
