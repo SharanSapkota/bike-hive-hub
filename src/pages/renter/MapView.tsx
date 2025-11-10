@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Star, X, Search, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Bike {
-  id: string;
+  id: number | string;
   name: string;
-  location: { lat: number; lng: number, city: string, state: string };
-  // city: string;
-  // state: string;
+  location: { lat: number; lng: number; city?: string | null; state?: string | null; address?: string | null };
   pricePerHour: number;
   category: string;
   available: boolean;
@@ -23,125 +24,8 @@ interface Bike {
   condition?: string;
   reviews?: number;
   rating?: number;
+  ownerId?: number | string | null;
 }
-
-// Mock data - will be replaced with API call
-const mockBikes: Bike[] = [
-  {
-    id: "1",
-    name: "Mountain Explorer Pro",
-    location: { lat: 65.0593, lng: 25.4663, city: "Oulu", state: "Oulu" },
-    // city: "Oulu",
-    // state: "NY",
-    pricePerHour: 8,
-    category: "Mountain",
-    available: true,
-    images: [
-      "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400",
-      "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=400",
-    ],
-    condition: "Excellent",
-    reviews: 24,
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    name: "City Cruiser Deluxe",
-    location: { lat: 65.0591, lng: 25.4653, city: "Oulu", state: "Oulu" },
-    // city: "Oulu",
-    // state: "NY",
-    pricePerHour: 5,
-    category: "City",
-    available: true,
-    images: ["https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400"],
-    condition: "Good",
-    reviews: 18,
-    rating: 4.5,
-  },
-  {
-    id: "3",
-    name: "Road Racer Speed",
-    location: { lat: 65.1591, lng: 25.465, city: "Oulu", state: "Oulu" },
-    // city: "New York",
-    // state: "NY",
-    pricePerHour: 10,
-    category: "Road",
-    available: true,
-    images: [
-      "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400",
-      "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400",
-    ],
-    condition: "Excellent",
-    reviews: 32,
-    rating: 4.9,
-  },
-  {
-    id: "4",
-    name: "Electric Bolt",
-    location: { lat: 40.7158, lng: -74.009, city: "New York", state: "NY" },
-    pricePerHour: 12,
-    category: "Electric",
-    available: true,
-    images: ["https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400"],
-    condition: "Excellent",
-    reviews: 41,
-    rating: 4.9,
-  },
-  {
-    id: "5",
-    name: "Hybrid Comfort",
-    location: { lat: 40.7098, lng: -74.003, city: "New York", state: "NY" },
-    pricePerHour: 7,
-    category: "Hybrid",
-    available: true,
-    images: ["https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400"],
-    condition: "Good",
-    reviews: 15,
-    rating: 4.3,
-  },
-  {
-    id: "6",
-    name: "Mountain Trail",
-    location: { lat: 40.7108, lng: -74.007, city: "New York", state: "NY" },
-    // state: "NY",
-    pricePerHour: 9,
-    category: "Mountain",
-    available: true,
-    images: ["https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400"],
-    condition: "Very Good",
-    reviews: 28,
-    rating: 4.7,
-  },
-  {
-    id: "7",
-    name: "City Commuter",
-    location: { lat: 40.7148, lng: -74.005, city: "New York", state: "NY" },
-    // city: "New York",
-    // state: "NY",
-    pricePerHour: 6,
-    category: "City",
-    available: true,
-    images: ["https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400"],
-    condition: "Good",
-    reviews: 12,
-    rating: 4.4,
-  },
-  {
-    id: "8",
-    name: "Electric Cruiser",
-    location: { lat: 40.7168, lng: -74.0065, city: "New York", state: "NY" },
-    pricePerHour: 11,
-    category: "Electric",
-    available: true,
-    images: [
-      "https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400",
-      "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400",
-    ],
-    condition: "Excellent",
-    reviews: 36,
-    rating: 4.8,
-  },
-];
 
 const containerStyle = {
   width: "100%",
@@ -151,17 +35,99 @@ const containerStyle = {
 const MapView = () => {
   const navigate = useNavigate();
   const { isLoaded, loadError } = useGoogleMaps();
+  const { user } = useAuth();
 
-  const [bikes, setBikes] = useState<Bike[]>(mockBikes);
+  const [bikes, setBikes] = useState<Bike[]>([]);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [isLoadingBikes, setIsLoadingBikes] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [searchValue, setSearchValue] = useState<string>("");
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autoplayTimeout = useRef<NodeJS.Timeout | null>(null);
+  const mediaBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_BASE_API_URL || "http://localhost:4000/api";
+    return base.replace(/\/api\/?$/, "");
+  }, []);
+
+  const fetchBikes = useCallback(async () => {
+    setIsLoadingBikes(true);
+    try {
+      const response = await api.get("/bikes", {
+        params: {
+          status: "AVAILABLE",
+        },
+      });
+
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+
+      const mapped: Bike[] = data
+        .map((bike: any) => {
+          const address = Array.isArray(bike.bikeAddress) ? bike.bikeAddress[0] : bike.bikeAddress;
+
+          if (!address || address.latitude == null || address.longitude == null) {
+            return null;
+          }
+
+          const images = Array.isArray(bike.bikeImages)
+            ? bike.bikeImages
+                .map((img: any) => img?.imageUrl)
+                .filter((img: string | undefined) => !!img)
+            : [];
+
+          const normalizedImages = images.map((img: string) =>
+            img.startsWith("http") ? img : `${mediaBaseUrl}${img}`
+          );
+
+          const pricePerHour =
+            typeof bike.pricePerHour === "number"
+              ? bike.pricePerHour
+              : typeof bike.rentAmount === "number"
+              ? bike.rentAmount
+              : 0;
+
+          return {
+            id: bike.id,
+            name: bike.name,
+            location: {
+              lat: address.latitude,
+              lng: address.longitude,
+              city: address.city,
+              state: address.state,
+              address: address.address,
+            },
+            pricePerHour,
+            category: bike.category?.name || "Unknown",
+            available: bike.status === "AVAILABLE",
+            images: normalizedImages,
+            image: normalizedImages[0],
+            ownerId: bike.owner?.id ?? bike.ownerId ?? null,
+          } as Bike;
+        })
+        .filter((bike: Bike | null): bike is Bike => bike !== null);
+
+      const filtered = mapped.filter((bike) => {
+        if (!bike.available) return false;
+        if (user?.id != null && bike.ownerId === user.id) return false;
+        return true;
+      });
+
+      setBikes(filtered);
+
+      if (filtered.length > 0) {
+        setCenter({ lat: filtered[0].location.lat, lng: filtered[0].location.lng });
+      }
+    } catch (error) {
+      console.error("Failed to load bikes", error);
+      toast.error("Unable to load available bikes right now.");
+    } finally {
+      setIsLoadingBikes(false);
+    }
+  }, [user?.id]);
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -192,11 +158,10 @@ const MapView = () => {
       setCenter(location);
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
-      return;
     }
 
     // Get user's current location only if not cached
-    if (navigator.geolocation) {
+    if (!cachedLocation && navigator.geolocation) {
       setIsLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -222,9 +187,8 @@ const MapView = () => {
       setIsLoadingLocation(false);
     }
 
-    // TODO: Fetch bikes from API
-    // api.get('/bikes/nearby').then(response => setBikes(response.data));
-  }, []);
+    fetchBikes();
+  }, [fetchBikes]);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -237,7 +201,23 @@ const MapView = () => {
     setTimeout(() => {
       setIsLoadingDetails(false);
     }, 1000);
-  }, []);
+
+    if (map) {
+      map.panTo({ lat: bike.location.lat, lng: bike.location.lng });
+      map.setZoom(15);
+    }
+  }, [map]);
+
+  const handleBikeCardClick = useCallback(
+    (bike: Bike) => {
+      setSelectedBike(bike);
+      if (map) {
+        map.panTo({ lat: bike.location.lat, lng: bike.location.lng });
+        map.setZoom(15);
+      }
+    },
+    [map]
+  );
 
   const onUnmount = useCallback(() => {
     setMap(null);
@@ -358,12 +338,13 @@ const MapView = () => {
 
   return (
     <div className="relative h-[calc(100vh-2rem)] rounded-lg overflow-hidden">
-      {/* Loading Overlay */}
-      {isLoadingLocation && (
+      {(isLoadingLocation || isLoadingBikes) && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-foreground font-semibold text-lg">Getting your location...</p>
+            <p className="text-foreground font-semibold text-lg">
+              {isLoadingLocation ? "Getting your location..." : "Loading available bikes..."}
+            </p>
             <p className="text-muted-foreground text-sm mt-2">Please wait</p>
           </div>
         </div>
@@ -457,6 +438,74 @@ const MapView = () => {
             <span className="text-sm font-medium">Available Products</span>
           </div>
         </Card>
+      </div>
+
+      {/* Available bikes carousel */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-4xl px-4">
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted-foreground/30">
+          {bikes.length === 0 && !isLoadingBikes ? (
+            <Card className="px-4 py-3 shadow-lg bg-background/90 border-dashed border-muted-foreground/40">
+              <p className="text-sm text-muted-foreground">No bikes available nearby yet.</p>
+            </Card>
+          ) : (
+            bikes.map((bike) => {
+              const isSelected = selectedBike?.id === bike.id;
+              return (
+                <Card
+                  key={bike.id}
+                  className={`min-w-[220px] max-w-[260px] shadow-lg transition-all cursor-pointer border ${
+                    isSelected ? "border-primary shadow-primary/30" : "border-transparent"
+                  }`}
+                  onClick={() => handleBikeCardClick(bike)}
+                >
+                  <div className="relative h-32 w-full overflow-hidden rounded-t-lg">
+                    {bike.images && bike.images.length > 0 ? (
+                      <img
+                        src={bike.images[0]}
+                        alt={bike.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                    <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px]">
+                      ${bike.pricePerHour}/hr
+                    </Badge>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-semibold leading-tight line-clamp-2">{bike.name}</h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {bike.location.city ?? "Unknown"}, {bike.location.state ?? ""}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={`text-[10px] ${isSelected ? "bg-primary/10 text-primary" : ""}`}
+                      >
+                        Available
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-gradient-primary hover:opacity-90 w-full text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/payment/${bike.id}`);
+                      }}
+                    >
+                      Rent Now
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Anchored popup emerging from marker */}
