@@ -245,6 +245,30 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
     });
   }, [isOwner, socketNotifications]);
 
+  // Show toast notifications for renters when they receive approved/rejected notifications
+  useEffect(() => {
+    if (user?.role === 'renter') {
+      notifications.forEach(notification => {
+        if (!notification.read) {
+          if (notification.type === 'rental_approved') {
+            toast({
+              title: "🎉 Booking Accepted!",
+              description: notification.message,
+              duration: 5000,
+            });
+          } else if (notification.type === 'rental_rejected') {
+            toast({
+              title: "❌ Booking Rejected",
+              description: notification.message,
+              variant: "destructive",
+              duration: 5000,
+            });
+          }
+        }
+      });
+    }
+  }, [notifications, user?.role, toast]);
+
   // Filter notifications based on active tab
   const getFilteredNotifications = () => {
     if (activeTab === 'requests') {
@@ -495,13 +519,17 @@ const NotificationPanel = ({ onMarkAsRead, onClose }: NotificationPanelProps) =>
             {/* Renter: Payment button for approved requests */}
             {user?.role === 'renter' && notification.type === 'rental_approved' && (
               <div className="pt-1.5 w-full">
+                <div className="mb-2 px-2 py-1.5 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-[10px] sm:text-xs">
+                  <p className="text-green-700 dark:text-green-400 font-medium">✓ Request Accepted</p>
+                  <p className="text-green-600 dark:text-green-500 text-[9px] sm:text-[10px] mt-0.5">Complete your payment to confirm the booking</p>
+                </div>
                 <Button
                   size="sm"
-                  className="w-full h-7 sm:h-8 text-[10px] sm:text-xs font-medium"
+                  className="w-full h-7 sm:h-8 text-[10px] sm:text-xs font-medium bg-green-600 hover:bg-green-700"
                   onClick={(e) => handlePayment(notification.id, notification.bookingId, e)}
                 >
                   <CreditCard className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">Proceed to Payment</span>
+                  <span className="truncate">Add Payment</span>
                 </Button>
               </div>
             )}
