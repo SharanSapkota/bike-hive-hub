@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, Locate, ImageIcon } from 'lucide-react';
+import { Bike, Plus, Edit, Trash2, Power, MapPin, Upload, X, Locate, ImageIcon, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,17 +73,12 @@ const MyBikes = () => {
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [isMapLoading, setIsMapLoading] = useState(false);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-
-  const revokeNewImagePreviews = () => {
-    newImagePreviews.forEach((preview) => {
-      if (preview.startsWith('blob:')) {
-        URL.revokeObjectURL(preview);
-      }
-    });
-  };
-
-  // Form state
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [addressPredictions, setAddressPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [isAddressSearching, setIsAddressSearching] = useState(false);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category: 'City',
@@ -94,6 +89,174 @@ const MyBikes = () => {
     description: '',
     autoAccept: false,
   });
+
+  const revokeNewImagePreviews = () => {
+    newImagePreviews.forEach((preview) => {
+      if (preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!isLoaded || typeof window === 'undefined' || !window.google) {
+      return;
+    }
+
+    if (!autocompleteServiceRef.current) {
+      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+    }
+
+    if (!geocoderRef.current) {
+      geocoderRef.current = new window.google.maps.Geocoder();
+    }
+  }, [isLoaded]);
+
+  useEffect(() => {
+    if (formData.address && !mapCenter) {
+      setMapCenter({
+        lat: formData.address.lat,
+        lng: formData.address.lng,
+      });
+    }
+  }, [formData.address, mapCenter]);
+
+  useEffect(() => {
+    if (mapCenter && mapRef.current) {
+      mapRef.current.panTo(mapCenter);
+    }
+  }, [mapCenter]);
+
+  const handleAddressInputChange = useCallback((value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      location: value,
+      address: value.trim().length === 0 ? null : prev.address && value === prev.location ? prev.address : null,
+    }));
+
+    if (
+      !autocompleteServiceRef.current ||
+      typeof window === 'undefined' ||
+      !window.google ||
+      value.trim().length < 3
+    ) {
+      setAddressPredictions([]);
+      setIsAddressSearching(false);
+      return;
+    }
+
+    setIsAddressSearching(true);
+    autocompleteServiceRef.current.getPlacePredictions(
+      { input: value },
+      (predictions, status) => {
+        setIsAddressSearching(false);
+        if (
+          status !== window.google.maps.places.PlacesServiceStatus.OK ||
+          !predictions
+        ) {
+          setAddressPredictions([]);
+          return;
+        }
+        setAddressPredictions(predictions);
+      },
+    );
+  }, []);
+
+  const handleSelectPrediction = useCallback(
+    (prediction: google.maps.places.AutocompletePrediction) => {
+      if (!geocoderRef.current) {
+        return;
+      }
+
+      geocoderRef.current.geocode(
+        { placeId: prediction.place_id },
+        (results, status) => {
+          if (status !== 'OK' || !results || !results[0]) {
+            return;
+          }
+
+          const location = results[0].geometry?.location;
+          if (!location) {
+            return;
+          }
+
+          const lat = location.lat();
+          const lng = location.lng();
+          const formattedAddress =
+            results[0].formatted_address ?? prediction.description;
+
+          setFormData((prev) => ({
+            ...prev,
+            location: formattedAddress,
+            address: {
+              formatted: formattedAddress,
+              lat,
+              lng,
+            },
+          }));
+
+          setAddressPredictions([]);
+          setIsAddressSearching(false);
+          setMapCenter({ lat, lng });
+
+          setTimeout(() => {
+            mapRef.current?.panTo({ lat, lng });
+            mapRef.current?.setZoom(15);
+          }, 0);
+        },
+      );
+    },
+    [],
+  );
+
+  const handleMapClick = useCallback((event: google.maps.MapMouseEvent) => {
+    const lat = event.latLng?.lat();
+    const lng = event.latLng?.lng();
+
+    if (lat == null || lng == null) {
+      return;
+    }
+
+    const updateFormData = (formattedAddress: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        location: formattedAddress,
+        address: {
+          formatted: formattedAddress,
+          lat,
+          lng,
+        },
+      }));
+      setAddressPredictions([]);
+      setIsAddressSearching(false);
+      setMapCenter({ lat, lng });
+    };
+
+    if (!geocoderRef.current) {
+      updateFormData(`Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
+      return;
+    }
+
+    geocoderRef.current.geocode(
+      { location: { lat, lng } },
+      (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          updateFormData(results[0].formatted_address ?? results[0].place_id ?? '');
+        } else {
+          updateFormData(`Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
+        }
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    if (formData.address && mapRef.current) {
+      mapRef.current.panTo({
+        lat: formData.address.lat,
+        lng: formData.address.lng,
+      });
+    }
+  }, [formData.address]);
 
   const mediaBaseUrl = useMemo(() => {
     const base = import.meta.env.VITE_BASE_API_URL || 'http://localhost:4000/api';
@@ -160,6 +323,14 @@ const MyBikes = () => {
     loadBikes();
   }, [loadBikes]);
 
+  const resolvedCenter =
+    mapCenter ??
+    (formData.address
+      ? { lat: formData.address.lat, lng: formData.address.lng }
+      : defaultCenter);
+
+  const resolvedZoom = mapCenter || formData.address ? 15 : 12;
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -176,6 +347,9 @@ const MyBikes = () => {
     revokeNewImagePreviews();
     setNewImages([]);
     setNewImagePreviews([]);
+    setAddressPredictions([]);
+    setIsAddressSearching(false);
+    setMapCenter(null);
     setEditingBike(null);
   };
 
@@ -201,6 +375,9 @@ const MyBikes = () => {
       description: bike.description,
       autoAccept: bike.autoAccept,
     });
+    setAddressPredictions([]);
+    setIsAddressSearching(false);
+    setMapCenter(bike.address ? { lat: bike.address.lat, lng: bike.address.lng } : null);
     // Set existing images
     setExistingImagePreviews(bike.images || []);
     setExistingImages(bike.rawImages || []);
@@ -244,23 +421,6 @@ const MyBikes = () => {
     }
   };
 
-  const onPlaceSelected = () => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry?.location) {
-        setFormData({
-          ...formData,
-          location: place.formatted_address || '',
-          address: {
-            formatted: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          },
-        });
-      }
-    }
-  };
-
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser');
@@ -279,20 +439,37 @@ const MyBikes = () => {
           const geocoder = new window.google.maps.Geocoder();
           const latlng = { lat: latitude, lng: longitude };
 
+          setMapCenter({ lat: latitude, lng: longitude });
+          const fallbackFormatted = `Lat: ${latitude.toFixed(5)}, Lng: ${longitude.toFixed(5)}`;
+          setFormData((prev) => ({
+            ...prev,
+            location: fallbackFormatted,
+            address: {
+              formatted: fallbackFormatted,
+              lat: latitude,
+              lng: longitude,
+            },
+          }));
+          setAddressPredictions([]);
+          setIsAddressSearching(false);
+
           geocoder.geocode({ location: latlng }, (results, status) => {
             toast.dismiss();
             setIsMapLoading(false);
             
             if (status === 'OK' && results && results[0]) {
-              setFormData({
-                ...formData,
-                location: results[0].formatted_address,
+              const formattedAddress = results[0].formatted_address;
+              setFormData((prev) => ({
+                ...prev,
+                location: formattedAddress,
                 address: {
-                  formatted: results[0].formatted_address,
+                  formatted: formattedAddress,
                   lat: latitude,
                   lng: longitude,
                 },
-              });
+              }));
+              mapRef.current?.panTo({ lat: latitude, lng: longitude });
+              mapRef.current?.setZoom(15);
               toast.success('Location updated!');
             } else {
               toast.error('Could not retrieve address');
@@ -521,29 +698,52 @@ const MyBikes = () => {
                   </Button>
                 </div>
                 {isLoaded ? (
-                  <Autocomplete
-                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                    onPlaceChanged={onPlaceSelected}
-                  >
-                    <Input
-                      id="address"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="Search for an address..."
-                      className="w-full"
-                    />
-                  </Autocomplete>
+                  <>
+                    <div className="relative">
+                      <Input
+                        id="address"
+                        value={formData.location}
+                        onChange={(e) => handleAddressInputChange(e.target.value)}
+                        placeholder="Search for an address..."
+                        className="w-full pr-10"
+                      />
+                      {isAddressSearching && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    {addressPredictions.length > 0 && (
+                      <div className="mt-2 border rounded-lg bg-background shadow-sm overflow-hidden">
+                        {addressPredictions.map((prediction) => (
+                          <button
+                            type="button"
+                            key={prediction.place_id}
+                            onClick={() => handleSelectPrediction(prediction)}
+                            className="w-full text-left px-3 py-2 hover:bg-accent focus-visible:bg-accent focus:outline-none transition-colors"
+                          >
+                            <div className="text-sm font-medium text-foreground">
+                              {prediction.structured_formatting?.main_text ?? prediction.description}
+                            </div>
+                            {prediction.structured_formatting?.secondary_text && (
+                              <div className="text-xs text-muted-foreground">
+                                {prediction.structured_formatting.secondary_text}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Input
                     id="address"
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) => handleAddressInputChange(e.target.value)}
                     placeholder="Loading search..."
                     disabled
                   />
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Start typing to search for an address
+                  Start typing to search for an address, then select a result to drop the marker or click directly on the map.
                 </p>
                 
                 {isLoaded && (
@@ -558,8 +758,18 @@ const MyBikes = () => {
                     )}
                     <GoogleMap
                       mapContainerStyle={mapContainerStyle}
-                      center={formData.address ? { lat: formData.address.lat, lng: formData.address.lng } : defaultCenter}
-                      zoom={formData.address ? 15 : 12}
+                      center={resolvedCenter}
+                      zoom={resolvedZoom}
+                      onLoad={(map) => {
+                        mapRef.current = map;
+                        if (resolvedCenter) {
+                          map.panTo(resolvedCenter);
+                        }
+                      }}
+                      onUnmount={() => {
+                        mapRef.current = null;
+                      }}
+                      onClick={handleMapClick}
                     >
                       {formData.address && (
                         <Marker
