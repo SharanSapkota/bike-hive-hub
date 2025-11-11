@@ -87,12 +87,13 @@ const Login = () => {
       const message = error?.response?.data?.data || error?.message || "Login failed";
 
       if (status === 403) {
-        toast.warning(message, {
-          action: {
-            label: "Verify",
-            onClick: () => navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`),
-          },
-        });
+        navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
+        // toast.warning(message, {
+        //   action: {
+        //     label: "Verify",
+        //     onClick: () => navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`),
+        //   },
+        // });
       } else {
         toast.error(message);
       }
