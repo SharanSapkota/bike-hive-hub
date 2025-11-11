@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      'bike-hive-hub.onrender.com', 
+      'localhost',                 
+    ],
   },
   plugins: [
     react(),
