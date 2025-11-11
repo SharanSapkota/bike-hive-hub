@@ -335,13 +335,13 @@ const MyBikes = () => {
       const payload = new FormData();
       payload.append('name', formData.name);
       payload.append('category', formData.category);
-      payload.append('pricePerHour', formData.pricePerHour);
+      // payload.append('pricePerHour', formData.pricePerHour);
       if (formData.pricePerDay) {
         payload.append('pricePerDay', formData.pricePerDay);
       }
       payload.append('location', formData.location);
       payload.append('description', formData.description);
-      payload.append('rentAmount', formData.pricePerHour);
+      payload.append('rentAmount', formData.pricePerDay);
       payload.append('latitude', String(formData.address.lat));
       payload.append('longitude', String(formData.address.lng));
       payload.append(
@@ -659,7 +659,7 @@ const MyBikes = () => {
               <Button
                 onClick={handleSaveBike}
                 className="bg-gradient-primary hover:opacity-90"
-                disabled={!formData.name || !formData.pricePerHour}
+                disabled={!formData.name}
               >
                 {editingBike ? 'Update Bike' : 'Add Bike'}
               </Button>

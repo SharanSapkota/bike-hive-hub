@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Clock, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 // Mock API call to complete rental
 const mockCompleteRental = (rentalId: string): Promise<void> => {
@@ -74,17 +75,32 @@ const History = () => {
     }
   ];
 
-  const [rentalHistory, setRentalHistory] = useState<RentalHistory[]>(initialRentalHistory);
+  const [rentalHistory, setRentalHistory] = useState<RentalHistory[]>([]);
+
+  const getRentalHistory = useCallback(async () => {
+    try {
+      const response = await api.get("/bookings/my");
+      const bookings = response?.data?.data;
+      console.log(bookings);
+      setRentalHistory(bookings);
+    } catch (error) {
+      console.error("Error getting rental history:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getRentalHistory();
+  }, []);
 
   const handleComplete = async (rentalId: string) => {
     setCompletingRental(rentalId);
     try {
-      await mockCompleteRental(rentalId);
-      setRentalHistory(
-        rentalHistory.map((rental) =>
-          rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
-        )
-      );
+      // await mockCompleteRental(rentalId);
+      // setRentalHistory(
+      //   rentalHistory.map((rental) =>
+      //     rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
+      //   )
+      // );
       toast.success('Rental marked as completed');
     } catch (error) {
       toast.error('Failed to complete rental');
@@ -101,6 +117,12 @@ const History = () => {
         return 'bg-red-500/10 text-red-500 border-red-500/20';
       case 'active':
         return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'approved':
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'rejected':
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -116,19 +138,19 @@ const History = () => {
       </div>
 
       <div className="grid gap-4">
-        {rentalHistory.map((rental) => (
+        {rentalHistory.map((rental: any) => (
           <Card key={rental.id}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-xl">{rental.bikeName}</CardTitle>
+                  <CardTitle className="text-xl">{rental?.bike?.name}</CardTitle>
                   <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span className="text-sm">{rental.location}</span>
+                    <span className="text-sm">{rental?.bike?.location?.city}, {rental.bike?.location?.state}</span>
                   </div>
                 </div>
-                <Badge className={getStatusColor(rental.status)}>
-                  {rental.status}
+                <Badge className={getStatusColor(rental?.status?.toLowerCase())}>
+                  {rental?.status?.toLowerCase()}
                 </Badge>
               </div>
             </CardHeader>
@@ -137,27 +159,27 @@ const History = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p className="font-medium">{rental.startDate}</p>
+                    <p className="text-sm text-muted-foreground">Start Time</p>
+                    <p className="font-medium">{rental.startTime}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Duration</p>
-                    <p className="font-medium">{rental.duration}</p>
+                    <p className="text-sm text-muted-foreground">End Time</p>
+                    <p className="font-medium">{rental.endTime}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total Cost</p>
-                    <p className="font-medium">${rental.cost}</p>
+                    <p className="font-medium">${rental?.price ? rental?.price : 0}</p>
                   </div>
                 </div>
               </div>
 
-              {rental.status === 'active' && (
+              {rental?.status.toLowerCase() === 'pending' && (
                 <div className="flex gap-2 mt-4 pt-4 border-t">
                   <Button
                     onClick={() => handleComplete(rental.id)}

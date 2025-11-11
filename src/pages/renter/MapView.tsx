@@ -166,6 +166,7 @@ const MapView = () => {
   const { isLoaded, loadError } = useGoogleMaps();
 
   const [bikes, setBikes] = useState<Bike[]>([]);
+  const [myBookings, setMyBookings] = useState<[]>([]);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
@@ -201,6 +202,16 @@ const MapView = () => {
       console.error("Error getting address:", error);
     }
   };
+
+   const getMyBookings = useCallback(async () => {
+    try {
+      const response = await api.get("/bookings/my");
+      const bookings = response?.data?.data;
+      setMyBookings(bookings);
+    } catch (error) {
+      console.error("Error getting my bookings:", error);
+    }
+  }, []);
 
   const getBikes = useCallback(async (coords?: { lat: number; lng: number }) => {
     try {
@@ -254,6 +265,7 @@ const MapView = () => {
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
       getBikes(location);
+      getMyBookings()
       return;
     }
 
