@@ -2,25 +2,27 @@
 import { toast } from "@/hooks/use-toast";
 import api from "@/lib/api";
 
-
 import { createContext, ReactNode, useCallback, useContext, useState } from "react";
   
   export interface Booking {
     id: string;
-    title: string;
-    message: string;
-    type: string;
+    bikeId: string;
+    renterId: string;
+    ownerId: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    price: number;
     createdAt: string;
-    read: boolean;
-    data?: Record<string, any>;
+    updatedAt: string;
   }
   
   interface BookingContextType {
-    bookings: Booking[];
+    bookings: any[];
     setBookings: (bookings: Booking[]) => void;
     getBookings: () => Promise<void>;
-    createBooking: (booking: Booking) => Promise<void>;
-    updateBooking: (booking: Booking) => Promise<void>;
+    createBooking: (booking: any) => Promise<void>;
+    updateBooking: (booking: any) => Promise<void>;
     deleteBooking: (id: string) => Promise<void>;
   }
 
@@ -34,8 +36,8 @@ export const useBookingContext = () => {
   return context;
 };
 
-export const BookingProvider = ({ children }: { children: ReactNode }) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+export const BookingProvider = ({ children, user }: { children: ReactNode, user: any }) => {
+  const [bookings, setBookings] = useState<any[]>([]);
 
   const getBookings = useCallback(async () => {
     try {

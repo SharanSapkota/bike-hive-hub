@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Clock, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { useBookingContext } from '@/contexts/BookingContext';
 
 // Mock API call to complete rental
 const mockCompleteRental = (rentalId: string): Promise<void> => {
@@ -30,7 +30,8 @@ interface RentalHistory {
 const History = () => {
   const { user } = useAuth();
   const [completingRental, setCompletingRental] = useState<string | null>(null);
-
+  const { bookings, getBookings } = useBookingContext();
+  console.log(bookings);
   // Mock data - replace with actual API call
   const initialRentalHistory: RentalHistory[] = [
     {
@@ -79,10 +80,7 @@ const History = () => {
 
   const getRentalHistory = useCallback(async () => {
     try {
-      const response = await api.get("/bookings/my");
-      const bookings = response?.data?.data;
-      console.log(bookings);
-      setRentalHistory(bookings);
+      await getBookings();
     } catch (error) {
       console.error("Error getting rental history:", error);
     }
