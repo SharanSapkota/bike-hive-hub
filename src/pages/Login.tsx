@@ -11,6 +11,7 @@ import { Bike } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
+import { api } from "@/lib/api";
 // Validation schema
 const signupSchema = z
   .object({
@@ -81,8 +82,20 @@ const Login = () => {
       const menuItems = fetchMenuItems(authenticatedUser.role);
       const redirectPath = menuItems[0]?.path || "/";
       navigate(redirectPath);
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.data || error?.message || "Login failed";
+
+      if (status === 403) {
+        toast.warning(message, {
+          action: {
+            label: "Verify",
+            onClick: () => navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`),
+          },
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
       setIsMenuLoading(false);
@@ -125,42 +138,25 @@ const Login = () => {
         return;
       }
 
-      // MOCK SIGNUP - Comment out API call
-      // Call signup API
-      // const response = await api.post("/auth/signup", {
-      //   firstName,
-      //   middleName,
-      //   lastName,
-      //   email,
-      //   phone,
-      //   dob,
-      //   address: {
-      //     country,
-      //     city,
-      //     state,
-      //     postalCode,
-      //   },
-      //   password,
-      //   role: registerRole,
-      // });
-
-      // Mock signup response
-      const mockUser = {
-        id: 'user-' + Date.now(),
+      await api.post("/auth/signup", {
+        firstName,
+        middleName,
+        lastName,
         email,
-        name: `${firstName} ${lastName}`,
+        phone,
+        dob,
+        address: {
+          country,
+          city,
+          state,
+          postalCode,
+        },
+        password,
         role: registerRole,
-      };
-      const mockToken = 'mock-token-' + email;
+      });
 
-      // Store auth token if provided
-      if (mockToken) {
-        localStorage.setItem("auth_token", mockToken);
-        localStorage.setItem("user", JSON.stringify(mockUser));
-      }
-
-      toast.success("Account created successfully!");
-      navigate("/");
+      toast.success("Account created! Check your email to verify.");
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       console.error("Registration failed:", error);
       const errorMessage = error.response?.data?.message || error.message || "Registration failed";

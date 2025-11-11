@@ -84,14 +84,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return userData;
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        (error?.message === 'invalid_login_response'
-          ? 'Unexpected response from server. Please try again.'
-          : error?.message === 'Invalid credentials' 
-          ? 'Invalid email or password. Use renter@gmail.com or owner@gmail.com'
-          : 'Login failed. Please try again.');
-      toast.error(message);
       throw error;
     }
   };
@@ -122,7 +114,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       toast.success('Registration successful!');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
       throw error;
     }
   };
