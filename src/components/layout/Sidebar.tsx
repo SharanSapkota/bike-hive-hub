@@ -64,11 +64,11 @@ const Sidebar = () => {
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
                 <Bike className="h-6 w-6 text-white" />
-                {unreadCount > 0 && (
+                {/* {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold flex items-center justify-center shadow-lg">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
-                )}
+                )} */}
               </div>
               <div>
                 <h1 className="font-bold text-lg">Gear Quest</h1>
@@ -82,25 +82,39 @@ const Sidebar = () => {
         {/* Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
-            {menuItems.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  onClick={() => setIsOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                      isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                        : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
-                    )
-                  }
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </NavLink>
-              </li>
-            ))}
+            {menuItems.map((item) => {
+              const showBadge =
+                item.path === '/notifications' && unreadCount > 0;
+              const badgeValue =
+                unreadCount > 99 ? '99+' : unreadCount.toString();
+
+              return (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    onClick={() => setIsOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                        isActive
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                          : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
+                      )
+                    }
+                  >
+                    <div className="relative">
+                      <item.icon className="h-5 w-5" />
+                      {showBadge && (
+                        <span className="absolute -top-1 -right-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground shadow">
+                          {badgeValue}
+                        </span>
+                      )}
+                    </div>
+                    <span>{item.label}</span>
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
