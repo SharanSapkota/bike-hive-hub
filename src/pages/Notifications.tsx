@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useNotificationContext } from "@/contexts/NotificationContext";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Notifications = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     notifications,
     markAsRead,
@@ -16,6 +20,7 @@ const Notifications = () => {
     isLoading,
     hasLoaded,
   } = useNotificationContext();
+  const isRenter = user?.role.toLowerCase() === "renter";
 
   useEffect(() => {
     loadNotifications(true);
@@ -55,6 +60,20 @@ const Notifications = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddPayment = (bookingId: string | undefined, notificationId: string) => {
+    if (!bookingId) {
+      toast({
+        title: "Missing booking",
+        description: "We couldn't find the booking details for this payment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    markAsRead(notificationId);
+    navigate(`/payment?bookingId=${bookingId}`);
   };
 
   const bookingNotifications = notifications;
@@ -154,7 +173,7 @@ const Notifications = () => {
               </CardHeader>
               <CardContent>
                 {/* Compact User Details - Only for rental requests */}
-                {/* {notification.type === "rental_request" && notification.data && ( */}
+                {notification.type === "rental_request" && notification.data && (
                   <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
                     <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -185,7 +204,7 @@ const Notifications = () => {
                       </div>
                     </div>
                   </div>
-                {/* )} */}
+                )}
 
                 {/* Payment Status */}
                 {notification.data?.paymentStatus && (
@@ -217,7 +236,7 @@ const Notifications = () => {
                     </span>
                   </div>
 
-                  {notification?.data?.booking?.status.toLowerCase() === "pending" && (
+                  {notification?.data?.booking?.status?.toLowerCase() === "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="default"
@@ -250,17 +269,43 @@ const Notifications = () => {
                     </div>
                   )}
 
-                  {notification?.data?.booking?.status.toLowerCase()!== "pending" && (
+                  {notification?.data?.booking?.status?.toLowerCase() !== "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <Button
+                      {/* <Button
                         variant="default"
                         size="sm"
                         className="flex-1 sm:flex-none text-xs h-8"
                       >
                         <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
                         <span className="hidden sm:inline">{notification?.data?.booking?.status.toLowerCase()}</span>
+                      </Button> */}
+                      {isRenter && notification.type === "rental_approved" && (
+                    <Button
+                     
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() =>
+                          handleAddPayment(
+                            notification.data?.bookingId ||
+                              notification.data?.rentalId ||
+                              notification.data?.booking?.id,
+                            notification.id,
+                          )
+                        }
+                      >
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Add Payment
                       </Button>
-                  
+                    )}
+                     {isRenter && notification.type === "rental_payment_done" && (
+                    <Button
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Payment Done
+                      </Button>
+                    )}
                     </div>
                   )}
                 </div>
