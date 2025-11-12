@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bike } from "lucide-react";
+import { Bike, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
@@ -75,7 +75,6 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setIsMenuLoading(true);
 
     try {
       const authenticatedUser = await login(loginEmail, loginPassword);
@@ -99,7 +98,6 @@ const Login = () => {
       }
     } finally {
       setIsLoading(false);
-      setIsMenuLoading(false);
     }
   };
 
@@ -167,14 +165,6 @@ const Login = () => {
     }
   };
 
-  if (isMenuLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 p-4">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 p-4">
       <div className="w-full max-w-md">
@@ -229,7 +219,14 @@ const Login = () => {
 
                 <CardFooter className="flex flex-col gap-2">
                   <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Login"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Logging in...
+                      </>
+                    ) : (
+                      "Login"
+                    )}
                   </Button>
                   <p className="text-sm text-muted-foreground text-center">
                     Don't have an account?{" "}
@@ -411,7 +408,14 @@ const Login = () => {
 
                 <CardFooter className="flex flex-col gap-2">
                   <Button type="submit" className="w-full bg-gradient-accent hover:opacity-90" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create Account"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
                   </Button>
                   <p className="text-sm text-muted-foreground text-center">
                     Already have an account?{" "}
