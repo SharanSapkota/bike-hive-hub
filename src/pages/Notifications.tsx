@@ -20,7 +20,7 @@ const Notifications = () => {
     isLoading,
     hasLoaded,
   } = useNotificationContext();
-  const isRenter = user?.role.toLowerCase() === "renter";
+  const isRenter = (user?.role ?? "").toLowerCase() === "renter";
 
   useEffect(() => {
     loadNotifications(true);
@@ -63,7 +63,16 @@ const Notifications = () => {
   };
 
   const handleAddPayment = (notification: any) => {
-    const bookingId = notification.data?.booking.id;
+    const booking =
+      notification.booking ??
+      notification.data?.booking ??
+      null;
+    const bookingId =
+      booking?.id ??
+      notification.data?.bookingId ??
+      notification.data?.rentalId ??
+      null;
+
     if (!bookingId) {
       toast({
         title: "Missing booking",
@@ -73,9 +82,17 @@ const Notifications = () => {
       return;
     }
 
-    console.log("Navigating to payment page with bookingId:", bookingId);
-    markAsRead(notificationId);
-    navigate(`/payment?bookingId=${bookingId}`);
+    markAsRead(notification.id);
+    const bikeId =
+      booking?.bikeId ??
+      booking?.bike?.id ??
+      notification.data?.bikeId ??
+      null;
+    navigate(
+      `/payment?bookingId=${bookingId}${
+        bikeId ? `&bikeId=${bikeId}` : ""
+      }`,
+    );
   };
 
   const bookingNotifications = notifications;
@@ -129,7 +146,27 @@ const Notifications = () => {
         </Card>
       ) : (
         <div className="space-y-3 sm:space-y-4">
-          {bookingNotifications.map((notification: any) => (
+          {bookingNotifications.map((notification: any) => {
+            const booking =
+              notification.booking ??
+              notification.data?.booking ??
+              null;
+            const bike =
+              booking?.bike ??
+              notification.data?.bike ??
+              null;
+            const paymentStatus =
+              notification.data?.paymentStatus ??
+              booking?.paymentTransaction?.status ??
+              null;
+            const bookingStatus = booking?.status?.toLowerCase();
+            const bookingId =
+              booking?.id ??
+              notification.data?.bookingId ??
+              notification.data?.rentalId ??
+              null;
+
+            return (
             <Card
               key={notification.id}
               className={`transition-colors ${
@@ -213,8 +250,27 @@ const Notifications = () => {
                 )}
 
                 {/* Bike Details - For renters viewing their notifications */}
-                {isRenter && (notification.type === "rental_approved" || notification.type === "rental_rejected" || notification.type === "rental_payment_done") && notification.data && (
-                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                {isRenter &&
+                  (notification.type === "rental_approved" ||
+                    notification.type === "rental_rejected" ||
+                    notification.type === "rental_payment_done") &&
+                  (booking || bike) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (bike?.id ?? booking?.bikeId ?? notification.data?.bikeId) {
+                        navigate(`/bike/${bike?.id ?? booking?.bikeId ?? notification.data?.bikeId}`);
+                      } else {
+                        toast({
+                          title: "Bike details unavailable",
+                          description: "We couldn't find this bike's information.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="w-full text-left"
+                  >
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 hover:border-primary/40 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Bike className="h-5 w-5 text-primary" />
@@ -222,34 +278,46 @@ const Notifications = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-sm">
-                            {notification.data.bikeName || notification.data.bike?.name || "Bike"}
+                            {bike?.name ??
+                              notification.data?.bikeName ??
+                              "Bike"}
                           </span>
-                          {notification.data.bikeModel && (
+                          {notification.data?.bikeModel && (
                             <Badge variant="secondary" className="text-[10px]">
-                              {notification.data.bikeModel}
+                              {notification.data?.bikeModel}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {notification.data.price && (
+                          {booking?.pricePerDay ?? bike?.pricePerDay ?? notification.data?.price ? (
                             <span className="font-medium text-foreground">
-                              ${notification.data.price}/hr
+                              $
+                              {booking?.pricePerDay ??
+                                bike?.pricePerDay ??
+                                notification.data?.price}
+                              /day
                             </span>
-                          )}
-                          {notification.data.bikeRating && (
+                          ) : null}
+                          {notification.data?.bikeRating && (
                             <div className="flex items-center gap-1">
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              <span>{notification.data.bikeRating.toFixed(1)}</span>
+                              <span>{notification.data?.bikeRating.toFixed(1)}</span>
                             </div>
+                          )}
+                          {booking?.bike?.bikeAddress?.[0]?.address && (
+                            <span className="truncate text-muted-foreground max-w-[160px]">
+                              {booking.bike.bikeAddress[0].address}
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
+                  </button>
                 )}
 
                 {/* Payment Status */}
-                {notification.data?.paymentStatus && (
+                {paymentStatus && (
                   <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -258,11 +326,11 @@ const Notifications = () => {
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs text-muted-foreground">Payment Status</span>
                         <span className="font-semibold text-sm capitalize">
-                          {notification.data.paymentStatus}
+                          {paymentStatus}
                         </span>
-                        {notification.data.amount && (
+                        {notification.data?.amount && (
                           <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                            ${notification.data.amount}
+                            ${notification.data?.amount}
                           </span>
                         )}
                       </div>
@@ -280,7 +348,7 @@ const Notifications = () => {
                     </span>
                   </div>
 
-                  {notification?.data?.booking?.status?.toLowerCase() === "pending" && (
+                  {bookingStatus === "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="default"
@@ -313,25 +381,19 @@ const Notifications = () => {
                     </div>
                   )}
 
-                  {notification?.data?.booking?.status?.toLowerCase() !== "pending" && (
+                  {bookingStatus !== "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {isRenter && notification.type === "rental_approved" && !notification.data?.paymentStatus && (
+                      {isRenter && notification.type === "rental_approved" && !paymentStatus && (
                         <Button
                           size="sm"
                           className="w-full sm:w-auto h-9"
-                          onClick={() => {
-                            const bookingId = notification.data?.bookingId ||
-                              notification.data?.rentalId ||
-                              notification.data?.booking?.id;
-                            console.log("Payment button clicked, bookingId:", bookingId);
-                            handleAddPayment(bookingId, notification.id);
-                          }}
+                          onClick={() => handleAddPayment(notification)}
                         >
                           <DollarSign className="mr-2 h-4 w-4" />
                           Add Payment
                         </Button>
                       )}
-                      {isRenter && notification.type === "rental_payment_done" && (
+                      {isRenter && (notification.type === "rental_payment_done" || paymentStatus) && (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -347,7 +409,7 @@ const Notifications = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </div>
       )}
     </div>
