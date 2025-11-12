@@ -12,6 +12,7 @@ import { useNotificationContext } from '@/contexts/NotificationContext';
 
 interface Notification {
   id: string;
+  name: string;
   type: 'rental_request' | 'rental_approved' | 'rental_rejected' | 'rental_cancelled' | 'payment' | 'ride_completed';
   title: string;
   message: string;
@@ -67,6 +68,7 @@ interface NotificationPanelProps {
 
 const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const { user } = useAuth();
+  console.log(user);
   const isOwner = user?.role === 'owner';
   const {
     notifications: contextNotifications,
@@ -87,6 +89,7 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
     const data = notification?.data ?? {};
     return {
       id: notification.id,
+      name: notification.name,
       type: (notification.type as Notification['type']) ?? 'rental_request',
       title: notification.title,
       message: notification.message,
@@ -415,7 +418,7 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
             )}
 
             {/* Renter: Payment button for approved requests */}
-            {user?.role === 'renter' && notification.type === 'rental_approved' && (
+            {user?.role?.toLowerCase() == 'renter' && notification.type == 'rental_approved' && (
               <div className="pt-1.5 w-full">
                 <div className="mb-2 px-2 py-1.5 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-[10px] sm:text-xs">
                   <p className="text-green-700 dark:text-green-400 font-medium">✓ Request Accepted</p>
