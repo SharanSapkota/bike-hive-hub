@@ -289,10 +289,11 @@ const MyBikes = () => {
       description: bike.description || '',
       available: bike.status ? bike.status === 'AVAILABLE' : true,
       autoAccept: bike.autoAccept || false,
-      images: imagesSource.map((img: any) => {
-        if (!img?.imageUrl) return '';
-        return img.imageUrl.startsWith('http') ? img.imageUrl : `${mediaBaseUrl}${img.imageUrl}`;
-      }),
+      images: imagesSource,
+      // images: imagesSource.map((img: any) => {
+      //   if (!img?.imageUrl) return '';
+      //   return img.imageUrl.startsWith('http') ? img.imageUrl : `${mediaBaseUrl}${img.imageUrl}`;
+      // }),
       rawImages: imagesSource.map((img: any) => img.imageUrl),
       ownerId: bike.ownerId ?? bike.owner?.id ?? null,
     };

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,9 +35,11 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { calculatePrice } from "@/services/pricing";
+import { api } from "@/lib/api";
 
 interface Owner {
   id: string;
+  images: any;
   name: string;
   email: string;
   phone: string;
@@ -52,8 +55,12 @@ interface Owner {
 interface BikeDetails {
   id: string;
   name: string;
-  category: string;
-  pricePerHour: number;
+  category: {
+    name: string;
+  };
+ 
+  pricePerHour:number
+  pricePerDay: number;
   location: {
     address: string;
     city: string;
@@ -79,92 +86,136 @@ interface Review {
 }
 
 // Mock data - replace with API calls
-const mockBikeDetails: Record<string, BikeDetails> = {
-  "1": {
-    id: "1",
-    name: "Mountain Explorer Pro",
-    category: "Mountain Bike",
-    pricePerHour: 8,
-    location: {
-      address: "123 Adventure Lane",
-      city: "Denver",
-      state: "CO",
-    },
-    images: [
-      "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=800",
-      "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=800",
-      "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=800",
-    ],
-    description: "Premium mountain bike perfect for trail adventures. Features full suspension, 29-inch wheels, and hydraulic disc brakes. Ideal for both beginners and experienced riders.",
-    condition: "Excellent",
-    rating: 4.8,
-    reviews: 24,
-    available: true,
-    features: [
-      "Full Suspension",
-      "29-inch Wheels",
-      "Hydraulic Disc Brakes",
-      "21-Speed Shimano",
-      "Aluminum Frame",
-      "Adjustable Seat",
-    ],
-    owner: {
-      id: "owner-1",
-      name: "John Smith",
-      email: "john.smith@example.com",
-      phone: "+1 (555) 123-4567",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-      rating: 4.9,
-      totalReviews: 87,
-      joinedDate: "January 2023",
-      responseTime: "Within 1 hour",
-      verifiedOwner: true,
-      totalBikes: 5,
-    },
-  },
-  "2": {
-    id: "2",
-    name: "City Cruiser Deluxe",
-    category: "City Bike",
-    pricePerHour: 6,
-    location: {
-      address: "456 Urban Street",
-      city: "Portland",
-      state: "OR",
-    },
-    images: [
-      "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800",
-      "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800",
-    ],
-    description: "Comfortable city bike with upright riding position. Perfect for commuting and leisurely rides around town.",
-    condition: "Very Good",
-    rating: 4.6,
-    reviews: 18,
-    available: true,
-    features: [
-      "Comfort Seat",
-      "7-Speed",
-      "Front Basket",
-      "LED Lights",
-      "Fenders",
-      "Kickstand",
-    ],
-    owner: {
-      id: "owner-2",
-      name: "Sarah Johnson",
-      email: "sarah.j@example.com",
-      phone: "+1 (555) 234-5678",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-      rating: 4.7,
-      totalReviews: 52,
-      joinedDate: "March 2023",
-      responseTime: "Within 2 hours",
-      verifiedOwner: true,
-      totalBikes: 3,
-    },
-  },
-};
+// const mockBikeDetails: Record<string, BikeDetails> = {
+//   "1": {
+//     id: "1",
+//     name: "Mountain Explorer Pro",
+//     category: "Mountain Bike",
+//     pricePerHour: 8,
+//     location: {
+//       address: "123 Adventure Lane",
+//       city: "Denver",
+//       state: "CO",
+//     },
+//     images: [
+//       "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=800",
+//       "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=800",
+//       "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=800",
+//     ],
+//     description: "Premium mountain bike perfect for trail adventures. Features full suspension, 29-inch wheels, and hydraulic disc brakes. Ideal for both beginners and experienced riders.",
+//     condition: "Excellent",
+//     rating: 4.8,
+//     reviews: 24,
+//     available: true,
+//     features: [
+//       "Full Suspension",
+//       "29-inch Wheels",
+//       "Hydraulic Disc Brakes",
+//       "21-Speed Shimano",
+//       "Aluminum Frame",
+//       "Adjustable Seat",
+//     ],
+//     owner: {
+//       id: "owner-1",
+//       name: "John Smith",
+//       email: "john.smith@example.com",
+//       phone: "+1 (555) 123-4567",
+//       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+//       rating: 4.9,
+//       totalReviews: 87,
+//       joinedDate: "January 2023",
+//       responseTime: "Within 1 hour",
+//       verifiedOwner: true,
+//       totalBikes: 5,
+//     },
+//   },
+//   "2": {
+//     id: "2",
+//     name: "City Cruiser Deluxe",
+//     category: "City Bike",
+//     pricePerHour: 6,
+//     location: {
+//       address: "456 Urban Street",
+//       city: "Portland",
+//       state: "OR",
+//     },
+//     images: [
+//       "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800",
+//       "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800",
+//     ],
+//     description: "Comfortable city bike with upright riding position. Perfect for commuting and leisurely rides around town.",
+//     condition: "Very Good",
+//     rating: 4.6,
+//     reviews: 18,
+//     available: true,
+//     features: [
+//       "Comfort Seat",
+//       "7-Speed",
+//       "Front Basket",
+//       "LED Lights",
+//       "Fenders",
+//       "Kickstand",
+//     ],
+//     owner: {
+//       id: "owner-2",
+//       name: "Sarah Johnson",
+//       email: "sarah.j@example.com",
+//       phone: "+1 (555) 234-5678",
+//       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+//       rating: 4.7,
+//       totalReviews: 52,
+//       joinedDate: "March 2023",
+//       responseTime: "Within 2 hours",
+//       verifiedOwner: true,
+//       totalBikes: 3,
+//     },
+//   },
+// };
 
+
+
+const mockBikeDetails = {
+  "id": 18,
+  "name": "Mountain Exploral",
+  "location": {
+      "lat": 65.05894282129752,
+      "lng": 25.45733670651922,
+      "address": "Tutkijantie 2, 90590 Oulu, Finland",
+      "city": null,
+      "state": null,
+      "country": null,
+      "postalCode": null,
+      "placeId": null
+  },
+  "rentAmount": 4,
+  "pricePerHour": 4,
+  "pricePerDay": 46,
+  "status": "AVAILABLE",
+  "startTime": null,
+  "endTime": null,
+  "category": {
+      "id": 1,
+      "name": "City"
+  },
+  "owner": {
+      "id": 14,
+      "name": "Ram Sapkota",
+      "images": [
+          {
+              "id": 9,
+              "url": "http://localhost:4000/media/Gemini_Generated_Image_s08abms08abms08a-1762711138037-241832582.png"
+          }
+      ],
+      "category": {
+          "id": 1,
+          "name": "City"
+      },
+      "owner": {
+          "id": 14,
+          "name": "Ram Sapkota"
+      }
+  }
+}
 const mockReviews: Review[] = [
   {
     id: "1",
@@ -243,10 +294,20 @@ const BikeDetails = () => {
   const [isSendingRequest, setIsSendingRequest] = useState(false);
 
   useEffect(() => {
+    const fetchBikeDetails = async () => {
+      // const location = useLocation();
+      // const bike = location.state?.bike;
+      // if (bike) {
+      //   setBike(bike);
+      //   return;
+      // }
+      const response = await api.get(`/bikes/${bikeId}`);
+      const bikeDetails = response.data?.data ?? response.data;
+      setBike(bikeDetails);
+    };
+    fetchBikeDetails();
     // Simulate API call
-    if (bikeId && mockBikeDetails[bikeId]) {
-      setBike(mockBikeDetails[bikeId]);
-    }
+  
   }, [bikeId]);
 
   // Calculate price when dates change
@@ -263,7 +324,7 @@ const BikeDetails = () => {
           bike.id,
           fromDate,
           toDate,
-          bike.pricePerHour
+          bike.pricePerDay
         );
         setCalculatedPrice(price);
       } catch (error) {
@@ -382,7 +443,7 @@ const BikeDetails = () => {
             <CardContent className="p-4">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {bike.images.map((image, index) => (
+                  {bike?.owner?.images.map((image, index) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video rounded-lg overflow-hidden">
                         <img
@@ -394,7 +455,7 @@ const BikeDetails = () => {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {bike.images.length > 1 && (
+                {bike?.owner?.images.length > 1 && (
                   <>
                     <CarouselPrevious className="left-4" />
                     <CarouselNext className="right-4" />
@@ -409,22 +470,22 @@ const BikeDetails = () => {
             <CardContent className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold mb-2">{bike.name}</h1>
+                  <h1 className="text-3xl font-bold mb-2">{bike?.name}</h1>
                   <p className="text-muted-foreground flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    {bike.location.address}, {bike.location.city}, {bike.location.state}
+                    {bike?.location.address}, {bike?.location.city}, {bike?.location.state}
                   </p>
                 </div>
                 <Badge
-                  variant={bike.available ? "default" : "secondary"}
+                  variant={bike?.available ? "default" : "secondary"}
                   className="shrink-0"
                 >
-                  {bike.available ? "Available" : "Unavailable"}
+                  {bike?.available ? "Available" : "Unavailable"}
                 </Badge>
               </div>
 
               <div className="flex items-center gap-4 flex-wrap">
-                <Badge variant="outline">{bike.category}</Badge>
+                <Badge variant="outline">{bike?.category?.name}</Badge>
                 <Badge variant="outline">{bike.condition}</Badge>
                 <div className="flex items-center gap-1">
                   {renderStars(bike.rating)}
@@ -438,8 +499,8 @@ const BikeDetails = () => {
 
               <div>
                 <div className="text-3xl font-bold text-primary mb-1">
-                  ${bike.pricePerHour}
-                  <span className="text-lg font-normal text-muted-foreground">/hour</span>
+                  EUR{bike?.pricePerDay}
+                  <span className="text-lg font-normal text-muted-foreground">/DAY</span>
                 </div>
               </div>
 
@@ -455,7 +516,7 @@ const BikeDetails = () => {
               <div>
                 <h3 className="font-semibold mb-3">Features</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {bike.features.map((feature, index) => (
+                  {bike?.features && bike?.features?.map((feature, index) => (
                     <div key={index} className="flex items-center gap-2 text-sm">
                       <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                       <span>{feature}</span>
@@ -509,21 +570,21 @@ const BikeDetails = () => {
 
               <div className="flex items-center gap-3">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={bike.owner.avatar} alt={bike.owner.name} />
-                  <AvatarFallback>{bike.owner.name[0]}</AvatarFallback>
+                  <AvatarImage src={bike.owner?.avatar} alt={bike.owner.name} />
+                  <AvatarFallback>{bike.owner.name}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{bike.owner.name}</h3>
-                    {bike.owner.verifiedOwner && (
+                    {bike.owner?.verifiedOwner && (
                       <Shield className="h-4 w-4 text-primary" />
                     )}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{bike.owner.rating}</span>
+                    <span className="text-sm font-medium">{bike.owner?.rating}</span>
                     <span className="text-xs text-muted-foreground">
-                      ({bike.owner.totalReviews} reviews)
+                      ({bike.owner?.totalReviews} reviews)
                     </span>
                   </div>
                 </div>

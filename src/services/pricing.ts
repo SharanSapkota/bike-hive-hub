@@ -1,5 +1,5 @@
 // Mock API for price calculation
-export const calculatePrice = async (bikeId: string, startDate: Date, endDate: Date, pricePerHour: number): Promise<number> => {
+export const calculatePrice = async (bikeId: string, startDate: Date, endDate: Date, pricePerDay: number): Promise<number> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
@@ -8,7 +8,7 @@ export const calculatePrice = async (bikeId: string, startDate: Date, endDate: D
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   // Calculate total price (assuming 24 hours per day)
-  const totalPrice = diffDays * 24 * pricePerHour;
+  const totalPrice = diffDays * pricePerDay;
   
   return totalPrice;
 };

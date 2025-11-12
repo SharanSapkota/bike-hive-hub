@@ -180,16 +180,16 @@ const Payment = () => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Rental ({bookingDetails.totalHours} hours)</span>
-              <span>${bookingDetails.totalAmount}</span>
+              <span>EUR{bookingDetails.totalAmount}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Service fee</span>
-              <span>$0</span>
+              <span>EUR{0}</span>
             </div>
             <Separator className="my-2" />
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span className="text-primary">${bookingDetails.totalAmount}</span>
+              <span className="text-primary">EUR {bookingDetails.totalAmount}</span>
             </div>
           </div>
         </Card>

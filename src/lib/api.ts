@@ -1,9 +1,13 @@
+import { API_BASE_URL, BASE_URL } from '@/Base/base';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || 'https://gear-quest.onrender.com/api';
+const API_BASE_URI = API_BASE_URL
+const BASE_URI = BASE_URL;
+// const BASE_URL = 'https://gear-quest.onrender.com';
+
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URI,
   headers: {
     'Content-Type': 'application/json',
   },

@@ -27,6 +27,7 @@ interface Bike {
   location: { lat: number; lng: number, city: string, state: string };
   // city: string;
   // state: string;
+  pricePerDay?: number;
   pricePerHour: number;
   category: string;
   available: boolean;
@@ -316,7 +317,7 @@ const MapView = () => {
             selectedBike.id,
             fromDate,
             toDate,
-            selectedBike.pricePerHour
+            selectedBike.pricePerDay
           );
           setCalculatedPrice(price);
         } catch (error) {
@@ -417,7 +418,9 @@ const MapView = () => {
     // setIsLoadingDetails(true);
     const bikeDetails = await getBikeDetails(bike.id);
     // setSelectedBike(bike);
+    
     setSelectedBike(normalizeBike(bikeDetails));
+    console.log(selectedBike);
     // Mock timeout to simulate  API call
     setTimeout(() => {
       setIsLoadingDetails(false);
@@ -691,11 +694,11 @@ const MapView = () => {
                 {selectedBike?.images && selectedBike?.images.length > 0 && (
                   <Carousel className="w-full mb-1 sm:mb-1.5">
                     <CarouselContent>
-                      {selectedBike?.images.map((image, index) => (
+                      {selectedBike?.images.map((image: any, index) => (
                         <CarouselItem key={index}>
                           <div className="aspect-video rounded overflow-hidden">
                             <img
-                              src={image}
+                              src={image?.url}
                               alt={`${selectedBike?.name} - ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
@@ -716,8 +719,8 @@ const MapView = () => {
                   <div className="flex items-start justify-between gap-1 mb-0.5">
                     <h3 
                       className="font-semibold text-[11px] sm:text-xs leading-tight flex-1 cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-2"
-                      onClick={() => navigate(`/bike/${selectedBike.id}`)}
-                    >
+                      onClick={() => navigate(`/bike/${selectedBike.id}`, { state: { bike: selectedBike } })}
+                      >
                       {selectedBike.name}
                     </h3>
                     <Badge
@@ -746,10 +749,10 @@ const MapView = () => {
                 </div>
 
                 {/* Price */}
-                {/* <div className="mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b">
-                  <p className="text-sm sm:text-base font-bold text-primary leading-none">${selectedBike.pricePerHour}</p>
-                  <p className="text-[7px] sm:text-[8px] text-muted-foreground">per hour</p>
-                </div> */}
+                <div className="mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b">
+                  <p className="text-sm sm:text-base font-bold text-primary leading-none">EUR{selectedBike?.pricePerDay}</p>
+                  <p className="text-[7px] sm:text-[8px] text-muted-foreground">per day</p>
+                </div>
 
                 {/* Book Now Button */}
                 <Button 
