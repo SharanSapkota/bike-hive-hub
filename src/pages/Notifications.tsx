@@ -62,7 +62,8 @@ const Notifications = () => {
     }
   };
 
-  const handleAddPayment = (bookingId: string | undefined, notificationId: string) => {
+  const handleAddPayment = (notification: any) => {
+    const bookingId = notification.data?.booking.id;
     if (!bookingId) {
       toast({
         title: "Missing booking",
