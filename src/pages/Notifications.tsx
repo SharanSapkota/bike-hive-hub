@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign } from "lucide-react";
+import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign, Bike } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +72,7 @@ const Notifications = () => {
       return;
     }
 
+    console.log("Navigating to payment page with bookingId:", bookingId);
     markAsRead(notificationId);
     navigate(`/payment?bookingId=${bookingId}`);
   };
@@ -171,36 +172,76 @@ const Notifications = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                {/* Compact User Details - Only for rental requests */}
-                {notification.type === "rental_request" && notification.data && (
-                  <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                      <span className="font-semibold text-xs sm:text-sm whitespace-nowrap">
-                        {notification.data.userName || "Renter"}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-3 w-3 ${
-                                star <= (notification.data.userRating || 0)
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-muted-foreground/40"
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-0.5 font-medium text-foreground">
-                            {notification.data.userRating?.toFixed(1) || "N/A"}
+              <CardContent className="space-y-3">
+                {/* User Details - For owners viewing rental requests */}
+                {!isRenter && notification.type === "rental_request" && notification.data && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm">
+                            {notification.data.userName || "Renter"}
                           </span>
                         </div>
-                        <span className="text-muted-foreground text-[10px] sm:text-xs">
-                          ({notification.data.userReviewCount || 0})
-                        </span>
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-3 w-3 ${
+                                  star <= (notification.data.userRating || 0)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-muted-foreground/40"
+                                }`}
+                              />
+                            ))}
+                            <span className="ml-1 font-medium">
+                              {notification.data.userRating?.toFixed(1) || "N/A"}
+                            </span>
+                          </div>
+                          <span className="text-muted-foreground">
+                            ({notification.data.userReviewCount || 0} reviews)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bike Details - For renters viewing their notifications */}
+                {isRenter && (notification.type === "rental_approved" || notification.type === "rental_rejected" || notification.type === "rental_payment_done") && notification.data && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Bike className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm">
+                            {notification.data.bikeName || notification.data.bike?.name || "Bike"}
+                          </span>
+                          {notification.data.bikeModel && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {notification.data.bikeModel}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          {notification.data.price && (
+                            <span className="font-medium text-foreground">
+                              ${notification.data.price}/hr
+                            </span>
+                          )}
+                          {notification.data.bikeRating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              <span>{notification.data.bikeRating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -208,20 +249,22 @@ const Notifications = () => {
 
                 {/* Payment Status */}
                 {notification.data?.paymentStatus && (
-                  <div className="mb-3 p-2 sm:p-3 rounded-md bg-muted/30 border border-border/50 inline-flex items-center gap-2 max-w-fit">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Payment Status</span>
-                      <span className="font-semibold text-xs sm:text-sm capitalize">
-                        {notification.data.paymentStatus}
-                      </span>
-                      {notification.data.amount && (
-                        <span className="text-xs text-muted-foreground">
-                          ${notification.data.amount}
+                  <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                        <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Payment Status</span>
+                        <span className="font-semibold text-sm capitalize">
+                          {notification.data.paymentStatus}
                         </span>
-                      )}
+                        {notification.data.amount && (
+                          <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                            ${notification.data.amount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -271,41 +314,33 @@ const Notifications = () => {
 
                   {notification?.data?.booking?.status?.toLowerCase() !== "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {/* <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-1 sm:flex-none text-xs h-8"
-                      >
-                        <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">{notification?.data?.booking?.status.toLowerCase()}</span>
-                      </Button> */}
-                      {isRenter && notification.type === "rental_approved" && (
-                    <Button
-                     
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() =>
-                          handleAddPayment(
-                            notification.data?.bookingId ||
+                      {isRenter && notification.type === "rental_approved" && !notification.data?.paymentStatus && (
+                        <Button
+                          size="sm"
+                          className="w-full sm:w-auto h-9"
+                          onClick={() => {
+                            const bookingId = notification.data?.bookingId ||
                               notification.data?.rentalId ||
-                              notification.data?.booking?.id,
-                            notification.id,
-                          )
-                        }
-                      >
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        Add Payment
-                      </Button>
-                    )}
-                     {isRenter && notification.type === "rental_payment_done" && (
-                    <Button
-                      size="sm"
-                      className="w-full sm:w-auto"
-                    >
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        Payment Done
-                      </Button>
-                    )}
+                              notification.data?.booking?.id;
+                            console.log("Payment button clicked, bookingId:", bookingId);
+                            handleAddPayment(bookingId, notification.id);
+                          }}
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Add Payment
+                        </Button>
+                      )}
+                      {isRenter && notification.type === "rental_payment_done" && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full sm:w-auto h-9"
+                          disabled
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          Payment Completed
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
