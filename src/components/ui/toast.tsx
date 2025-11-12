@@ -23,14 +23,14 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-lg border-l-4 p-4 pr-8 shadow-xl backdrop-blur-sm transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-lg border-l-4 p-4 pr-8 shadow-xl backdrop-blur-sm transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:duration-300",
   {
     variants: {
       variant: {
-        default: "border-l-primary bg-card/95 text-card-foreground shadow-primary/20",
-        destructive: "destructive group border-l-destructive bg-card/95 text-card-foreground shadow-destructive/20",
-        success: "border-l-green-500 bg-card/95 text-card-foreground shadow-green-500/20",
-        warning: "border-l-yellow-500 bg-card/95 text-card-foreground shadow-yellow-500/20",
+        default: "border-l-primary bg-card text-card-foreground shadow-lg shadow-primary/20",
+        destructive: "destructive group border-l-destructive bg-destructive/10 text-card-foreground shadow-lg shadow-destructive/30 ring-1 ring-destructive/20",
+        success: "border-l-success bg-success/10 text-card-foreground shadow-lg shadow-success/30 ring-1 ring-success/20",
+        warning: "border-l-warning bg-warning/10 text-card-foreground shadow-lg shadow-warning/30 ring-1 ring-warning/20",
       },
     },
     defaultVariants: {
