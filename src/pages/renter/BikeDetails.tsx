@@ -632,7 +632,7 @@ const BikeDetails = () => {
           </Card>
 
           {/* Owner's Other Bikes */}
-          <Card>
+          {/* <Card>
             <CardContent className="p-6 space-y-4">
               <h2 className="text-lg font-bold">Owner's Other Bikes</h2>
               <Separator />
@@ -674,7 +674,7 @@ const BikeDetails = () => {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
 
