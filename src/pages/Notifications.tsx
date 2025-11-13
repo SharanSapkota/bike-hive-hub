@@ -251,9 +251,6 @@ const Notifications = () => {
 
                 {/* Bike Details - For renters viewing their notifications */}
                 {isRenter &&
-                  (notification.type === "rental_approved" ||
-                    notification.type === "rental_rejected" ||
-                    notification.type === "rental_payment_done") &&
                   (booking || bike) && (
                   <button
                     type="button"
@@ -348,7 +345,7 @@ const Notifications = () => {
                     </span>
                   </div>
 
-                  {bookingStatus === "pending" && (
+                  {bookingStatus === "pending" && !isRenter && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="default"
