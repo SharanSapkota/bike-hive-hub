@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign, Bike } from "lucide-react";
+import { Bell, Clock, CheckCheck, Check, X, Star, User, DollarSign, Bike, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -129,9 +129,9 @@ const Notifications = () => {
 
       {isLoading && !hasLoaded ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-            <Bell className="h-12 w-12 animate-pulse" />
-            <p className="font-medium">Loading notifications...</p>
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading notifications...</p>
           </CardContent>
         </Card>
       ) : bookingNotifications.length === 0 ? (

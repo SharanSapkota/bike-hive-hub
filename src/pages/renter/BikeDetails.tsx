@@ -282,6 +282,7 @@ const BikeDetails = () => {
   const { bikeId } = useParams();
   const navigate = useNavigate();
   const [bike, setBike] = useState<BikeDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
   const [ownerBikes, setOwnerBikes] = useState(mockOwnerBikes);
   
@@ -295,19 +296,19 @@ const BikeDetails = () => {
 
   useEffect(() => {
     const fetchBikeDetails = async () => {
-      // const location = useLocation();
-      // const bike = location.state?.bike;
-      // if (bike) {
-      //   setBike(bike);
-      //   return;
-      // }
-      const response = await api.get(`/bikes/${bikeId}`);
-      const bikeDetails = response.data?.data ?? response.data;
-      setBike(bikeDetails);
+      setIsLoading(true);
+      try {
+        const response = await api.get(`/bikes/${bikeId}`);
+        const bikeDetails = response.data?.data ?? response.data;
+        setBike(bikeDetails);
+      } catch (error) {
+        console.error("Error fetching bike details:", error);
+        setBike(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchBikeDetails();
-    // Simulate API call
-  
   }, [bikeId]);
 
   // Calculate price when dates change
@@ -395,6 +396,23 @@ const BikeDetails = () => {
       setIsSendingRequest(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container max-w-6xl mx-auto p-4 md:p-6">
+        <Button variant="ghost" onClick={() => navigate("/map")} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Map
+        </Button>
+        <Card className="p-6">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading bike details...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (!bike) {
     return (
