@@ -19,7 +19,7 @@ const signupSchema = z
     middleName: z.string().max(50, "Middle name too long").optional(),
     lastName: z.string().min(2, "Last name must be at least 2 characters").max(50, "Last name too long"),
     email: z.string().email("Invalid email address"),
-    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
+    phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
     dob: z.string().refine((date) => {
       const birthDate = new Date(date);
       const today = new Date();
@@ -315,8 +315,13 @@ const Login = () => {
                       id="phone"
                       type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setPhone(value);
+                      }}
+                      placeholder="1234567890"
+                      maxLength={10}
+                      inputMode="numeric"
                     />
                     {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                   </div>
