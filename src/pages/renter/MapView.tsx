@@ -296,18 +296,11 @@ const MapView = () => {
   }
 
   const handleMarkerClick = useCallback(async (bike: Bike) => {
-    // setSelectedBike(bike);
-    console.log(bike);
-    // setIsLoadingDetails(true);
-    const bikeDetails = await getBikeDetails(bike.id);
-    // setSelectedBike(bike);
-    
+    setIsLoadingDetails(true);
+    const bikeDetails = await getBikeDetails(bike.id);    
     setSelectedBike(normalizeBike(bikeDetails));
-    console.log(selectedBike);
-    // Mock timeout to simulate  API call
-    setTimeout(() => {
-      setIsLoadingDetails(false);
-    }, 1000);
+
+    setIsLoadingDetails(false);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -510,6 +503,7 @@ const MapView = () => {
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <Button size="icon" onClick={handleCenterOnUser} className="bg-card shadow-lg hover:bg-card/90">
           <Navigation className="h-5 w-5" />
+          test
         </Button>
       </div>
 
@@ -579,6 +573,7 @@ const MapView = () => {
                       {selectedBike?.images.map((image: any, index) => (
                         <CarouselItem key={index}>
                           <div className="aspect-video rounded overflow-hidden">
+                            {image?.url}
                             <img
                               src={image?.url}
                               alt={`${selectedBike?.name} - ${index + 1}`}
