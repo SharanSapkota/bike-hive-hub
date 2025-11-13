@@ -43,6 +43,9 @@ interface BikeAddress {
   state?: string | null;
   country?: string | null;
   postalCode?: string | null;
+  village?: string | null;
+  street?: string | null;
+  apartment?: string | null;
 }
 
 interface BikeData {
@@ -85,10 +88,30 @@ const MyBikes = () => {
     pricePerHour: '',
     pricePerDay: '',
     location: '',
-    address: null as { formatted: string; lat: number; lng: number } | null,
+    address: null as BikeAddress | null,
     description: '',
     autoAccept: false,
   });
+
+  const extractAddressParts = useCallback((result: google.maps.GeocoderResult) => {
+    const components = result.address_components ?? [];
+    const find = (type: string) =>
+      components.find((component) => component.types.includes(type))?.long_name ?? null;
+
+    const streetNumber = find('street_number');
+    const route = find('route');
+    const formattedStreet = [streetNumber, route].filter(Boolean).join(' ');
+
+    return {
+      city: find('locality') ?? find('administrative_area_level_3'),
+      state: find('administrative_area_level_1'),
+      country: find('country'),
+      postalCode: find('postal_code'),
+      village: find('sublocality_level_1') ?? find('administrative_area_level_2'),
+      street: formattedStreet || find('route'),
+      apartment: find('subpremise'),
+    };
+  }, []);
 
   const revokeNewImagePreviews = () => {
     newImagePreviews.forEach((preview) => {
@@ -185,6 +208,8 @@ const MyBikes = () => {
           const formattedAddress =
             results[0].formatted_address ?? prediction.description;
 
+          const parts = extractAddressParts(results[0]);
+
           setFormData((prev) => ({
             ...prev,
             location: formattedAddress,
@@ -192,6 +217,13 @@ const MyBikes = () => {
               formatted: formattedAddress,
               lat,
               lng,
+              city: parts.city ?? null,
+              state: parts.state ?? null,
+              country: parts.country ?? null,
+              postalCode: parts.postalCode ?? null,
+              village: parts.village ?? null,
+              street: parts.street ?? null,
+              apartment: parts.apartment ?? null,
             },
           }));
 
@@ -206,7 +238,7 @@ const MyBikes = () => {
         },
       );
     },
-    [],
+    [extractAddressParts],
   );
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent) => {
@@ -217,7 +249,9 @@ const MyBikes = () => {
       return;
     }
 
-    const updateFormData = (formattedAddress: string) => {
+    const updateFormData = (formattedAddress: string, result?: google.maps.GeocoderResult) => {
+      const parts = result ? extractAddressParts(result) : undefined;
+
       setFormData((prev) => ({
         ...prev,
         location: formattedAddress,
@@ -225,6 +259,13 @@ const MyBikes = () => {
           formatted: formattedAddress,
           lat,
           lng,
+          city: parts?.city ?? null,
+          state: parts?.state ?? null,
+          country: parts?.country ?? null,
+          postalCode: parts?.postalCode ?? null,
+          village: parts?.village ?? null,
+          street: parts?.street ?? null,
+          apartment: parts?.apartment ?? null,
         },
       }));
       setAddressPredictions([]);
@@ -241,13 +282,13 @@ const MyBikes = () => {
       { location: { lat, lng } },
       (results, status) => {
         if (status === 'OK' && results && results[0]) {
-          updateFormData(results[0].formatted_address ?? results[0].place_id ?? '');
+          updateFormData(results[0].formatted_address ?? results[0].place_id ?? '', results[0]);
         } else {
           updateFormData(`Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
         }
       },
     );
-  }, []);
+  }, [extractAddressParts]);
 
   useEffect(() => {
     if (formData.address && mapRef.current) {
@@ -266,35 +307,49 @@ const MyBikes = () => {
   const combinedImagePreviews = [...existingImagePreviews, ...newImagePreviews];
 
   const mapBikeResponse = (bike: any): BikeData => {
-    const addressSource = Array.isArray(bike.bikeAddress) ? bike.bikeAddress[0] : bike.bikeAddress;
-    const imagesSource = Array.isArray(bike.bikeImages) ? bike.bikeImages : [];
+    const rawAddress = Array.isArray(bike.bikeAddress)
+      ? bike.bikeAddress[0]
+      : bike.bikeAddress ?? bike.location ?? null;
+
+    const normalizedAddress: BikeAddress | undefined = rawAddress
+      ? {
+          formatted: rawAddress.address ?? rawAddress.formatted ?? 'Not specified',
+          lat: rawAddress.lat ?? rawAddress.latitude ?? 0,
+          lng: rawAddress.lng ?? rawAddress.longitude ?? 0,
+          city: rawAddress.city ?? null,
+          state: rawAddress.state ?? null,
+          country: rawAddress.country ?? null,
+          postalCode: rawAddress.postalCode ?? null,
+          village: rawAddress.village ?? null,
+          street: rawAddress.street ?? null,
+          apartment: rawAddress.apartment ?? null,
+        }
+      : undefined;
+
+    const imagesSource = Array.isArray(bike.images)
+      ? bike.images
+      : Array.isArray(bike.bikeImages)
+      ? bike.bikeImages
+      : [];
+
     return {
       id: bike.id,
       name: bike.name,
-      category: bike.category?.name || 'General',
+      category: bike.category?.name || bike.category || 'General',
       pricePerHour: typeof bike.pricePerHour === 'number' ? bike.pricePerHour : bike.rentAmount || 0,
-      pricePerDay: typeof bike.pricePerDay === 'number' ? bike.pricePerDay : 0,
-      location: addressSource?.address || 'Not specified',
-      address: addressSource
-        ? {
-            formatted: addressSource.address,
-            lat: addressSource.latitude,
-            lng: addressSource.longitude,
-            city: addressSource.city,
-            state: addressSource.state,
-            country: addressSource.country,
-            postalCode: addressSource.postalCode,
-          }
-        : undefined,
+      pricePerDay: typeof bike.pricePerDay === 'number' ? bike.pricePerDay : bike.rentAmount || 0,
+      location: normalizedAddress?.formatted || 'Not specified',
+      address: normalizedAddress,
       description: bike.description || '',
-      available: bike.status ? bike.status === 'AVAILABLE' : true,
-      autoAccept: bike.autoAccept || false,
-      images: imagesSource,
-      // images: imagesSource.map((img: any) => {
-      //   if (!img?.imageUrl) return '';
-      //   return img.imageUrl.startsWith('http') ? img.imageUrl : `${mediaBaseUrl}${img.imageUrl}`;
-      // }),
-      rawImages: imagesSource.map((img: any) => img.imageUrl),
+      available: (bike.status ?? '').toString().toUpperCase() === 'AVAILABLE',
+      autoAccept: Boolean(bike.autoAccept),
+      images: imagesSource
+        .map((img: any) => img?.url ?? img?.imageUrl ?? '')
+        .filter((url: string) => !!url)
+        .map((url: string) => (url.startsWith('http') ? url : `${mediaBaseUrl}${url}`)),
+      rawImages: imagesSource
+        .map((img: any) => img?.url ?? img?.imageUrl ?? '')
+        .filter((url: string) => !!url),
       ownerId: bike.ownerId ?? bike.owner?.id ?? null,
     };
   };
@@ -449,6 +504,13 @@ const MyBikes = () => {
               formatted: fallbackFormatted,
               lat: latitude,
               lng: longitude,
+              city: null,
+              state: null,
+              country: null,
+              postalCode: null,
+              village: null,
+              street: null,
+              apartment: null,
             },
           }));
           setAddressPredictions([]);
@@ -460,6 +522,8 @@ const MyBikes = () => {
             
             if (status === 'OK' && results && results[0]) {
               const formattedAddress = results[0].formatted_address;
+              const parts = extractAddressParts(results[0]);
+             
               setFormData((prev) => ({
                 ...prev,
                 location: formattedAddress,
@@ -467,6 +531,13 @@ const MyBikes = () => {
                   formatted: formattedAddress,
                   lat: latitude,
                   lng: longitude,
+                  city: parts.city ?? null,
+                  state: parts.state ?? null,
+                  country: parts.country ?? null,
+                  postalCode: parts.postalCode ?? null,
+                  village: parts.village ?? null,
+                  street: parts.street ?? null,
+                  apartment: parts.apartment ?? null,
                 },
               }));
               mapRef.current?.panTo({ lat: latitude, lng: longitude });
@@ -528,11 +599,18 @@ const MyBikes = () => {
           formatted: formData.address.formatted || formData.location,
           lat: formData.address.lat,
           lng: formData.address.lng,
+          city: formData.address.city || '',
+          state: formData.address.state,
+          country: formData.address.country,
+          postalCode: formData.address.postalCode,
+          village: formData.address.village,
+          street: formData.address.street,
+          apartment: formData.address.apartment,
         })
       );
 
       payload.append('existingImages', JSON.stringify(existingImages));
-      payload.append('status', editingBike && !editingBike.available ? 'MAINTENANCE' : 'AVAILABLE');
+      payload.append('status', editingBike && !editingBike?.available ? 'MAINTENANCE' : 'AVAILABLE');
       payload.append('categoryName', formData.category);
 
       newImages.forEach((file) => {
@@ -672,7 +750,7 @@ const MyBikes = () => {
                   />
                 </div> */}
                 <div className="space-y-2">
-                  <Label htmlFor="pricePerDay">Price/Day ($)</Label>
+                  <Label htmlFor="pricePerDay">Price/Day (EUR)</Label>
                   <Input
                     id="pricePerDay"
                     type="number"
@@ -902,7 +980,7 @@ const MyBikes = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {bikes.filter((b) => b.available).length}
+              {bikes.filter((b) => b?.available)?.length}
             </div>
           </CardContent>
         </Card>
@@ -948,10 +1026,10 @@ const MyBikes = () => {
               )}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{bike?.name}</CardTitle>
+                  <CardTitle className="text-lg">{bike.name}</CardTitle>
                   <CardDescription className="flex items-center gap-1 mt-1">
                     <MapPin className="h-3 w-3" />
-                    {bike?.location}
+                    {bike.location || 'Not specified'}
                   </CardDescription>
                 </div>
                 <Badge
