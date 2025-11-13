@@ -296,18 +296,20 @@ const MapView = () => {
   }
 
   const handleMarkerClick = useCallback(async (bike: Bike) => {
-    // setSelectedBike(bike);
-    console.log(bike);
-    // setIsLoadingDetails(true);
-    const bikeDetails = await getBikeDetails(bike.id);
-    // setSelectedBike(bike);
+    // Show popover immediately with current bike data
+    setSelectedBike(bike);
+    setIsLoadingDetails(true);
     
-    setSelectedBike(normalizeBike(bikeDetails));
-    console.log(selectedBike);
-    // Mock timeout to simulate  API call
-    setTimeout(() => {
+    try {
+      // Fetch detailed bike data in the background
+      const bikeDetails = await getBikeDetails(bike.id);
+      setSelectedBike(normalizeBike(bikeDetails));
+    } catch (error) {
+      console.error("Failed to fetch bike details:", error);
+      // Keep showing the basic bike info even if details fail to load
+    } finally {
       setIsLoadingDetails(false);
-    }, 1000);
+    }
   }, []);
 
   const onUnmount = useCallback(() => {
