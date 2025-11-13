@@ -582,7 +582,6 @@ const MapView = () => {
                       {selectedBike?.images.map((image: any, index) => (
                         <CarouselItem key={index}>
                           <div className="aspect-video rounded overflow-hidden">
-                            {image?.url}
                             <img
                               src={image?.url}
                               alt={`${selectedBike?.name} - ${index + 1}`}
