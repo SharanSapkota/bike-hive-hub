@@ -22,7 +22,7 @@ export const normalizeBike = (bike: any): any => {
       pricePerDay: Number(bike?.pricePerDay ?? bike?.rentAmount ?? 0),
       category: bike?.category?.name ?? "General",
       available: true,
-      images: bike?.owner?.images ?? [],
+      images: bike?.images ?? [],
       condition: bike?.condition ?? bike?.bikeCondition ?? undefined,
       reviews: bike?.reviews ?? bike?.reviewCount ?? undefined,
       rating: bike?.rating ?? bike?.averageRating ?? undefined,
