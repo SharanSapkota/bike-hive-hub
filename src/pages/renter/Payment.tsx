@@ -7,32 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, CreditCard, Calendar, Clock, Bike } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { differenceInDays, differenceInHours, format } from "date-fns";
 
-// Mock booking data - replace with real API call
-const mockBookingData: Record<string, any> = {
-  "booking-1": {
-    bikeName: "Mountain Explorer Pro",
-    bikeImage: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400",
-    pricePerHour: 8,
-    startDate: "2025-01-15",
-    startTime: "10:00",
-    endDate: "2025-01-15",
-    endTime: "14:00",
-    totalHours: 4,
-    totalAmount: 32,
-  },
-  "booking-3": {
-    bikeName: "Road Racer Speed",
-    bikeImage: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400",
-    pricePerHour: 10,
-    startDate: "2025-01-16",
-    startTime: "09:00",
-    endDate: "2025-01-16",
-    endTime: "17:00",
-    totalHours: 8,
-    totalAmount: 80,
-  },
-};
+const getBookingDetails = async (bookingId: string) => {
+  const response = await api.get(`/bookings/${bookingId}`);
+  return response.data.data;
+}
 
 const Payment = () => {
   const [searchParams] = useSearchParams();
@@ -41,12 +22,33 @@ const Payment = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
+  const [isBookingLoading, setIsBookingLoading] = useState(false);
 
   useEffect(() => {
-    if (bookingId && mockBookingData[bookingId]) {
-      setBookingDetails(mockBookingData[bookingId]);
-    }
-  }, [bookingId]);
+    const fetchBookingDetails = async () => {
+      if (!bookingId) {
+        return;
+      }
+
+      try {
+        setIsBookingLoading(true);
+        const bookingDetails = await getBookingDetails(bookingId);
+        setBookingDetails(bookingDetails);
+      } catch (error: any) {
+        console.error("Failed to load booking details:", error);
+        toast({
+          title: "Unable to load booking",
+          description:
+            error?.response?.data?.message ??
+            "Please try again or contact support.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsBookingLoading(false);
+      }
+    };
+    fetchBookingDetails();
+  }, [bookingId, toast]);
 
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
@@ -96,10 +98,33 @@ const Payment = () => {
     }, 2000);
   };
 
-  if (!bookingDetails) {
+  if (!bookingId) {
     return (
       <div className="container max-w-2xl mx-auto p-4 md:p-6">
         <Card className="p-6 text-center">
+          <p className="text-muted-foreground">No booking selected</p>
+          <Button onClick={() => navigate("/map")} className="mt-4">
+            Back to Map
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isBookingLoading) {
+    return (
+      <div className="container max-w-2xl mx-auto p-4 md:p-6">
+        <Card className="p-6 text-center space-y-4">
+          <p className="text-muted-foreground">Loading booking details...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!bookingDetails) {
+    return (
+      <div className="container max-w-2xl mx-auto p-4 md:p-6">
+        <Card className="p-6 text-center space-y-4">
           <p className="text-muted-foreground">Booking not found</p>
           <Button onClick={() => navigate("/map")} className="mt-4">
             Back to Map
@@ -109,6 +134,40 @@ const Payment = () => {
     );
   }
 
+  const bike = bookingDetails.bike ?? {};
+  const owner = bookingDetails.owner ?? bike.owner ?? {};
+
+  const start = bookingDetails.startTime ? new Date(bookingDetails.startTime) : null;
+  const end = bookingDetails.endTime ? new Date(bookingDetails.endTime) : null;
+
+  const durationHours =
+    start && end ? Math.max(1, differenceInHours(end, start)) : null;
+  const durationDays =
+    start && end ? Math.max(1, differenceInDays(end, start)) : null;
+
+  const dailyRate = bike.pricePerDay ?? 0;
+
+  const totalAmount =
+    bookingDetails.totalAmount ??
+    bookingDetails.price ??
+    // totalFromDays ??
+    // totalFromHours ??
+    0;
+
+  const currency = (bookingDetails.currency ?? "EUR").toUpperCase();
+
+  const startDateLabel = start ? format(start, "PPP") : "N/A";
+  const startTimeLabel = start ? format(start, "p") : "";
+  const endDateLabel = end ? format(end, "PPP") : "N/A";
+  const endTimeLabel = end ? format(end, "p") : "";
+
+  const location =
+    bike.location?.[0]?.address ??
+    bike.location?.[0]?.street ??
+    "Address not available";
+
+  const bikeImage =
+    bike.images?.[0]?.url
   return (
     <div className="container max-w-3xl mx-auto p-4 md:p-6">
       <Button
@@ -128,16 +187,24 @@ const Payment = () => {
           {/* Bike Details */}
           <div className="mb-4">
             <img 
-              src={bookingDetails.bikeImage} 
-              alt={bookingDetails.bikeName}
+              src={bikeImage}
+              alt={bike.name ?? "Bike"}
               className="w-full h-40 object-cover rounded-lg mb-3"
             />
             <div className="flex items-center gap-2 mb-2">
               <Bike className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold">{bookingDetails.bikeName}</h3>
+              <h3 className="font-semibold">
+                {bike.name ?? "Bike"}
+              </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              ${bookingDetails.pricePerHour}/hour
+              {dailyRate ? `${currency} ${dailyRate}/day` : "Daily rate unavailable"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Owner: {owner.firstName} {owner.lastName ?? ""}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {location}
             </p>
           </div>
 
@@ -150,7 +217,8 @@ const Payment = () => {
               <div>
                 <p className="text-sm font-medium">Start</p>
                 <p className="text-sm text-muted-foreground">
-                  {bookingDetails.startDate} at {bookingDetails.startTime}
+                  {startDateLabel}
+                  {startTimeLabel ? ` at ${startTimeLabel}` : ""}
                 </p>
               </div>
             </div>
@@ -159,7 +227,8 @@ const Payment = () => {
               <div>
                 <p className="text-sm font-medium">End</p>
                 <p className="text-sm text-muted-foreground">
-                  {bookingDetails.endDate} at {bookingDetails.endTime}
+                  {endDateLabel}
+                  {endTimeLabel ? ` at ${endTimeLabel}` : ""}
                 </p>
               </div>
             </div>
@@ -168,7 +237,9 @@ const Payment = () => {
               <div>
                 <p className="text-sm font-medium">Duration</p>
                 <p className="text-sm text-muted-foreground">
-                  {bookingDetails.totalHours} hours
+                  {durationHours
+                    ? `${durationHours} hour${durationHours !== 1 ? "s" : ""}`
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -179,17 +250,25 @@ const Payment = () => {
           {/* Price Breakdown */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Rental ({bookingDetails.totalHours} hours)</span>
-              <span>EUR{bookingDetails.totalAmount}</span>
+              <span className="text-muted-foreground">
+                Rental
+                {durationHours ? ` (${durationHours} hour${durationHours !== 1 ? "s" : ""})` : ""}
+              </span>
+              <span>
+                {currency}{" "}
+                {Number(totalAmount).toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Service fee</span>
-              <span>EUR{0}</span>
+              <span>{currency} 0.00</span>
             </div>
             <Separator className="my-2" />
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span className="text-primary">EUR {bookingDetails.totalAmount}</span>
+              <span className="text-primary">
+                {currency} {Number(totalAmount).toFixed(2)}
+              </span>
             </div>
           </div>
         </Card>
@@ -284,7 +363,9 @@ const Payment = () => {
             className="w-full h-12 text-base"
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : `Pay $${bookingDetails.totalAmount}`}
+            {isProcessing
+              ? "Processing..."
+              : `Pay ${currency} ${Number(totalAmount).toFixed(2)}`}
           </Button>
         </form>
 
@@ -299,3 +380,60 @@ const Payment = () => {
 };
 
 export default Payment;
+
+const data = {
+  "id": 3,
+  "userId": 13,
+  "bikeId": 18,
+  "ownerId": 14,
+  "price": null,
+  "currency": null,
+  "status": "APPROVED",
+  "completedAt": null,
+  "startTime": "2025-11-11T22:00:00.000Z",
+  "endTime": "2025-11-13T22:00:00.000Z",
+  "createdAt": "2025-11-10T16:55:07.005Z",
+  "updatedAt": "2025-11-10T18:14:08.165Z",
+  "paymentTransactionId": null,
+  "user": {
+      "id": 13,
+      "firstName": "Ram",
+      "secondName": "Sharan",
+      "lastName": "Sapkota",
+      "password": "$2b$12$jkBPlsRi.z3sv.s4hldcXe18cK8Iiz9LZQ.ClHg/ws.uCNkn/Z43y",
+      "age": 22,
+      "isActive": true,
+      "isEmailVerified": true,
+      "createdAt": "2025-11-09T05:54:28.129Z",
+      "updatedAt": "2025-11-09T05:54:28.129Z",
+      "userTypeId": null
+  },
+  "bike": {
+      "id": 18,
+      "name": "Mountain Exploral",
+      "description": "This is excellent bike",
+      "rentAmount": 4,
+      "pricePerHour": 4,
+      "pricePerDay": 46,
+      "status": "AVAILABLE",
+      "startTime": null,
+      "endTime": null,
+      "categoryId": 1,
+      "ownerId": 14,
+      "createdAt": "2025-11-09T17:58:58.063Z",
+      "updatedAt": "2025-11-09T17:58:58.063Z"
+  },
+  "owner": {
+      "id": 14,
+      "firstName": "Ram",
+      "secondName": "Sharan",
+      "lastName": "Sapkota",
+      "password": "$2b$12$w/UCNFoTGttA6qM2mIND6uBls/9Quo9YNdGAFe0Cz/9g3vxKoeE5K",
+      "age": 18,
+      "isActive": true,
+      "isEmailVerified": true,
+      "createdAt": "2025-11-09T08:05:49.168Z",
+      "updatedAt": "2025-11-09T08:05:49.168Z",
+      "userTypeId": null
+  }
+}
