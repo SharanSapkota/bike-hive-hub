@@ -443,11 +443,11 @@ const BikeDetails = () => {
             <CardContent className="p-4">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {bike?.owner?.images.map((image, index) => (
+                  {bike?.images.map((image: any, index) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video rounded-lg overflow-hidden">
                         <img
-                          src={image}
+                          src={image?.url}
                           alt={`${bike.name} - ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
@@ -455,7 +455,7 @@ const BikeDetails = () => {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {bike?.owner?.images.length > 1 && (
+                {bike?.images.length > 1 && (
                   <>
                     <CarouselPrevious className="left-4" />
                     <CarouselNext className="right-4" />
@@ -524,10 +524,17 @@ const BikeDetails = () => {
                   ))}
                 </div>
               </div>
+              {bike?.available && (
+                  <div>
+                      <Button size="lg" className="w-full mt-4" onClick={handleBookNow}>
+                    Book Now
+                  </Button>
+                  </div>
+              )}
+                  <div>
 
-              <Button size="lg" className="w-full mt-4" onClick={handleBookNow}>
-                Book Now
-              </Button>
+                  </div>
+            
             </CardContent>
           </Card>
 
@@ -591,10 +598,6 @@ const BikeDetails = () => {
               </div>
 
               <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Joined {bike.owner.joinedDate}</span>
-                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
