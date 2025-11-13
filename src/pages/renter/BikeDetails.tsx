@@ -524,7 +524,7 @@ const BikeDetails = () => {
                   ))}
                 </div>
               </div>
-              {bike?.available && (
+              { (
                   <div>
                       <Button size="lg" className="w-full mt-4" onClick={handleBookNow}>
                     Book Now
