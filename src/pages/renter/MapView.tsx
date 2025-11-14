@@ -361,14 +361,26 @@ const MapView = () => {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          setIsLoadingLocation(false);
           setCenter(newCenter);
           setUserLocation(newCenter);
+ 
           if (map) {
             map.panTo(newCenter);
             map.setZoom(15);
           }
-          getAddressFromCoordinates(newCenter.lat, newCenter.lng);
+ 
+          getAddressFromCoordinates(newCenter.lat, newCenter.lng)
+            .catch((error) => {
+              console.error("Error getting address:", error);
+              toast({
+                title: "Address Lookup Failed",
+                description: "We couldn't determine your address.",
+                variant: "destructive",
+              });
+            })
+            .finally(() => {
+              setIsLoadingLocation(false);
+            });
         },
         (error) => {
           console.error("Error getting location:", error);
