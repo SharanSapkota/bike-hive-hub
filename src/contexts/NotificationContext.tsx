@@ -16,6 +16,7 @@ import {
   getNotificationCount,
   getNotifications,
 } from "@/services/notification";
+import { api } from "@/lib/api";
 
 export interface Notification {
   id: string;
@@ -33,7 +34,7 @@ interface NotificationContextType {
   isLoading: boolean;
   hasLoaded: boolean;
   loadNotifications: (force?: boolean) => Promise<void>;
-  markAsRead: (id: string) => void;
+  markAsRead: (id: string, callApi?: boolean) => void;
   markAllAsRead: () => void;
 }
 
@@ -172,7 +173,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     [hasLoaded, user],
   );
 
-  const markAsRead = useCallback((id: string) => {
+  const markAsRead = useCallback((id: string, callApi = true) => {
+    if (callApi) {
+      api.post(`/notifications/${id}/read`);
+    }
     setNotifications((prev) => {
       const updated = prev.map((notification) =>
         notification.id === id ? { ...notification, read: true } : notification,
