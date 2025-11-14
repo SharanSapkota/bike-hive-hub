@@ -143,7 +143,7 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
 
       if (notification.type === 'rental_approved') {
         toast({
-          title: "🎉 Booking Accepted!",
+          title: "Booking Accepted!",
           description: notification.message,
           duration: 5000,
         });
@@ -153,7 +153,7 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
 
       if (notification.type === 'rental_rejected') {
         toast({
-          title: "❌ Booking Rejected",
+          title: "Booking Rejected",
           description: notification.message,
           variant: "destructive",
           duration: 5000,
