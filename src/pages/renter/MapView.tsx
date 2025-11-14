@@ -781,8 +781,8 @@ const MapView = () => {
                 ) : calculatedPrice !== null ? (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Price per hour:</span>
-                      <span className="font-medium">${selectedBike?.pricePerHour}</span>
+                      <span className="text-muted-foreground">Price per Day:</span>
+                      <span className="font-medium">EUR {selectedBike?.pricePerDay}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Duration:</span>
