@@ -497,6 +497,7 @@ const MapView = () => {
           streetViewControl: false,
           mapTypeControl: false,
           fullscreenControl: false,
+          gestureHandling: 'greedy', // Enable single-finger drag
         }}
       >
         {bikes.map((bike) => {
