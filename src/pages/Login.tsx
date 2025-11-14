@@ -4,14 +4,14 @@ import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bike, Loader2 } from "lucide-react";
+import { Bike, Loader2, ArrowRight, Shield, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
-import { api } from "@/lib/api";
+
 // Validation schema
 const signupSchema = z
   .object({
@@ -65,7 +65,6 @@ const Login = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [registerRole, setRegisterRole] = useState<UserRole>("renter");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isMenuLoading, setIsMenuLoading] = useState(false);
 
   if (isAuthenticated) {
     navigate("/");
@@ -87,12 +86,6 @@ const Login = () => {
 
       if (status === 403) {
         navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
-        // toast.warning(message, {
-        //   action: {
-        //     label: "Verify",
-        //     onClick: () => navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`),
-        //   },
-        // });
       } else {
         toast.error(message);
       }
@@ -104,355 +97,378 @@ const Login = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    const formData = {
+      firstName,
+      middleName,
+      lastName,
+      email,
+      phone,
+      dob,
+      country,
+      city,
+      state,
+      postalCode,
+      password,
+      confirmPassword,
+    };
+
+    const result = signupSchema.safeParse(formData);
+
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.errors.forEach((error) => {
+        if (error.path) {
+          newErrors[error.path[0]] = error.message;
+        }
+      });
+      setErrors(newErrors);
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Validate form data
-      const formData = {
-        firstName,
-        middleName,
-        lastName,
-        email,
-        phone,
-        dob,
-        country,
-        city,
-        state,
-        postalCode,
-        password,
-        confirmPassword,
-      };
+      const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+      await register(email, password, fullName, registerRole);
 
-      const result = signupSchema.safeParse(formData);
-
-      if (!result.success) {
-        const newErrors: Record<string, string> = {};
-        result.error.errors.forEach((err) => {
-          if (err.path[0]) {
-            newErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(newErrors);
-        toast.error("Please fix the validation errors");
-        return;
-      }
-
-      await api.post("/auth/signup", {
-        firstName,
-        middleName,
-        lastName,
-        email,
-        phone,
-        dob,
-        address: {
-          country,
-          city,
-          state,
-          postalCode,
-        },
-        password,
-        role: registerRole,
-      });
-
-      toast.success("Account created! Check your email to verify.");
+      toast.success("Registration successful! Please verify your email.");
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Registration failed";
-      toast.error(errorMessage);
+      toast.error(error?.response?.data?.data || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
-            <Bike className="h-7 w-7 text-white" />
+    <div className="min-h-screen flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-primary relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
+          <div className="mb-8 animate-fade-in">
+            <Bike className="w-24 h-24 mb-6" />
+            <h1 className="text-5xl font-bold mb-4">Gear Quest</h1>
+            <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
           </div>
-          <h1 className="text-3xl font-bold">Gear Quest</h1>
+          
+          <div className="space-y-6 max-w-md animate-fade-in">
+            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <Zap className="w-6 h-6 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold mb-1">Quick & Easy</h3>
+                <p className="text-sm opacity-90">Find and rent bikes in seconds</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <Shield className="w-6 h-6 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold mb-1">Secure & Safe</h3>
+                <p className="text-sm opacity-90">Your data is protected with us</p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <Card className="shadow-lg">
-          <Tabs defaultValue="login" className="w-full">
-            <CardHeader>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
+      {/* Right Side - Forms */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md animate-scale-in">
+          <div className="lg:hidden mb-8 text-center">
+            <Bike className="w-16 h-16 mx-auto mb-4 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Gear Quest</h1>
+          </div>
+
+          <Card className="border-border shadow-lg">
+            <CardHeader className="space-y-1 pb-4">
+              <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+              <CardDescription>Sign in to your account or create a new one</CardDescription>
             </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                  <TabsTrigger value="register">Register</TabsTrigger>
+                </TabsList>
 
-            {/* Login Tab */}
-            <TabsContent value="login">
-              <form onSubmit={handleLogin}>
-                <CardContent className="space-y-4">
-                  <CardTitle>Welcome Back</CardTitle>
-                  <CardDescription>Enter your credentials to access your account</CardDescription>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password">Password</Label>
-                      <button
-                        type="button"
-                        className="text-sm text-primary hover:underline"
-                        onClick={() => navigate('/forgot-password')}
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </CardContent>
-
-                <CardFooter className="flex flex-col gap-2">
-                  <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Logging in...
-                      </>
-                    ) : (
-                      "Login"
-                    )}
-                  </Button>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Don't have an account?{" "}
-                    <button
-                      type="button"
-                      className="text-primary hover:underline font-medium"
-                      onClick={() => {
-                        const registerTab = document.querySelector('[value="register"]') as HTMLButtonElement;
-                        registerTab?.click();
-                      }}
-                    >
-                      Register
-                    </button>
-                  </p>
-                </CardFooter>
-              </form>
-            </TabsContent>
-
-            {/* Register Tab */}
-            <TabsContent value="register">
-              <form onSubmit={handleRegister}>
-                <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto">
-                  <CardTitle>Create Account</CardTitle>
-                  <CardDescription>Fill in your details to get started</CardDescription>
-
-                  {/* Name Fields */}
-                  <div className="grid grid-cols-3 gap-3">
+                {/* Login Tab */}
+                <TabsContent value="login">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name *</Label>
+                      <Label htmlFor="login-email">Email</Label>
                       <Input
-                        id="firstName"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="John"
+                        id="login-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        className="h-11"
                       />
-                      {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
                     </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">Password</Label>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/forgot-password")}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                        className="h-11"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11 text-base" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          Sign In
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                {/* Register Tab */}
+                <TabsContent value="register">
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="role">I want to</Label>
+                      <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
+                        <SelectTrigger className="h-11">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="renter">Rent bikes</SelectItem>
+                          <SelectItem value="owner">List my bikes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name *</Label>
+                        <Input
+                          id="firstName"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className={errors.firstName ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.firstName && (
+                          <p className="text-xs text-destructive">{errors.firstName}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name *</Label>
+                        <Input
+                          id="lastName"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className={errors.lastName ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.lastName && (
+                          <p className="text-xs text-destructive">{errors.lastName}</p>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="middleName">Middle Name</Label>
                       <Input
                         id="middleName"
                         value={middleName}
                         onChange={(e) => setMiddleName(e.target.value)}
-                        placeholder="M."
                       />
-                      {errors.middleName && <p className="text-xs text-destructive">{errors.middleName}</p>}
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name *</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
-                        id="lastName"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Doe"
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={errors.email ? "border-destructive" : ""}
+                        required
                       />
-                      {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                      {errors.email && (
+                        <p className="text-xs text-destructive">{errors.email}</p>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Email */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                    />
-                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-                  </div>
-
-                  {/* Phone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setPhone(value);
-                      }}
-                      placeholder="1234567890"
-                      maxLength={10}
-                      inputMode="numeric"
-                    />
-                    {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth * (Must be 18+)</Label>
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
-                    />
-                    {errors.dob && <p className="text-xs text-destructive">{errors.dob}</p>}
-                  </div>
-
-                  {/* Address Fields */}
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="country">Country *</Label>
+                      <Label htmlFor="phone">Phone Number *</Label>
                       <Input
-                        id="country"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        placeholder="United States"
+                        id="phone"
+                        type="tel"
+                        placeholder="1234567890"
+                        value={phone}
+                        onChange={(e) => {
+                          const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setPhone(cleaned);
+                        }}
+                        maxLength={10}
+                        inputMode="numeric"
+                        className={errors.phone ? "border-destructive" : ""}
+                        required
                       />
-                      {errors.country && <p className="text-xs text-destructive">{errors.country}</p>}
+                      {errors.phone && (
+                        <p className="text-xs text-destructive">{errors.phone}</p>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City *</Label>
-                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="New York" />
-                      {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="state">State/Province *</Label>
-                      <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="NY" />
-                      {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="postalCode">Postal Code *</Label>
+                      <Label htmlFor="dob">Date of Birth *</Label>
                       <Input
-                        id="postalCode"
-                        value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value)}
-                        placeholder="10001"
+                        id="dob"
+                        type="date"
+                        value={dob}
+                        onChange={(e) => setDob(e.target.value)}
+                        className={errors.dob ? "border-destructive" : ""}
+                        required
                       />
-                      {errors.postalCode && <p className="text-xs text-destructive">{errors.postalCode}</p>}
+                      {errors.dob && (
+                        <p className="text-xs text-destructive">{errors.dob}</p>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Password */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Must be 8+ characters with uppercase, lowercase, and number
-                    </p>
-                    {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-                  </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Country *</Label>
+                        <Input
+                          id="country"
+                          value={country}
+                          onChange={(e) => setCountry(e.target.value)}
+                          className={errors.country ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.country && (
+                          <p className="text-xs text-destructive">{errors.country}</p>
+                        )}
+                      </div>
 
-                  {/* Confirm Password */}
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                    />
-                    {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state">State/Province *</Label>
+                        <Input
+                          id="state"
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          className={errors.state ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.state && (
+                          <p className="text-xs text-destructive">{errors.state}</p>
+                        )}
+                      </div>
+                    </div>
 
-                  {/* Role Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="register-role">I want to *</Label>
-                    <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
-                      <SelectTrigger id="register-role">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="renter">Rent Bikes</SelectItem>
-                        <SelectItem value="owner">List My Bikes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">City *</Label>
+                        <Input
+                          id="city"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className={errors.city ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.city && (
+                          <p className="text-xs text-destructive">{errors.city}</p>
+                        )}
+                      </div>
 
-                <CardFooter className="flex flex-col gap-2">
-                  <Button type="submit" className="w-full bg-gradient-accent hover:opacity-90" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      "Create Account"
-                    )}
-                  </Button>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      className="text-primary hover:underline font-medium"
-                      onClick={() => {
-                        const loginTab = document.querySelector('[value="login"]') as HTMLButtonElement;
-                        loginTab?.click();
-                      }}
+                      <div className="space-y-2">
+                        <Label htmlFor="postalCode">Postal Code *</Label>
+                        <Input
+                          id="postalCode"
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className={errors.postalCode ? "border-destructive" : ""}
+                          required
+                        />
+                        {errors.postalCode && (
+                          <p className="text-xs text-destructive">{errors.postalCode}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={errors.password ? "border-destructive" : ""}
+                        required
+                      />
+                      {errors.password && (
+                        <p className="text-xs text-destructive">{errors.password}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Must contain uppercase, lowercase, and number
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={errors.confirmPassword ? "border-destructive" : ""}
+                        required
+                      />
+                      {errors.confirmPassword && (
+                        <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11 text-base" 
+                      disabled={isLoading}
                     >
-                      Login
-                    </button>
-                  </p>
-                </CardFooter>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </Card>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          Create Account
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
