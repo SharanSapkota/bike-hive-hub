@@ -380,7 +380,7 @@ const Notifications = () => {
 
                   {bookingStatus !== "pending" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {isRenter && notification.type === "rental_approved" && !paymentStatus && (
+                      {isRenter && notification.type === "rental_approved" && (
                         <Button
                           size="sm"
                           className="w-full sm:w-auto h-9"
