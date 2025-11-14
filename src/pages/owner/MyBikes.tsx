@@ -301,8 +301,8 @@ const MyBikes = () => {
   }, [formData.address]);
 
   const mediaBaseUrl = useMemo(() => {
-    const base = import.meta.env.VITE_BASE_API_URL || 'http://localhost:4000/api';
-    return base.replace(/\/api\/?$/, '');
+    const base = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+    return base.replace(/\/$/, '');
   }, []);
 
   const combinedImagePreviews = [...existingImagePreviews, ...newImagePreviews];
