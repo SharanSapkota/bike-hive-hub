@@ -361,6 +361,7 @@ const MapView = () => {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
+          setIsLoadingLocation(false);
           setCenter(newCenter);
           setUserLocation(newCenter);
           if (map) {
@@ -368,7 +369,6 @@ const MapView = () => {
             map.setZoom(15);
           }
           getAddressFromCoordinates(newCenter.lat, newCenter.lng);
-          setIsLoadingLocation(false);
         },
         (error) => {
           console.error("Error getting location:", error);
