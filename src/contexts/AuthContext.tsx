@@ -13,12 +13,30 @@ export interface User {
   avatar?: string;
 }
 
+interface RegisterPayload {
+  firstName,
+  middleName,
+  lastName,
+  phone,
+  address: {
+    country,
+    city,
+    state,
+    postalCode,
+  },
+  dob,
+  password,
+  confirmPassword,
+  email,
+  role,
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -89,13 +107,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (email: string, password: string, name: string, role: UserRole) => {
+  const register = async (payload: RegisterPayload) => {
     try {
-      // MOCK REGISTRATION - Comment out API call
-      const response = await api.post('/auth/signup', { email, password, name, role });
-      const payload = response.data?.data ?? response.data;
-      const authToken = payload?.token;
-      const userData = payload?.user;
+      const response = await api.post('/auth/signup', payload);
+      const payloadResponse = response.data?.data ?? response.data;
+      const authToken = payloadResponse?.data?.token;
+      const userData = payloadResponse?.data?.user;
 
       // Mock registration
       // const userData: User = {

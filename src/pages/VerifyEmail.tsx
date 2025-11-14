@@ -22,6 +22,7 @@ const VerifyEmail = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [email, setEmail] = useState(initialEmail);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [disableResend, setDisableResend] = useState(false);
 
   useEffect(() => {
     const verify = async () => {
@@ -45,9 +46,9 @@ const VerifyEmail = () => {
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmitResend) return;
-
+    if (!canSubmitResend || disableResend) return;
     setIsSubmitting(true);
+    setDisableResend(true);
     try {
       await api.post("/auth/resend-verification", { email });
       sonnerToast('Verification email sent!', 'Please check your inbox.');
@@ -55,6 +56,9 @@ const VerifyEmail = () => {
       sonnerToast('Failed to resend verification email', 'Failed to resend the verification email.');
     } finally {
       setIsSubmitting(false);
+      setTimeout(() => {
+        setDisableResend(true);
+      }, 2000);
     }
   };
 
@@ -128,8 +132,8 @@ const VerifyEmail = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={!canSubmitResend || isSubmitting}>
-                  {isSubmitting ? "Sending…" : "Resend verification email"}
+                <Button type="submit" className="w-full" disabled={!canSubmitResend || disableResend}>
+                  {isSubmitting ? "sending..." : "Resend verification email"}
                 </Button>
               </form>
             )}

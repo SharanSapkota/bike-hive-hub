@@ -132,7 +132,23 @@ const Login = () => {
 
     try {
       const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
-      await register(email, password, fullName, registerRole);
+      await register({
+        firstName,
+        middleName,
+        lastName,
+        email,
+        address: {
+          country,
+          city,
+          state,
+          postalCode,
+        },
+        phone,
+        dob,
+        password,
+        confirmPassword,
+        role: registerRole,
+      });
 
       sonnerToast("Registration successful!", "Please verify your email.");
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
@@ -151,7 +167,7 @@ const Login = () => {
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8 animate-fade-in">
             <Bike className="w-24 h-24 mb-6" />
-            <h1 className="text-5xl font-bold mb-4">Gear Quest</h1>
+            <h1 className="text-5xl font-bold mb-4">Bike Rentals </h1>
             <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
           </div>
           
@@ -180,7 +196,7 @@ const Login = () => {
         <div className="w-full max-w-md animate-scale-in">
           <div className="lg:hidden mb-8 text-center">
             <Bike className="w-16 h-16 mx-auto mb-4 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Gear Quest</h1>
+            <h1 className="text-3xl font-bold text-foreground">Bike Rentals </h1>
           </div>
 
           <Card className="border-border shadow-lg">

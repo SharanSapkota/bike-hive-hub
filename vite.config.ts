@@ -22,10 +22,10 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
       manifest: {
-        name: "Gear Quest - Rent Bikes Anywhere",
-        short_name: "Gear Quest",
+        name: "Bike Rentals  - Rent Bikes Anywhere",
+        short_name: "Bike Rentals ",
         description:
-          "Find and rent bikes near you with Gear Quest. Easy, fast, and affordable bike rentals for everyone.",
+          "Find and rent bikes near you with Bike Rentals . Easy, fast, and affordable bike rentals for everyone.",
         theme_color: "#14b8a6",
         background_color: "#ffffff",
         display: "standalone",

@@ -1,4 +1,4 @@
-# Welcome to Gear Quest project
+# Welcome to Bike Rentals  project
 
 ## Project info
 
