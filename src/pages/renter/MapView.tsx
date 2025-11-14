@@ -51,6 +51,7 @@ const MapView = () => {
   const { isLoaded, loadError } = useGoogleMaps();
 
   const [bikes, setBikes] = useState<Bike[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [myBookings, setMyBookings] = useState<[]>([]);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.006 });
@@ -146,6 +147,7 @@ const MapView = () => {
       // Use cached location - no loading needed
       const location = JSON.parse(cachedLocation);
       setCenter(location);
+      setUserLocation(location);
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
       getBikes(location);
@@ -163,6 +165,7 @@ const MapView = () => {
             lng: position.coords.longitude,
           };
           setCenter(newCenter);
+          setUserLocation(newCenter);
           
           // Cache the location
           sessionStorage.setItem('userLocation', JSON.stringify(newCenter));
@@ -250,18 +253,7 @@ const MapView = () => {
       // Set loading state
       setIsSendingRequest(true);
       
-      try {
-        // Mock API call with delay
-        // await new Promise((resolve) => setTimeout(resolve, 2000));
-        
-        const startDateStr = format(fromDate, "yyyy-MM-dd");
-        const endDateStr = format(toDate, "yyyy-MM-dd");
-        const booking = await createBooking({
-          bikeId: selectedBike.id,
-          startTime: fromDate.toISOString(),
-          endTime: toDate.toISOString(),
-        });
-        
+      try {      
         // Update bike's myBooking flag
         setBikes(prev => prev.map(bike => 
           bike.id === selectedBike.id 
@@ -271,7 +263,7 @@ const MapView = () => {
         
         // Show success message
         toast({
-          title: "✅ Request Sent Successfully",
+          title: "Request Sent Successfully",
           description: "Your rental request has been submitted. The owner will respond shortly.",
         });
         
@@ -350,13 +342,13 @@ const MapView = () => {
 
       updatePopupPosition();
 
-      const zoomListener = map.addListener("zoom_changed", updatePopupPosition);
-      const centerListener = map.addListener("center_changed", updatePopupPosition);
+      // const zoomListener = map.addListener("zoom_changed", updatePopupPosition);
+      // const centerListener = map.addListener("center_changed", updatePopupPosition);
 
-      return () => {
-        google.maps.event.removeListener(zoomListener);
-        google.maps.event.removeListener(centerListener);
-      };
+      // return () => {
+      //   google.maps.event.removeListener(zoomListener);
+      //   google.maps.event.removeListener(centerListener);
+      // };
     }
   }, [map, selectedBike]);
 
@@ -370,16 +362,13 @@ const MapView = () => {
             lng: position.coords.longitude,
           };
           setCenter(newCenter);
+          setUserLocation(newCenter);
           if (map) {
             map.panTo(newCenter);
             map.setZoom(15);
           }
           getAddressFromCoordinates(newCenter.lat, newCenter.lng);
           setIsLoadingLocation(false);
-          toast({
-            title: "Location Found",
-            description: "Map centered on your current location",
-          });
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -500,6 +489,24 @@ const MapView = () => {
           gestureHandling: 'greedy', // Enable single-finger drag
         }}
       >
+        {userLocation && (
+          <Marker
+            position={userLocation}
+            icon={{
+              url:
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(`
+                  <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="12" fill="#2563eb" fill-opacity="0.25" />
+                    <circle cx="18" cy="18" r="6" fill="#2563eb" stroke="white" stroke-width="2" />
+                  </svg>
+                `),
+              scaledSize: new google.maps.Size(36, 36),
+              anchor: new google.maps.Point(18, 18),
+            }}
+            zIndex={1500}
+          />
+        )}
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
           const isMyBooking = bike.myBooking === true;
