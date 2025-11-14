@@ -99,7 +99,7 @@ const VerifyEmail = () => {
               <div className="space-y-4 text-center">
                 <p className="text-sm text-muted-foreground">
                   Thanks! Your email address has been verified. You can now sign in and start using
-                  Gear Quest.
+                  Bike Rentals.
                 </p>
                 <Button onClick={() => navigate("/login")}>Go to login</Button>
               </div>
