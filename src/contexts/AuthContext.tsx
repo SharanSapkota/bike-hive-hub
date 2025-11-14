@@ -92,19 +92,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     try {
       // MOCK REGISTRATION - Comment out API call
-      // const response = await api.post('/auth/signup', { email, password, name, role });
-      // const payload = response.data?.data ?? response.data;
-      // const authToken = payload?.token;
-      // const userData = payload?.user;
+      const response = await api.post('/auth/signup', { email, password, name, role });
+      const payload = response.data?.data ?? response.data;
+      const authToken = payload?.token;
+      const userData = payload?.user;
 
       // Mock registration
-      const userData: User = {
-        id: 'user-' + Date.now(),
-        email,
-        name,
-        role,
-      };
-      const authToken = 'mock-token-' + email;
+      // const userData: User = {
+      //   id: 'user-' + Date.now(),
+      //   email,
+      //   name,
+      //   role,
+      // };
+      // const authToken = 'mock-token-' + email;
 
       if (authToken && userData) {
         localStorage.setItem('auth_token', authToken);
