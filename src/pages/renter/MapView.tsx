@@ -58,6 +58,7 @@ const MapView = () => {
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [isMyLoadingLocation, setIsMyLoadingLocation] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [searchValue, setSearchValue] = useState<string>("");
@@ -354,7 +355,7 @@ const MapView = () => {
 
   const handleCenterOnUser = () => {
     if (navigator.geolocation) {
-      setIsLoadingLocation(true);
+      setIsMyLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newCenter = {
@@ -379,12 +380,12 @@ const MapView = () => {
               });
             })
             .finally(() => {
-              setIsLoadingLocation(false);
+              setIsMyLoadingLocation(false);
             });
         },
         (error) => {
           console.error("Error getting location:", error);
-          setIsLoadingLocation(false);
+          setIsMyLoadingLocation(false);
           toast({
             title: "Location Error",
             description: "Unable to get your location. Please check your permissions.",
@@ -568,9 +569,9 @@ const MapView = () => {
         <Button 
           onClick={handleCenterOnUser}
           className="shadow-lg w-full justify-start gap-2 h-auto p-3"
-          disabled={isLoadingLocation}
+          disabled={isMyLoadingLocation}
         >
-          {isLoadingLocation ? (
+          {isMyLoadingLocation ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className="text-sm font-medium">Getting location...</span>
