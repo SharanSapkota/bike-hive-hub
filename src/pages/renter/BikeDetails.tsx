@@ -59,7 +59,7 @@ interface BikeDetails {
   category: {
     name: string;
   };
- 
+  status: string;
   pricePerHour:number
   pricePerDay: number;
   location: {
@@ -340,10 +340,10 @@ const BikeDetails = () => {
                   </p>
                 </div>
                 <Badge
-                  variant={bike?.available ? "default" : "secondary"}
+                  variant={bike?.status?.toUpperCase() === "AVAILABLE" ? "default" : "secondary"}
                   className="shrink-0"
                 >
-                  {bike?.available ? "Available" : "Unavailable"}
+                  {bike?.status?.toUpperCase()}
                 </Badge>
               </div>
 

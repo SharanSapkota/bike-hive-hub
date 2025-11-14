@@ -147,24 +147,12 @@ const Notifications = () => {
       ) : (
         <div className="space-y-3 sm:space-y-4">
           {bookingNotifications.map((notification: any) => {
-            const booking =
-              notification.booking ??
-              notification.data?.booking ??
-              null;
-            const bike =
-              booking?.bike ??
-              notification.data?.bike ??
-              null;
-            const paymentStatus =
-              notification.data?.paymentStatus ??
-              booking?.paymentTransaction?.status ??
-              null;
+            const booking = notification.data?.booking;
+            const bike = notification.data?.bike;
+            const paymentStatus = notification.data?.paymentStatus;
             const bookingStatus = booking?.status?.toLowerCase();
-            const bookingId =
-              booking?.id ??
-              notification.data?.bookingId ??
-              notification.data?.rentalId ??
-              null;
+            console.log(bookingStatus);
+            const bookingId = booking?.id;
 
             return (
             <Card
@@ -187,13 +175,13 @@ const Notifications = () => {
                         )}
                       </CardTitle>
                       <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                        {notification.message}
+                        {notification.message} 
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     <Badge variant={getNotificationBadgeVariant(notification.type)} className="text-[10px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 hidden sm:inline-flex">
-                      {notification.type.replace(/_/g, " ")} test
+                      {notification.type.replace(/_/g, " ")}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -377,10 +365,11 @@ const Notifications = () => {
                       </Button>
                     </div>
                   )}
+                  
 
-                  {bookingStatus !== "pending" && (
+                  {bookingStatus.toLowerCase() == "approved" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {isRenter && notification.type === "rental_approved" && (
+                      {isRenter && notification.type === "rental_accepted" && (
                         <Button
                           size="sm"
                           className="w-full sm:w-auto h-9"

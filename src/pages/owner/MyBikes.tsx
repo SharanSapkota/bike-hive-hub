@@ -569,12 +569,6 @@ const MyBikes = () => {
         return;
       }
 
-      // Commented out: Price per hour validation
-      // if (!formData.pricePerHour) {
-      //   toast.error('Please provide an hourly price');
-      //   return;
-      // }
-
       if (!formData.address) {
         toast.error('Please choose a location for the bike');
         return;
@@ -592,6 +586,7 @@ const MyBikes = () => {
       payload.append('location', formData.location);
       payload.append('description', formData.description);
       payload.append('rentAmount', formData.pricePerDay);
+      payload.append('autoAccept', formData.autoAccept ? 'true' : 'false');
       payload.append('latitude', String(formData.address.lat));
       payload.append('longitude', String(formData.address.lng));
       payload.append(
@@ -633,7 +628,7 @@ const MyBikes = () => {
           },
         });
 
-        const created = mapBikeResponse(response.data);
+        const created = mapBikeResponse(response.data.data);
         if (user && created?.ownerId === Number(user?.id)) {
           setBikes((prev) => [...prev, created]);
         }
