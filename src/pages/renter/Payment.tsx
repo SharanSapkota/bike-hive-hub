@@ -8,7 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, CreditCard, Calendar, Clock, Bike } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { loadStripe } from "@stripe/stripe-js";
 import { differenceInDays, differenceInHours, format } from "date-fns";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const getBookingDetails = async (bookingId: string) => {
   const response = await api.get(`/bookings/${bookingId}`);
