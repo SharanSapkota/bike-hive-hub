@@ -499,7 +499,6 @@ const MapView = () => {
           fullscreenControl: false,
         }}
       >
-        {/* Hide bike markers - showing only user location
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
           const isMyBooking = bike.myBooking === true;
@@ -526,7 +525,7 @@ const MapView = () => {
               zIndex={isSelected ? 1000 : 1}
             />
           );
-        })} */}
+        })}
       </GoogleMap>
 
       {/* Floating controls - Remove duplicate location button */}
