@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bike, Loader2, ArrowRight, Shield, Zap } from "lucide-react";
-import { toast } from "sonner";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
 import { sonnerToast } from "@/components/ui/sonnertoast";
@@ -125,7 +124,7 @@ const Login = () => {
       });
       setErrors(newErrors);
       const firstError = result.error.errors[0];
-      toast.error(firstError.message);
+      sonnerToast("Registration failed", firstError.message);
       return;
     }
 
@@ -135,10 +134,10 @@ const Login = () => {
       const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
       await register(email, password, fullName, registerRole);
 
-      toast.success("Registration successful! Please verify your email.");
+      sonnerToast("Registration successful!", "Please verify your email.");
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.data || "Registration failed");
+      sonnerToast("Registration failed", error?.response?.data?.data || "Registration failed");
     } finally {
       setIsLoading(false);
     }

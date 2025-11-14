@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { sonnerToast } from '@/components/ui/sonnertoast';
 
 export type UserRole = 'renter' | 'owner' | 'admin';
 
@@ -80,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       setToken(authToken);
       setUser(userData);
-      toast.success('Login successful!');
+      sonnerToast('Login successful!', 'You have successfully logged in to your account.');
 
       return userData;
     } catch (error: any) {
@@ -112,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
       }
 
-      toast.success('Registration successful!');
+      sonnerToast('Registration successful!', 'You have successfully registered for an account.');
     } catch (error: any) {
       throw error;
     }
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
-    toast.success('Logged out successfully');
+    sonnerToast('Logged out successfully', 'You have successfully logged out of your account.');
   };
 
   return (

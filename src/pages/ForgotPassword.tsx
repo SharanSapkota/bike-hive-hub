@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Bike, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { sonnerToast } from "@/components/ui/sonnertoast";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const ForgotPassword = () => {
 
     try {
       await api.post("/auth/forgot-password", { email });
-      toast.success("Password reset email sent! Check your inbox.");
+      sonnerToast('Password reset email sent!', 'Check your inbox.');
       navigate("/login");
     } catch (error: any) {
       console.error("Forgot password error:", error);

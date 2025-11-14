@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Clock, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useBookingContext } from '@/contexts/BookingContext';
+import { sonnerToast } from '@/components/ui/sonnertoast';
 
 // Mock API call to complete rental
 const mockCompleteRental = (rentalId: string): Promise<void> => {
@@ -99,9 +99,9 @@ const History = () => {
       //     rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
       //   )
       // );
-      toast.success('Rental marked as completed');
+      sonnerToast('Rental marked as completed', 'You have successfully marked the rental as completed.');
     } catch (error) {
-      toast.error('Failed to complete rental');
+      sonnerToast('Failed to complete rental', error?.response?.data?.data || "Failed to complete the rental.");
     } finally {
       setCompletingRental(null);
     }

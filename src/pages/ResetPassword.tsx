@@ -8,6 +8,7 @@ import { Bike, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { z } from "zod";
+import { sonnerToast } from "@/components/ui/sonnertoast";
 
 const passwordSchema = z
   .object({
@@ -68,12 +69,12 @@ const ResetPassword = () => {
 
       setIsLoading(true);
       await api.post("/auth/reset-password", { token, password });
-      toast.success("Password reset successfully! You can now login with your new password.");
+      sonnerToast("Password reset successfully!", "You can now login with your new password.");
       navigate("/login");
     } catch (error: any) {
       console.error("Reset password error:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to reset password";
-      toast.error(errorMessage);
+      sonnerToast('Failed to reset password', errorMessage);
     } finally {
       setIsLoading(false);
     }

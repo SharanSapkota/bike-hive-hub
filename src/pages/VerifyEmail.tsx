@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Loader2, MailCheck, MailWarning } from "lucide-react";
+import { sonnerToast } from "@/components/ui/sonnertoast";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -28,7 +29,7 @@ const VerifyEmail = () => {
       try {
         await api.post("/auth/verify-email", { token });
         setStatus("success");
-        toast.success("Email verified successfully. You can now log in.");
+        sonnerToast('Email verified successfully!', 'You can now log in.');
       } catch (error: any) {
         const message =
           error?.response?.data?.data || error?.message || "Verification failed.";
@@ -49,11 +50,9 @@ const VerifyEmail = () => {
     setIsSubmitting(true);
     try {
       await api.post("/auth/resend-verification", { email });
-      toast.success("Verification email sent. Please check your inbox.");
+      sonnerToast('Verification email sent!', 'Please check your inbox.');
     } catch (error: any) {
-      const message =
-        error?.response?.data?.data || error?.message || "Unable to resend verification email.";
-      toast.error(message);
+      sonnerToast('Failed to resend verification email', 'Failed to resend the verification email.');
     } finally {
       setIsSubmitting(false);
     }

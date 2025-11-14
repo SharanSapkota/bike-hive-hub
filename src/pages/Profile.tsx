@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Camera, LogOut, CreditCard, ShieldCheck, ChevronRight, CheckCircle2, XCircle, Upload, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { sonnerToast } from '@/components/ui/sonnertoast';
 
 // Mock data - replace with API calls later
 const PAYMENT_METHODS = [
@@ -68,9 +69,9 @@ const Profile = () => {
     try {
       // TODO: Call API to update profile
       // await api.put('/profile', { name, email, phone });
-      toast.success('Profile updated successfully!');
+      sonnerToast('Profile updated successfully!', 'You have successfully updated your profile.');
     } catch (error) {
-      toast.error('Failed to update profile');
+      sonnerToast('Failed to update profile', 'Failed to update your profile.');
     } finally {
       setIsLoading(false);
     }
@@ -126,10 +127,10 @@ const Profile = () => {
     
     try {
       // TODO: Call API to send verification email
-      toast.success('Verification email sent! Please check your inbox.');
+      sonnerToast('Verification email sent!', 'Please check your inbox.');
       setIsCodeSent(true);
     } catch (error) {
-      toast.error('Failed to send verification email');
+      sonnerToast('Failed to send verification email', 'Failed to send verification email.');
     }
   };
 
@@ -141,10 +142,10 @@ const Profile = () => {
     
     try {
       // TODO: Call API to send verification SMS
-      toast.success(`Verification code sent to ${verificationPhone}!`);
+      sonnerToast(`Verification code sent to ${verificationPhone}!`, 'Please check your inbox.');
       setIsCodeSent(true);
     } catch (error) {
-      toast.error('Failed to send verification code');
+      sonnerToast('Failed to send verification code', 'Failed to send verification code.');
     }
   };
 
@@ -152,16 +153,16 @@ const Profile = () => {
     try {
       // TODO: Call API to verify the code
       if (verificationCode.length === 6) {
-        toast.success('Successfully verified!');
+        sonnerToast('Successfully verified!', 'You have successfully verified your email and phone number.');
         setShowEmailVerification(false);
         setShowPhoneVerification(false);
         setIsCodeSent(false);
         setVerificationCode('');
       } else {
-        toast.error('Please enter a valid 6-digit code');
+        sonnerToast('Please enter a valid 6-digit code', 'Please enter a valid 6-digit code.');
       }
     } catch (error) {
-      toast.error('Failed to verify code');
+      sonnerToast('Failed to verify code', 'Failed to verify the code.');
     }
   };
 
@@ -171,7 +172,7 @@ const Profile = () => {
     
     try {
       // TODO: Call API to save payment method
-      toast.success('Payment method saved successfully!');
+      sonnerToast('Payment method saved successfully!', 'You have successfully saved the payment method.');
       setIsPaymentFormOpen(false);
       // Reset form
       setCardNumber('');
@@ -183,7 +184,7 @@ const Profile = () => {
       setAccountNumber('');
       setRoutingNumber('');
     } catch (error) {
-      toast.error('Failed to save payment method');
+      sonnerToast('Failed to save payment method', 'Failed to save the payment method.');
     } finally {
       setIsLoading(false);
     }

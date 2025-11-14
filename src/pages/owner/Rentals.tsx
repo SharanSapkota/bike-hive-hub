@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, Clock, DollarSign, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { sonnerToast } from '@/components/ui/sonnertoast';
 
 // Mock API call to complete rental
 const mockCompleteRental = (rentalId: string): Promise<void> => {
@@ -88,7 +88,7 @@ const Rentals = () => {
         rental.id === rentalId ? { ...rental, status: 'active' as const } : rental
       )
     );
-    toast.success('Rental approved');
+    sonnerToast('Rental approved', 'You have successfully approved the rental.');
   };
 
   const handleReject = (rentalId: string) => {
@@ -97,7 +97,7 @@ const Rentals = () => {
         rental.id === rentalId ? { ...rental, status: 'cancelled' as const } : rental
       )
     );
-    toast.success('Rental rejected');
+    sonnerToast('Rental rejected', 'You have successfully rejected the rental.');
   };
 
   const handleComplete = async (rentalId: string) => {
@@ -109,9 +109,9 @@ const Rentals = () => {
           rental.id === rentalId ? { ...rental, status: 'completed' as const } : rental
         )
       );
-      toast.success('Rental marked as completed');
+      sonnerToast('Rental marked as completed', 'You have successfully marked the rental as completed.');
     } catch (error) {
-      toast.error('Failed to complete rental');
+      sonnerToast('Failed to complete rental', 'Failed to complete the rental.');
     } finally {
       setCompletingRental(null);
     }

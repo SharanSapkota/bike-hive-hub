@@ -22,6 +22,7 @@ import { GoogleMap, Marker } from '@react-google-maps/api';
 import { api } from '@/lib/api';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { sonnerToast } from '@/components/ui/sonnertoast';
 
 const mapContainerStyle = {
   width: '100%',
@@ -371,7 +372,7 @@ const MyBikes = () => {
       setBikes(mapped);
     } catch (error) {
       console.error('Failed to load bikes', error);
-      toast.error('Unable to load bikes. Please try again later.');
+      sonnerToast('Unable to load bikes', 'Unable to load bikes. Please try again later.');
     }
   }, [user]);
 
@@ -542,9 +543,9 @@ const MyBikes = () => {
               }));
               mapRef.current?.panTo({ lat: latitude, lng: longitude });
               mapRef.current?.setZoom(15);
-              toast.success('Location updated!');
+              sonnerToast('Location updated!', 'You have successfully updated the location.');
             } else {
-              toast.error('Could not retrieve address');
+              sonnerToast('Could not retrieve address', 'Could not retrieve the address.');
             }
           });
         } else {
@@ -624,7 +625,7 @@ const MyBikes = () => {
           },
         });
         await loadBikes();
-        toast.success('Bike updated successfully!');
+        sonnerToast('Bike updated successfully!', 'You have successfully updated the bike.');
       } else {
         const response = await api.post('/bikes', payload, {
           headers: {
@@ -636,7 +637,7 @@ const MyBikes = () => {
         if (user && created?.ownerId === Number(user?.id)) {
           setBikes((prev) => [...prev, created]);
         }
-        toast.success('Bike added successfully!');
+        sonnerToast('Bike added successfully!', 'You have successfully added the bike.');
       }
 
       setIsDialogOpen(false);
@@ -661,7 +662,7 @@ const MyBikes = () => {
         bike.id === bikeId ? { ...bike, available: !bike.available } : bike
       )
     );
-    toast.success('Bike availability updated');
+    sonnerToast('Bike availability updated', 'You have successfully updated the bike availability.');
   };
 
   const handleDeleteBike = async (bikeId: number) => {
@@ -669,14 +670,14 @@ const MyBikes = () => {
     try {
       await api.delete(`/bikes/${bikeId}`);
       setBikes((prev) => prev.filter((bike) => bike.id !== bikeId));
-      toast.success('Bike deleted successfully');
+      sonnerToast('Bike deleted successfully', 'You have successfully deleted the bike.');
     } catch (error: any) {
       console.error('Failed to delete bike:', error);
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         'Failed to delete bike';
-      toast.error(message);
+      sonnerToast('Failed to delete bike', 'Failed to delete the bike.');
     } finally {
       toast.dismiss(loadingId);
     }
