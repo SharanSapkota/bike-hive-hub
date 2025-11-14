@@ -15,18 +15,44 @@ const VerifyEmail = () => {
 
   const token = searchParams.get("token");
   const initialEmail = searchParams.get("email") || "";
+  const verified = searchParams.get("verified");
+  const errorParam = searchParams.get("error");
 
-  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">(
-    token ? "verifying" : "idle"
-  );
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">(() => {
+    if (verified === "true") return "success";
+    if (errorParam) return "error";
+    return token ? "verifying" : "idle";
+  });
+  const [errorMessage, setErrorMessage] = useState<string>(() => {
+    if (errorParam === "missing_token") return "Verification token is missing.";
+    if (errorParam === "invalid_token") return "Invalid verification token.";
+    if (errorParam === "token_already_used") return "This verification link has already been used.";
+    if (errorParam === "token_expired") return "Verification link has expired.";
+    if (errorParam === "verification_failed") return "Verification failed. Please try again.";
+    return "";
+  });
   const [email, setEmail] = useState(initialEmail);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [disableResend, setDisableResend] = useState(false);
 
   useEffect(() => {
     const verify = async () => {
+      // If already verified by backend redirect, don't verify again
+      if (verified === "true") {
+        setStatus("success");
+        sonnerToast('Email verified successfully!', 'You can now log in.');
+        return;
+      }
+
+      // If there's an error from backend redirect, don't verify
+      if (errorParam) {
+        setStatus("error");
+        return;
+      }
+
+      // Only verify via POST if we have a token but no verified/error params
       if (!token) return;
+      
       try {
         await api.post("/auth/verify-email", { token });
         setStatus("success");
@@ -40,7 +66,7 @@ const VerifyEmail = () => {
     };
 
     verify();
-  }, [token]);
+  }, [token, verified, errorParam]);
 
   const canSubmitResend = useMemo(() => email.trim().length > 0, [email]);
 
