@@ -54,6 +54,7 @@ interface Owner {
 
 interface BikeDetails {
   id: string;
+  myBooking: boolean;
   name: string;
   category: {
     name: string;
@@ -85,163 +86,7 @@ interface Review {
   date: string;
 }
 
-// Mock data - replace with API calls
-// const mockBikeDetails: Record<string, BikeDetails> = {
-//   "1": {
-//     id: "1",
-//     name: "Mountain Explorer Pro",
-//     category: "Mountain Bike",
-//     pricePerHour: 8,
-//     location: {
-//       address: "123 Adventure Lane",
-//       city: "Denver",
-//       state: "CO",
-//     },
-//     images: [
-//       "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=800",
-//       "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=800",
-//       "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=800",
-//     ],
-//     description: "Premium mountain bike perfect for trail adventures. Features full suspension, 29-inch wheels, and hydraulic disc brakes. Ideal for both beginners and experienced riders.",
-//     condition: "Excellent",
-//     rating: 4.8,
-//     reviews: 24,
-//     available: true,
-//     features: [
-//       "Full Suspension",
-//       "29-inch Wheels",
-//       "Hydraulic Disc Brakes",
-//       "21-Speed Shimano",
-//       "Aluminum Frame",
-//       "Adjustable Seat",
-//     ],
-//     owner: {
-//       id: "owner-1",
-//       name: "John Smith",
-//       email: "john.smith@example.com",
-//       phone: "+1 (555) 123-4567",
-//       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-//       rating: 4.9,
-//       totalReviews: 87,
-//       joinedDate: "January 2023",
-//       responseTime: "Within 1 hour",
-//       verifiedOwner: true,
-//       totalBikes: 5,
-//     },
-//   },
-//   "2": {
-//     id: "2",
-//     name: "City Cruiser Deluxe",
-//     category: "City Bike",
-//     pricePerHour: 6,
-//     location: {
-//       address: "456 Urban Street",
-//       city: "Portland",
-//       state: "OR",
-//     },
-//     images: [
-//       "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800",
-//       "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800",
-//     ],
-//     description: "Comfortable city bike with upright riding position. Perfect for commuting and leisurely rides around town.",
-//     condition: "Very Good",
-//     rating: 4.6,
-//     reviews: 18,
-//     available: true,
-//     features: [
-//       "Comfort Seat",
-//       "7-Speed",
-//       "Front Basket",
-//       "LED Lights",
-//       "Fenders",
-//       "Kickstand",
-//     ],
-//     owner: {
-//       id: "owner-2",
-//       name: "Sarah Johnson",
-//       email: "sarah.j@example.com",
-//       phone: "+1 (555) 234-5678",
-//       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-//       rating: 4.7,
-//       totalReviews: 52,
-//       joinedDate: "March 2023",
-//       responseTime: "Within 2 hours",
-//       verifiedOwner: true,
-//       totalBikes: 3,
-//     },
-//   },
-// };
-
-
-
-const mockBikeDetails = {
-  "id": 18,
-  "name": "Mountain Exploral",
-  "location": {
-      "lat": 65.05894282129752,
-      "lng": 25.45733670651922,
-      "address": "Tutkijantie 2, 90590 Oulu, Finland",
-      "city": null,
-      "state": null,
-      "country": null,
-      "postalCode": null,
-      "placeId": null
-  },
-  "rentAmount": 4,
-  "pricePerHour": 4,
-  "pricePerDay": 46,
-  "status": "AVAILABLE",
-  "startTime": null,
-  "endTime": null,
-  "category": {
-      "id": 1,
-      "name": "City"
-  },
-  "owner": {
-      "id": 14,
-      "name": "Ram Sapkota",
-      "images": [
-          {
-              "id": 9,
-              "url": "http://localhost:4000/media/Gemini_Generated_Image_s08abms08abms08a-1762711138037-241832582.png"
-          }
-      ],
-      "category": {
-          "id": 1,
-          "name": "City"
-      },
-      "owner": {
-          "id": 14,
-          "name": "Ram Sapkota"
-      }
-  }
-}
-const mockReviews: Review[] = [
-  {
-    id: "1",
-    userName: "Mike Wilson",
-    userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-    rating: 5,
-    comment: "Great bike! Owner was very responsive and the bike was in excellent condition. Highly recommend!",
-    date: "2 days ago",
-  },
-  {
-    id: "2",
-    userName: "Emily Chen",
-    userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-    rating: 4,
-    comment: "Good experience overall. The bike performed well on trails. Would rent again.",
-    date: "1 week ago",
-  },
-  {
-    id: "3",
-    userName: "David Brown",
-    userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-    rating: 5,
-    comment: "Amazing bike and owner! Everything was perfect from start to finish.",
-    date: "2 weeks ago",
-  },
-];
+const mockReviews: Review[] = [];
 
 const mockOwnerBikes = [
   {
@@ -542,16 +387,20 @@ const BikeDetails = () => {
                   ))}
                 </div>
               </div>
-              { (
+              { !bike?.myBooking && (
                   <div>
                       <Button size="lg" className="w-full mt-4" onClick={handleBookNow}>
                     Book Now
                   </Button>
                   </div>
               )}
-                  <div>
-
-                  </div>
+              { bike?.myBooking && (
+                <div>
+                  <Button size="lg" disabled className="w-full mt-4">
+                    Booking Made
+                  </Button>
+                </div>
+              )}
             
             </CardContent>
           </Card>

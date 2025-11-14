@@ -7,15 +7,6 @@ import { Calendar, MapPin, Clock, DollarSign, CheckCircle, Loader2 } from 'lucid
 import { useBookingContext } from '@/contexts/BookingContext';
 import { sonnerToast } from '@/components/ui/sonnertoast';
 
-// Mock API call to complete rental
-const mockCompleteRental = (rentalId: string): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 1500);
-  });
-};
-
 interface RentalHistory {
   id: string;
   bikeName: string;

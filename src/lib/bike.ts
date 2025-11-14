@@ -5,6 +5,7 @@ export const normalizeBike = (bike: any): any => {
     return {
       id: String(bike?.id ?? ""),
       name: bike?.name ?? "Unknown bike",
+      myBooking: bike?.myBooking ?? false,
       location: {
         lat: Number(
           fallbackLocation?.lat ??

@@ -32,6 +32,7 @@ interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   isLoading: boolean;
+  IncreaseUnreadCount: () => void;
   hasLoaded: boolean;
   loadNotifications: (force?: boolean) => Promise<void>;
   markAsRead: (id: string, callApi?: boolean) => void;
@@ -259,12 +260,18 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [hasLoaded, user]);
 
+  const IncreaseUnreadCount = useCallback(() => {
+    console.log(unreadCount)
+    setUnreadCount((prev) => prev + 1);
+  }, []);
+
   const value: NotificationContextType = {
     notifications,
     unreadCount,
     isLoading,
     hasLoaded,
     loadNotifications,
+    IncreaseUnreadCount,
     markAsRead,
     markAllAsRead,
   };

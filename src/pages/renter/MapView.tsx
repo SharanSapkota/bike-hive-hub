@@ -20,6 +20,8 @@ import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 import { createBooking } from "@/services/booking";
 import { calculatePrice } from "@/services/pricing";
+import { sonnerToast } from "@/components/ui/sonnertoast";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 interface Bike {
   id: string;
@@ -49,7 +51,7 @@ const containerStyle = {
 const MapView = () => {
   const navigate = useNavigate();
   const { isLoaded, loadError } = useGoogleMaps();
-
+  const { IncreaseUnreadCount } = useNotificationContext();
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [myBookings, setMyBookings] = useState<[]>([]);
@@ -95,6 +97,7 @@ const MapView = () => {
       const response = await api.get("/bookings/my");
       const bookings = response?.data?.data;
       setMyBookings(bookings);
+      return bookings;
     } catch (error) {
       console.error("Error getting my bookings:", error);
     }
@@ -127,9 +130,19 @@ const MapView = () => {
         setBikes([]);
         return;
       }
+      const myBookings = await getMyBookings(); 
 
       const normalized = bikeList.map((bike: any) => normalizeBike(bike));
-      setBikes(normalized);
+     
+      normalized.forEach((bike: any) => {
+        bike.myBooking = false;
+        if (myBookings.some((booking: any) => booking?.bike?.id == bike.id)) {
+          return bike.myBooking = true;
+        }
+        console.log(normalized)
+        setBikes(normalized);
+      });
+    
     } catch (error) {
       console.error("Failed to fetch bikes:", error);
     }
@@ -152,7 +165,6 @@ const MapView = () => {
       setCurrentAddress(cachedAddress);
       setIsLoadingLocation(false);
       getBikes(location);
-      getMyBookings()
       return;
     }
 
@@ -241,7 +253,6 @@ const MapView = () => {
         return;
       }
 
-      // Validate end date is after start date
       if (toDate <= fromDate) {
         toast({
           title: "Invalid Date Range",
@@ -251,24 +262,22 @@ const MapView = () => {
         return;
       }
       
-      // Set loading state
       setIsSendingRequest(true);
       
       try {      
-        // Update bike's myBooking flag
         setBikes(prev => prev.map(bike => 
           bike.id === selectedBike.id 
             ? { ...bike, myBooking: true }
             : bike
         ));
-        
-        // Show success message
-        toast({
-          title: "Request Sent Successfully",
-          description: "Your rental request has been submitted. The owner will respond shortly.",
-        });
-        
-        // Reset form and close modal
+
+      await createBooking({
+        bikeId: selectedBike.id,
+        startTime: fromDate.toISOString(),
+        endTime: toDate.toISOString(),
+      });
+      IncreaseUnreadCount();
+
         setFromDate(undefined);
         setToDate(undefined);
         setCalculatedPrice(null);
@@ -277,11 +286,8 @@ const MapView = () => {
         setSelectedBike(null);
         setPopupPosition(null);
       } catch (error) {
-        toast({
-          title: "Request Failed",
-          description: "Failed to submit rental request. Please try again.",
-          variant: "destructive",
-        });
+        console.log(error)
+        sonnerToast('Request Failed', error?.response?.data?.data?.error || "Failed to submit rental request. Please try again.");
       } finally {
         setIsSendingRequest(false);
       }
@@ -292,10 +298,9 @@ const MapView = () => {
     // Show popover immediately with current bike data
     setSelectedBike(bike);
     setIsLoadingDetails(true);
-    
     try {
-      // Fetch detailed bike data in the background
       const bikeDetails = await getBikeDetails(bike.id);
+      bikeDetails.myBooking = bike.myBooking || false;
       setSelectedBike(normalizeBike(bikeDetails));
     } catch (error) {
       console.error("Failed to fetch bike details:", error);
@@ -689,12 +694,21 @@ const MapView = () => {
                 </div>
 
                 {/* Book Now Button */}
+                {selectedBike?.myBooking ? (
+                  <Button 
+                    className="w-full h-6 sm:h-7 text-[9px] sm:text-[10px]"
+                    onClick={() => navigate(`/bike/${selectedBike.id}`, { state: { bike: selectedBike } })}
+                  >
+                    View Booking
+                  </Button>
+                ) : (
                 <Button 
                   className="w-full h-6 sm:h-7 text-[9px] sm:text-[10px]"
                   onClick={() => setShowBookingDialog(true)}
                 >
                   Book Now
                 </Button>
+                )}
               </div>
             )}
           </Card>
