@@ -11,6 +11,7 @@ import { Bike, Loader2, ArrowRight, Shield, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
+import { sonnerToast } from "@/components/ui/sonnertoast";
 
 // Validation schema
 const signupSchema = z
@@ -87,7 +88,7 @@ const Login = () => {
       if (status === 403) {
         navigate(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
       } else {
-        toast.error(message);
+        sonnerToast("Login failed", message);
       }
     } finally {
       setIsLoading(false);

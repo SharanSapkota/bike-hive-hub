@@ -33,7 +33,7 @@ const Notifications = () => {
         title: "Booking Accepted",
         description: "The booking request has been approved.",
       });
-      markAsRead(notificationId);
+      markAsRead(notificationId, false);
       loadNotifications(true);
     } catch (error) {
       toast({
@@ -51,7 +51,7 @@ const Notifications = () => {
         title: "Booking Rejected",
         description: "The booking request has been rejected.",
       });
-      markAsRead(notificationId);
+      markAsRead(notificationId, false);
       loadNotifications(true);
     } catch (error) {
       toast({
@@ -82,7 +82,7 @@ const Notifications = () => {
       return;
     }
 
-    markAsRead(notification.id);
+    markAsRead(notification.id, false);
     const bikeId =
       booking?.bikeId ??
       booking?.bike?.id ??
@@ -193,7 +193,7 @@ const Notifications = () => {
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     <Badge variant={getNotificationBadgeVariant(notification.type)} className="text-[10px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 hidden sm:inline-flex">
-                      {notification.type.replace(/_/g, " ")}
+                      {notification.type.replace(/_/g, " ")} test
                     </Badge>
                     <Button
                       variant="ghost"
