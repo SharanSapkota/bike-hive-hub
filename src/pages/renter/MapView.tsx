@@ -362,6 +362,7 @@ const MapView = () => {
 
   const handleCenterOnUser = () => {
     if (navigator.geolocation) {
+      setIsLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newCenter = {
@@ -371,12 +372,31 @@ const MapView = () => {
           setCenter(newCenter);
           if (map) {
             map.panTo(newCenter);
+            map.setZoom(15);
           }
+          getAddressFromCoordinates(newCenter.lat, newCenter.lng);
+          setIsLoadingLocation(false);
+          toast({
+            title: "Location Found",
+            description: "Map centered on your current location",
+          });
         },
         (error) => {
           console.error("Error getting location:", error);
+          setIsLoadingLocation(false);
+          toast({
+            title: "Location Error",
+            description: "Unable to get your location. Please check your permissions.",
+            variant: "destructive",
+          });
         },
       );
+    } else {
+      toast({
+        title: "Not Supported",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
+      });
     }
   };
 
@@ -479,10 +499,11 @@ const MapView = () => {
           fullscreenControl: false,
         }}
       >
+        {/* Hide bike markers - showing only user location
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
           const isMyBooking = bike.myBooking === true;
-          const markerColor = isMyBooking ? "#3b82f6" : "#14b8a6"; // blue for my bookings, teal for available
+          const markerColor = isMyBooking ? "#3b82f6" : "#14b8a6";
           
           return (
             <Marker
@@ -505,18 +526,17 @@ const MapView = () => {
               zIndex={isSelected ? 1000 : 1}
             />
           );
-        })}
+        })} */}
       </GoogleMap>
 
-      {/* Floating controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+      {/* Floating controls - Remove duplicate location button */}
+      {/* <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <Button size="icon" onClick={handleCenterOnUser} className="bg-card shadow-lg hover:bg-card/90">
           <Navigation className="h-5 w-5" />
-          test
         </Button>
-      </div>
+      </div> */}
 
-      {/* Current location and bikes count */}
+      {/* Get My Location Button */}
       <div className="absolute top-20 left-4 z-10 space-y-2">
         {currentAddress && (
           <Card className="shadow-lg">
@@ -526,14 +546,23 @@ const MapView = () => {
             </div>
           </Card>
         )}
-        <Card className="shadow-lg">
-          <div className="p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-bold text-sm">{bikes.length}</span>
-            </div>
-            <span className="text-sm font-medium">Available Products</span>
-          </div>
-        </Card>
+        <Button 
+          onClick={handleCenterOnUser}
+          className="shadow-lg w-full justify-start gap-2 h-auto p-3"
+          disabled={isLoadingLocation}
+        >
+          {isLoadingLocation ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="text-sm font-medium">Getting location...</span>
+            </>
+          ) : (
+            <>
+              <Navigation className="h-5 w-5" />
+              <span className="text-sm font-medium">Get My Location</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Anchored popup emerging from marker */}
