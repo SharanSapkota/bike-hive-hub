@@ -354,7 +354,7 @@ const MapView = () => {
 
   const handleCenterOnUser = () => {
     if (navigator.geolocation) {
-      setIsLoadingLocation(true);
+      // setIsLoadingLocation(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newCenter = {
