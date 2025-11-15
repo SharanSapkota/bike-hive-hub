@@ -807,7 +807,7 @@ const MapView = () => {
                     <div className="pt-2 border-t">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Total Price:</span>
-                        <span className="text-2xl font-bold text-primary">${calculatedPrice}</span>
+                        <span className="text-2xl font-bold text-primary">EUR {calculatedPrice}</span>
                       </div>
                     </div>
                   </div>
@@ -818,7 +818,7 @@ const MapView = () => {
             <Button 
               className="w-full"
               onClick={(event: any) => sendRequest(event)}
-              disabled={!fromDate || !toDate || isSendingRequest}
+              disabled={!fromDate || !toDate || isSendingRequest || calculatedPrice === null || calculatedPrice === 0}
             >
               {isSendingRequest ? (
                 <>
