@@ -128,9 +128,7 @@ const BikeDetails = () => {
   const navigate = useNavigate();
   const [bike, setBike] = useState<BikeDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [ownerBikes, setOwnerBikes] = useState(mockOwnerBikes);
-  
+  const [reviews, setReviews] = useState<Review[]>();
   // Booking dialog state
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [fromDate, setFromDate] = useState<Date>();
@@ -362,7 +360,7 @@ const BikeDetails = () => {
 
               <div>
                 <div className="text-3xl font-bold text-primary mb-1">
-                  EUR{bike?.pricePerDay}
+                  EUR {bike?.pricePerDay}
                   <span className="text-lg font-normal text-muted-foreground">/DAY</span>
                 </div>
               </div>
@@ -649,7 +647,7 @@ const BikeDetails = () => {
             <Button 
               className="w-full"
               onClick={sendRequest}
-              disabled={!fromDate || !toDate || isSendingRequest}
+              disabled={!fromDate || !toDate || isSendingRequest || calculatedPrice === null || calculatedPrice === 0}
             >
               {isSendingRequest ? (
                 <>
