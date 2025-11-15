@@ -369,12 +369,13 @@ const Notifications = () => {
 
                   {bookingStatus.toLowerCase() == "approved" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {isRenter && notification.type === "rental_accepted" && (
+                      {isRenter && notification.type === "rental_approved" && (
                         <Button
                           size="sm"
                           className="w-full sm:w-auto h-9"
                           onClick={() => handleAddPayment(notification)}
                         >
+                          
                           <DollarSign className="mr-2 h-4 w-4" />
                           Add Payment
                         </Button>
