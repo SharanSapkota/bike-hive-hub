@@ -10,13 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { loadStripe } from "@stripe/stripe-js";
 import { differenceInDays, differenceInHours, format } from "date-fns";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "./checkout";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
-const getBookingDetails = async (bookingId: string) => {
-  const response = await api.get(`/bookings/${bookingId}`);
-  return response.data.data;
-}
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+let stripePromise = loadStripe(stripeKey);
 
 const Payment = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +22,7 @@ const Payment = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stripePaymentIntent, setStripePaymentIntent] = useState<any>(null);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
 
@@ -36,6 +35,7 @@ const Payment = () => {
       try {
         setIsBookingLoading(true);
         const bookingDetails = await getBookingDetails(bookingId);
+        createPaymentIntent(bookingDetails.id);
         setBookingDetails(bookingDetails);
       } catch (error: any) {
         console.error("Failed to load booking details:", error);
@@ -59,6 +59,18 @@ const Payment = () => {
     expiry: "",
     cvv: "",
   });
+
+  const getBookingDetails = async (bookingId: string) => {
+    const response = await api.get(`/bookings/${bookingId}`);
+    return response.data.data;
+  }
+  
+  const createPaymentIntent = async (bookingId: string) => {
+    const response = await api.post(`/payments/create-payment-intent`, { bookingId });
+
+    setStripePaymentIntent(response.data.data);
+  }
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -287,9 +299,16 @@ const Payment = () => {
             <p className="text-sm text-muted-foreground">Complete your bike rental</p>
           </div>
         </div>
+        {(stripePaymentIntent?.clientSecret) ? (
+  <Elements stripe={stripePromise} options={{ clientSecret: stripePaymentIntent.clientSecret }}>
+    <CheckoutForm bookingDetails={stripePaymentIntent} />
+  </Elements>
+) : (
+  <p>Loading payment form…</p>
+)}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Card Number */}
+
+        {/* <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="cardNumber">Card Number</Label>
             <div className="relative">
@@ -318,7 +337,6 @@ const Payment = () => {
             </div>
           </div>
 
-          {/* Cardholder Name */}
           <div className="space-y-2">
             <Label htmlFor="cardName">Cardholder Name</Label>
             <Input
@@ -332,7 +350,6 @@ const Payment = () => {
             />
           </div>
 
-          {/* Expiry and CVV */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="expiry">Expiry Date</Label>
@@ -360,7 +377,6 @@ const Payment = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
           <Button 
             type="submit" 
             className="w-full h-12 text-base"
@@ -370,9 +386,8 @@ const Payment = () => {
               ? "Processing..."
               : `Pay ${currency} ${Number(totalAmount).toFixed(2)}`}
           </Button>
-        </form>
+        </form> */}
 
-        {/* Security Note */}
         <p className="text-xs text-muted-foreground text-center mt-4">
           🔒 Your payment information is encrypted and secure
         </p>
@@ -383,60 +398,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
-const data = {
-  "id": 3,
-  "userId": 13,
-  "bikeId": 18,
-  "ownerId": 14,
-  "price": null,
-  "currency": null,
-  "status": "APPROVED",
-  "completedAt": null,
-  "startTime": "2025-11-11T22:00:00.000Z",
-  "endTime": "2025-11-13T22:00:00.000Z",
-  "createdAt": "2025-11-10T16:55:07.005Z",
-  "updatedAt": "2025-11-10T18:14:08.165Z",
-  "paymentTransactionId": null,
-  "user": {
-      "id": 13,
-      "firstName": "Ram",
-      "secondName": "Sharan",
-      "lastName": "Sapkota",
-      "password": "$2b$12$jkBPlsRi.z3sv.s4hldcXe18cK8Iiz9LZQ.ClHg/ws.uCNkn/Z43y",
-      "age": 22,
-      "isActive": true,
-      "isEmailVerified": true,
-      "createdAt": "2025-11-09T05:54:28.129Z",
-      "updatedAt": "2025-11-09T05:54:28.129Z",
-      "userTypeId": null
-  },
-  "bike": {
-      "id": 18,
-      "name": "Mountain Exploral",
-      "description": "This is excellent bike",
-      "rentAmount": 4,
-      "pricePerHour": 4,
-      "pricePerDay": 46,
-      "status": "AVAILABLE",
-      "startTime": null,
-      "endTime": null,
-      "categoryId": 1,
-      "ownerId": 14,
-      "createdAt": "2025-11-09T17:58:58.063Z",
-      "updatedAt": "2025-11-09T17:58:58.063Z"
-  },
-  "owner": {
-      "id": 14,
-      "firstName": "Ram",
-      "secondName": "Sharan",
-      "lastName": "Sapkota",
-      "password": "$2b$12$w/UCNFoTGttA6qM2mIND6uBls/9Quo9YNdGAFe0Cz/9g3vxKoeE5K",
-      "age": 18,
-      "isActive": true,
-      "isEmailVerified": true,
-      "createdAt": "2025-11-09T08:05:49.168Z",
-      "updatedAt": "2025-11-09T08:05:49.168Z",
-      "userTypeId": null
-  }
-}
