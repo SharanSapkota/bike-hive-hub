@@ -301,7 +301,7 @@ const MyBikes = () => {
   }, [formData.address]);
 
   const mediaBaseUrl = useMemo(() => {
-    const base = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+    const base = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BASE_URL || 'https://gear-quest.onrender.com';
     return base.replace(/\/$/, '');
   }, []);
 
