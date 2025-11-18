@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Camera, LogOut, CreditCard, ShieldCheck, ChevronRight, CheckCircle2, XCircle, Upload, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { sonnerToast } from '@/components/ui/sonnertoast';
+import api from '@/lib/api';
 
 // Mock data - replace with API calls later
 const PAYMENT_METHODS = [
@@ -32,6 +33,7 @@ const VERIFICATION_DATA = {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isOwner = user?.role.toLowerCase() === 'owner';
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
@@ -54,6 +56,7 @@ const Profile = () => {
   
   // Payment form states
   const [cardNumber, setCardNumber] = useState('');
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCVV, setCardCVV] = useState('');
   const [cardName, setCardName] = useState('');
@@ -61,6 +64,15 @@ const Profile = () => {
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const response = await api.get('/users/me');
+      setUserDetails(response.data.data);
+      console.log(response.data.data);
+    };
+    fetchUserDetails();
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +113,21 @@ const Profile = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleStripAccountVerification = async () => {
+    const newTab = window.open("", "_blank");
+    const res = await api.post('/stripe/create-stripe-customer');
+
+    const url = res.data.data.url; 
+
+    if (url) {
+      newTab.location.href = url;    
+    } else {
+      console.error("Verification URL not found");
+    }
+    
+    console.log('handleStripAccountVerification');
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,6 +300,35 @@ const Profile = () => {
             </Button>
           </form>
         </CardContent>
+      </Card>
+
+      <Card 
+        className="cursor-pointer hover:border-primary/50 transition-colors "
+        onClick={() => handleStripAccountVerification()}
+      >
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Strip Account Verification</CardTitle>
+                <CardDescription>View your strip account verification status</CardDescription>
+                {!isOwner && (
+                  <>
+                    {userDetails?.stipeKycVerified ? (
+                      <p className="text-muted-foreground text-sm font-medium text-green-500">Stripe account verified</p>
+                    ) : (
+                      <p className="text-muted-foreground text-sm font-medium text-red-500">Need stripe verification</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </CardHeader>
       </Card>
 
       {/* Identity Verification Section */}
