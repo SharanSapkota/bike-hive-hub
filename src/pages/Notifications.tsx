@@ -369,8 +369,7 @@ const Notifications = () => {
 
                   {bookingStatus.toLowerCase() == "approved" && (
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {notification.type}
-                      {isRenter.toString()}
+                    
                       {isRenter && ['rental_approved', 'rental_accepted'].includes(notification.type) && (
                         <Button
                           size="sm"
