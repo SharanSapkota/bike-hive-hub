@@ -55,6 +55,7 @@ interface Owner {
 interface BikeDetails {
   id: string;
   myBooking: boolean;
+  bookings: any[];
   name: string;
   category: {
     name: string;
@@ -142,7 +143,7 @@ const BikeDetails = () => {
       setIsLoading(true);
       try {
         const response = await api.get(`/bikes/${bikeId}`);
-        const bikeDetails = response.data?.data ?? response.data;
+        const bikeDetails: any = response.data?.data ?? response.data;
         setBike(bikeDetails);
       } catch (error) {
         console.error("Error fetching bike details:", error);
@@ -185,6 +186,13 @@ const BikeDetails = () => {
 
     fetchPrice();
   }, [fromDate, toDate, bike]);
+
+  const checkForPayment = () => {
+    if (bike?.myBooking && bike?.bookings?.length > 0 && bike?.bookings[0]?.status === "APPROVED") {
+      return true;
+    }
+    return false;
+  };
 
   const handleBookNow = () => {
     setShowBookingDialog(true);
@@ -238,6 +246,14 @@ const BikeDetails = () => {
     } finally {
       setIsSendingRequest(false);
     }
+  };
+
+  const handleAddPayment = () => {
+    console.log(bike?.myBooking);
+    // /payment?bookingId=${bookingId}${
+    //   bikeId ? `&bikeId=${bikeId}` : ""
+    // }`,
+    navigate(`/payment?bookingId=${bike?.bookings[0]?.id}${bike?.id ? `&bikeId=${bike?.id}` : ""}`);
   };
 
   if (isLoading) {
@@ -351,7 +367,7 @@ const BikeDetails = () => {
                 <div className="flex items-center gap-1">
                   {renderStars(bike.rating)}
                   <span className="text-sm font-medium ml-1">
-                    {bike.rating} ({bike.reviews} reviews)
+                    {bike.rating} ({bike?.reviews} reviews)
                   </span>
                 </div>
               </div>
@@ -392,10 +408,19 @@ const BikeDetails = () => {
                   </Button>
                   </div>
               )}
-              { bike?.myBooking && (
+              { bike?.myBooking && bike?.status === "PENDING" && (
                 <div>
                   <Button size="lg" disabled className="w-full mt-4">
-                    Booking Made
+                    Booking Made (waiting for approval)
+                  </Button>
+                </div>
+              )}
+              
+
+            { checkForPayment() && (
+                <div>
+                  <Button size="lg" onClick={handleAddPayment} className="w-full mt-4">
+                    Add Payment
                   </Button>
                 </div>
               )}
@@ -406,9 +431,9 @@ const BikeDetails = () => {
           {/* Reviews Section */}
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">Reviews ({reviews.length})</h2>
+              <h2 className="text-xl font-bold mb-4">Reviews ({reviews?.length})</h2>
               <div className="space-y-4">
-                {reviews.map((review) => (
+                {reviews && reviews.length > 0 && reviews.map((review) => (
                   <div key={review.id} className="space-y-2">
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
