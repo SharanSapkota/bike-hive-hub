@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { sonnerToast } from '@/components/ui/sonnertoast';
+import { clearAccessToken, setAccessToken } from './tokenStore';
 
 export type UserRole = 'renter' | 'owner' | 'admin';
 
@@ -33,11 +34,11 @@ interface RegisterPayload {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
+  token: string | null; // Deprecated: kept for backward compatibility, but not used with httpOnly cookies
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (payload: RegisterPayload) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -45,60 +46,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null); // Deprecated: kept for backward compatibility
   const [loading, setLoading] = useState(true);
+  const justLoggedInRef = useRef(false);
 
   useEffect(() => {
-    // Check for existing session
-    const storedToken = localStorage.getItem('auth_token');
+   
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setLoading(false);
+        
+      } catch (error) {
+        localStorage.removeItem('user');
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      // MOCK LOGIN - Comment out API call
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/vlogin', { email, password }, { withCredentials: true });
       const payload = response.data?.data ?? response.data;
-      const authToken = payload?.token;
-      const userData = payload?.user;
+      const userData = payload?.user ?? payload;
 
-      // Mock credentials
-      // let userData: User | null = null;
-      
-      // if (email === 'renter@gmail.com') {
-      //   userData = {
-      //     id: 'renter-1',
-      //     email: 'renter@gmail.com',
-      //     name: 'Renter User',
-      //     role: 'renter' as UserRole,
-      //   };
-      // } else if (email === 'owner@gmail.com') {
-      //   userData = {
-      //     id: 'owner-1',
-      //     email: 'owner@gmail.com',
-      //     name: 'Owner User',
-      //     role: 'owner' as UserRole,
-      //   };
-      // } else {
-      //   throw new Error('Invalid credentials');
-      // }
+      if (!userData) {
+        throw new Error('invalid_login_response');
+      }
 
-      // const authToken = 'mock-token-' + email;
-
-      // if (!authToken || !userData) {
-      //   throw new Error('invalid_login_response');
-      // }
-
-      localStorage.setItem('auth_token', authToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      setToken(authToken);
       setUser(userData);
+      setAccessToken(payload.token ?? null);
+      setToken(payload.token);
+      setLoading(false);
       sonnerToast('Login successful!', 'You have successfully logged in to your account.');
 
       return userData;
@@ -111,22 +96,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await api.post('/auth/signup', payload);
       const payloadResponse = response.data?.data ?? response.data;
-      const authToken = payloadResponse?.data?.token;
-      const userData = payloadResponse?.data?.user;
+      const userData = payloadResponse?.data?.user ?? payloadResponse?.user ?? payloadResponse;
 
-      // Mock registration
-      // const userData: User = {
-      //   id: 'user-' + Date.now(),
-      //   email,
-      //   name,
-      //   role,
-      // };
-      // const authToken = 'mock-token-' + email;
-
-      if (authToken && userData) {
-        localStorage.setItem('auth_token', authToken);
+      if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
-        setToken(authToken);
         setUser(userData);
       }
 
@@ -136,24 +109,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-    sonnerToast('Logged out successfully', 'You have successfully logged out of your account.');
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+      clearAccessToken();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('user');
+      setToken(null);
+      setUser(null);
+      sonnerToast('Logged out successfully', 'You have successfully logged out of your account.');
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        token, // Deprecated: kept for backward compatibility
         loading,
         login,
         register,
         logout,
-        isAuthenticated: !!token && !!user,
+        isAuthenticated: !!user, // Authentication is determined by user presence (cookie validates on backend)
       }}
     >
       {children}
