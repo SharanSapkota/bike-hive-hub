@@ -127,12 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
-        token, // Deprecated: kept for backward compatibility
+        token,
         loading,
         login,
         register,
         logout,
-        isAuthenticated: !!user, // Authentication is determined by user presence (cookie validates on backend)
+        isAuthenticated: !!user,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -66,10 +66,11 @@ const Login = () => {
   const [registerRole, setRegisterRole] = useState<UserRole>("renter");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (isAuthenticated) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +80,7 @@ const Login = () => {
       const authenticatedUser = await login(loginEmail, loginPassword);
       const menuItems = fetchMenuItems(authenticatedUser.role);
       const redirectPath = menuItems[0]?.path || "/";
-      navigate(redirectPath);
+      navigate(redirectPath, { replace: true });
     } catch (error: any) {
       const status = error?.response?.status;
       const message = error?.response?.data?.data || error?.message || "Login failed";
