@@ -11,8 +11,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      'https://gear-quest.onrender.com', 
-      'localhost',                 
+      'localhost',
+      'http://localhost:4000',
+      'https://gear-quest.onrender.com',
+      '*', 
     ],
   },
   plugins: [
