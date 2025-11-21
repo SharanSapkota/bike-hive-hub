@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      'bike-hive-hub.onrender.com', 
+      'https://gear-quest.onrender.com', 
       'localhost',                 
     ],
   },
