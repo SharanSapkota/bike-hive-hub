@@ -122,7 +122,7 @@ const History = () => {
       <div>
         <h1 className="text-3xl font-bold">Rental History</h1>
         <p className="text-muted-foreground mt-2">
-          View your past bike rentals and transactions
+          View your past Adventure Gear rentals and transactions
         </p>
       </div>
 

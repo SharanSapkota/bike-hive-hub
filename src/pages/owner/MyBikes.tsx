@@ -642,7 +642,7 @@ const MyBikes = () => {
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (editingBike ? 'Failed to update bike' : 'Failed to add bike');
+        (editingBike ? 'Failed to update Adventure Gear' : 'Failed to add Adventure Gear');
       toast.error(message);
     } finally {
       if (loadingId !== undefined) {
@@ -693,7 +693,7 @@ const MyBikes = () => {
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:opacity-90 gap-2" onClick={openAddDialog}>
               <Plus className="h-4 w-4" />
-              Add Bike
+              Add Adventure Gear
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -946,7 +946,7 @@ const MyBikes = () => {
                 className="bg-gradient-primary hover:opacity-90"
                 disabled={!formData.name}
               >
-                {editingBike ? 'Update Bike' : 'Add Bike'}
+                {editingBike ? 'Update Adventure Gear' : 'Add Adventure Gear'}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -168,7 +168,7 @@ const Login = () => {
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8 animate-fade-in">
             <Bike className="w-24 h-24 mb-6" />
-            <h1 className="text-5xl font-bold mb-4">Bike Rentals </h1>
+            <h1 className="text-5xl font-bold mb-4">Gear Quest </h1>
             <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
           </div>
           
@@ -177,7 +177,7 @@ const Login = () => {
               <Zap className="w-6 h-6 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold mb-1">Quick & Easy</h3>
-                <p className="text-sm opacity-90">Find and rent bikes in seconds</p>
+                <p className="text-sm opacity-90">Find and rent Adventure Gear in seconds</p>
               </div>
             </div>
             

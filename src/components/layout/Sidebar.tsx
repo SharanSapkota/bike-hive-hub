@@ -71,7 +71,7 @@ const Sidebar = () => {
                 )} */}
               </div>
               <div>
-                <h1 className="font-bold text-lg">Bike Rentals </h1>
+                <h1 className="font-bold text-lg">Qear Quest </h1>
                 <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
               </div>
             </div>
