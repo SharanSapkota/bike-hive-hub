@@ -64,14 +64,9 @@ const Sidebar = () => {
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
                 <Bike className="h-6 w-6 text-white" />
-                {/* {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold flex items-center justify-center shadow-lg">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )} */}
               </div>
               <div>
-                <h1 className="font-bold text-lg">Bike Rentals </h1>
+                <h1 className="font-bold text-lg">GearQuest</h1>
                 <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
               </div>
             </div>

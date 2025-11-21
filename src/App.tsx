@@ -17,6 +17,7 @@ import History from "./pages/History";
 import Notifications from "./pages/Notifications";
 import Install from "./pages/Install";
 import MapView from "./pages/renter/MapView";
+import GearList from "./pages/renter/GearList";
 import Payment from "./pages/renter/Payment";
 import BikeDetails from "./pages/renter/BikeDetails";
 import MyBikes from "./pages/owner/MyBikes";
@@ -58,7 +59,10 @@ const AppRoutes = () => {
         <Route path="/history" element={<History />} />
         <Route path="/notifications" element={<ProtectedRoute allowedRoles={['owner', 'renter']}><Notifications /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
+        <Route path="/renter/map" element={<ProtectedRoute allowedRoles={['renter']}><MapView /></ProtectedRoute>} />
+        <Route path="/renter/gear-list" element={<ProtectedRoute allowedRoles={['renter']}><GearList /></ProtectedRoute>} />
         <Route path="/bike/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><BikeDetails /></ProtectedRoute>} />
+        <Route path="/renter/gear/:bikeId" element={<ProtectedRoute allowedRoles={['renter']}><BikeDetails /></ProtectedRoute>} />
         <Route path="/payment" element={<ProtectedRoute allowedRoles={['renter']}><Payment /></ProtectedRoute>} />
         <Route path="/bikes" element={<ProtectedRoute allowedRoles={['owner', 'admin']}><MyBikes /></ProtectedRoute>} />
         <Route path="/rentals" element={<ProtectedRoute allowedRoles={['owner']}><Rentals /></ProtectedRoute>} />

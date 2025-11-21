@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Navigation, Star, X, Search, Loader2, CalendarIcon } from "lucide-react";
+import { MapPin, Navigation, Star, X, Search, Loader2, CalendarIcon, Filter, List } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -66,6 +67,10 @@ const MapView = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   
+  // Filter state
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [gearSearchQuery, setGearSearchQuery] = useState("");
+  
   // Booking dialog state
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [fromDate, setFromDate] = useState<Date>();
@@ -105,16 +110,24 @@ const MapView = () => {
 
   const getBikes = useCallback(async (coords?: { lat: number; lng: number }) => {
     try {
-      const params = coords
+      const params: any = coords
         ? {
             lat: coords.lat,
             lng: coords.lng,
             latitude: coords.lat,
             longitude: coords.lng,
           }
-        : undefined;
+        : {};
 
-      const response = await api.get("/bikes", params ? { params } : undefined);
+      if (selectedCategory !== "all") {
+        params.category = selectedCategory;
+      }
+      
+      if (gearSearchQuery) {
+        params.search = gearSearchQuery;
+      }
+
+      const response = await api.get("/bikes", { params });
       const payload = response?.data;
       const bikeList = Array.isArray(payload?.data)
         ? payload.data
@@ -203,7 +216,7 @@ const MapView = () => {
       getBikes();
     }
 
-  }, [getBikes, isLoaded]);
+  }, [getBikes, isLoaded, selectedCategory, gearSearchQuery]);
 
   // Calculate price when dates change
   useEffect(() => {
@@ -469,8 +482,9 @@ const MapView = () => {
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
+      {/* Search Bar and Filters */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-2xl px-4 space-y-2">
+        {/* Location Search */}
         <Card className="shadow-xl">
           <div className="flex items-center gap-2 p-3">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -489,6 +503,40 @@ const MapView = () => {
                 className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
               />
             </Autocomplete>
+          </div>
+        </Card>
+
+        {/* Filters */}
+        <Card className="shadow-xl">
+          <div className="flex items-center gap-2 p-3 flex-wrap">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search gear..."
+              value={gearSearchQuery}
+              onChange={(e) => setGearSearchQuery(e.target.value)}
+              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 flex-1 min-w-[150px]"
+            />
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[150px] border-0 focus:ring-0">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="camping">Camping</SelectItem>
+                <SelectItem value="hiking">Hiking</SelectItem>
+                <SelectItem value="climbing">Climbing</SelectItem>
+                <SelectItem value="water-sports">Water Sports</SelectItem>
+                <SelectItem value="winter-sports">Winter Sports</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate("/renter/gear-list")}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List View
+            </Button>
           </div>
         </Card>
       </div>
@@ -528,7 +576,20 @@ const MapView = () => {
         {bikes.map((bike) => {
           const isSelected = selectedBike?.id === bike.id;
           const isMyBooking = bike.myBooking === true;
-          const markerColor = isMyBooking ? "#3b82f6" : "#14b8a6";
+          
+          // Different pin colors based on category
+          const getCategoryColor = (category: string) => {
+            const colors: Record<string, string> = {
+              camping: "#10b981", // green
+              hiking: "#f59e0b", // amber
+              climbing: "#ef4444", // red
+              "water-sports": "#3b82f6", // blue
+              "winter-sports": "#8b5cf6", // purple
+            };
+            return colors[category?.toLowerCase()] || "#14b8a6";
+          };
+          
+          const markerColor = isMyBooking ? "#3b82f6" : getCategoryColor(bike.category);
           
           return (
             <Marker
@@ -542,7 +603,7 @@ const MapView = () => {
                   <svg width="${isSelected ? 56 : 40}" height="${isSelected ? 56 : 40}" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
                     ${isSelected ? `<circle cx="28" cy="28" r="26" fill="${markerColor}" opacity="0.3"><animate attributeName="r" values="26;30;26" dur="1.5s" repeatCount="indefinite"/></circle>` : ""}
                     <circle cx="28" cy="28" r="22" fill="${markerColor}" stroke="white" stroke-width="${isSelected ? 3 : 2}"/>
-                    <text x="28" y="${isSelected ? 36 : 34}" font-size="${isSelected ? 26 : 24}" text-anchor="middle" fill="white">🚲</text>
+                    <text x="28" y="${isSelected ? 36 : 34}" font-size="${isSelected ? 26 : 24}" text-anchor="middle" fill="white">🎒</text>
                   </svg>
                 `),
                 scaledSize: new google.maps.Size(isSelected ? 56 : 40, isSelected ? 56 : 40),
@@ -588,6 +649,35 @@ const MapView = () => {
             </>
           )}
         </Button>
+        
+        {/* Category Legend */}
+        <Card className="shadow-lg">
+          <div className="p-3 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Categories</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#10b981]" />
+                <span className="text-xs">Camping</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#f59e0b]" />
+                <span className="text-xs">Hiking</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
+                <span className="text-xs">Climbing</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#3b82f6]" />
+                <span className="text-xs">Water Sports</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#8b5cf6]" />
+                <span className="text-xs">Winter Sports</span>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Anchored popup emerging from marker */}

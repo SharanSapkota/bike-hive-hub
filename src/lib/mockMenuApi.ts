@@ -8,6 +8,7 @@ import {
   Settings,
   Package,
   Bell,
+  List,
 } from 'lucide-react';
 import { UserRole } from '@/contexts/AuthContext';
 
@@ -24,7 +25,8 @@ export const fetchMenuItems = (role: UserRole): MenuItem[] => {
 
   const menuData: Record<UserRole, MenuItem[]> = {
     renter: [
-      { icon: Map, label: 'Map', path: '/map' },
+      { icon: List, label: 'Gear List', path: '/renter/gear-list' },
+      { icon: Map, label: 'Map View', path: '/map' },
       { icon: Bell, label: 'Notifications', path: '/notifications' },
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
       { icon: History, label: 'Rental History', path: '/history' },
