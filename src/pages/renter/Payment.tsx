@@ -107,7 +107,7 @@ const Payment = () => {
       setIsProcessing(false);
       toast({
         title: "Payment Successful!",
-        description: "Your bike rental has been confirmed.",
+        description: "Your Adventure Gear rental has been confirmed.",
       });
       navigate("/history");
     }, 2000);
@@ -296,7 +296,7 @@ const Payment = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Payment Details</h1>
-            <p className="text-sm text-muted-foreground">Complete your bike rental</p>
+            <p className="text-sm text-muted-foreground">Complete your Adventure Gear rental</p>
           </div>
         </div>
         {(stripePaymentIntent?.clientSecret) ? (
