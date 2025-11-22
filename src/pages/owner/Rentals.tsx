@@ -129,7 +129,7 @@ const Rentals = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Rentals</h1>
-        <p className="text-muted-foreground">Manage your bike rental requests</p>
+        <p className="text-muted-foreground">Manage your Adventure Gear rental requests</p>
       </div>
 
       {/* Stats */}
