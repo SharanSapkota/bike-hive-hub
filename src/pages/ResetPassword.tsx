@@ -92,7 +92,7 @@ const ResetPassword = () => {
           <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
             <Bike className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold">Bike Rentals </h1>
+          <h1 className="text-3xl font-bold"> Gear Quest </h1>
         </div>
 
         <Card className="shadow-lg">
