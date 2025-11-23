@@ -69,7 +69,6 @@ const MapView = () => {
   
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [gearSearchQuery, setGearSearchQuery] = useState("");
   
   // Booking dialog state
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -121,10 +120,6 @@ const MapView = () => {
 
       if (selectedCategory !== "all") {
         params.category = selectedCategory;
-      }
-      
-      if (gearSearchQuery) {
-        params.search = gearSearchQuery;
       }
 
       const response = await api.get("/bikes", { params });
@@ -216,7 +211,7 @@ const MapView = () => {
       getBikes();
     }
 
-  }, [getBikes, isLoaded, selectedCategory, gearSearchQuery]);
+  }, [getBikes, isLoaded, selectedCategory]);
 
   // Calculate price when dates change
   useEffect(() => {
@@ -510,12 +505,6 @@ const MapView = () => {
         <Card className="shadow-xl">
           <div className="flex items-center gap-2 p-3 flex-wrap">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search gear..."
-              value={gearSearchQuery}
-              onChange={(e) => setGearSearchQuery(e.target.value)}
-              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 flex-1 min-w-[150px]"
-            />
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-[150px] border-0 focus:ring-0">
                 <SelectValue placeholder="Category" />
