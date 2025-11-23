@@ -74,16 +74,19 @@ export default {
         "gradient-primary": "var(--gradient-primary)",
         "gradient-accent": "var(--gradient-accent)",
         "gradient-hero": "var(--gradient-hero)",
+        "gradient-card": "var(--gradient-card)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         glow: "var(--shadow-glow)",
+        "accent-glow": "var(--shadow-accent-glow)",
       },
       transitionProperty: {
         base: "var(--transition-base)",
         smooth: "var(--transition-smooth)",
+        bounce: "var(--transition-bounce)",
       },
       borderRadius: {
         lg: "var(--radius)",
