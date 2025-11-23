@@ -11,6 +11,7 @@ import { Bike, Loader2, ArrowRight, Shield, Zap } from "lucide-react";
 import { z } from "zod";
 import { fetchMenuItems } from "@/lib/mockMenuApi";
 import { sonnerToast } from "@/components/ui/sonnertoast";
+import adventureImage from "@/assets/adventure-login.jpg";
 
 // Validation schema
 const signupSchema = z
@@ -162,32 +163,18 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
-          <div className="mb-8 animate-fade-in">
-            <Bike className="w-24 h-24 mb-6" />
-            <h1 className="text-5xl font-bold mb-4">Gear Quest </h1>
-            <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
-          </div>
-          
-          <div className="space-y-6 max-w-md animate-fade-in">
-            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <Zap className="w-6 h-6 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">Quick & Easy</h3>
-                <p className="text-sm opacity-90">Find and rent Adventure Gear in seconds</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <Shield className="w-6 h-6 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">Secure & Safe</h3>
-                <p className="text-sm opacity-90">Your data is protected with us</p>
-              </div>
-            </div>
+      {/* Left Side - Adventure Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img 
+          src={adventureImage} 
+          alt="Adventure biking through mountains" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="relative z-10 flex flex-col justify-end p-12 text-white">
+          <div className="animate-fade-in">
+            <h1 className="text-5xl font-bold mb-4">Gear Quest</h1>
+            <p className="text-xl opacity-90">Your Journey Starts Here</p>
           </div>
         </div>
       </div>
