@@ -7,6 +7,6 @@ export const getBikes = async () => {
 
 export const getBikeDetails = async (id: string) => {
   const response = await api.get(`/bikes/${id}`);
-  return response.data.data;
+  return response?.data?.data;
 };
 
