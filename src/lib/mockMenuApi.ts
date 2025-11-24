@@ -27,8 +27,8 @@ export const fetchMenuItems = (role: UserRole): MenuItem[] => {
     renter: [
       { icon: List, label: 'Gear List', path: '/renter/gear-list' },
       { icon: Map, label: 'Map View', path: '/map' },
-      { icon: Bell, label: 'Notifications', path: '/notifications' },
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+      { icon: Bell, label: 'Notifications', path: '/notifications' },
       { icon: History, label: 'Rental History', path: '/history' },
       { icon: User, label: 'Profile', path: '/profile' },
     ],
