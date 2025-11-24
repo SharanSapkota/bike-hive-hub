@@ -88,8 +88,8 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const mapContextNotification = useCallback((notification: any): Notification => {
     const data = notification?.data ?? {};
     return {
-      id: notification.id,
-      name: notification.name,
+      id: notification?.id,
+      name: notification?.name,
       type: (notification.type as Notification['type']) ?? 'rental_request',
       title: notification.title,
       message: notification.message,
