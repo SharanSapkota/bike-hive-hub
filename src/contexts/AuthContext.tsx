@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+        setUser(userData); 
       }
 
       sonnerToast('Registration successful!', 'You have successfully registered for an account.');
