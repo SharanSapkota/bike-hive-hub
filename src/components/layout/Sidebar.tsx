@@ -101,7 +101,7 @@ const Sidebar = () => {
                       <item.icon className="h-5 w-5" />
                       {showBadge && (
                         <span className="absolute -top-1 -right-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground shadow">
-                          {badgeValue}
+                          {badgeValue} 
                         </span>
                       )}
                     </div>
