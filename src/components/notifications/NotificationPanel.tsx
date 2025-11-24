@@ -89,12 +89,12 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
     const data = notification?.data ?? {};
     return {
       id: notification?.id,
-      name: notification?.name,
+      name: notification?.name, 
       type: (notification.type as Notification['type']) ?? 'rental_request',
       title: notification.title,
-      message: notification.message,
-      read: notification.read,
-      createdAt: notification.createdAt,
+      message: notification?.message,
+      read: notification?.read,
+      createdAt: notification?.createdAt,
       bikeId: data?.bikeId ?? data?.bike_id ?? notification.bikeId,
       bookingId: data?.bookingId ?? data?.booking_id ?? notification.bookingId,
       status: (data?.status ?? notification.status) as Notification['status'],
