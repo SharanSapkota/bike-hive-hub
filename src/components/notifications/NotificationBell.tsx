@@ -34,7 +34,7 @@ const NotificationBell = () => {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
         <NotificationPanel onClose={() => setOpen(false)} />
-      </PopoverContent>
+      </PopoverContent> 
     </Popover>
   );
 };
