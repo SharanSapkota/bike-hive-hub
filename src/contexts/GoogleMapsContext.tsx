@@ -13,7 +13,7 @@ const GoogleMapsContext = createContext<GoogleMapsContextType | undefined>(undef
 
 export const GoogleMapsProvider = ({ children }: { children: ReactNode }) => {
   const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
+    id: "google-map-script", 
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
