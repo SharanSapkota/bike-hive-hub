@@ -52,7 +52,7 @@ export const BookingProvider = ({ children, user }: { children: ReactNode, user:
   const createBooking = useCallback(async (booking: any) => {
     try {
       const response = await api.post("/bookings", booking);
-      const newBooking = response?.data?.data;
+      const newBooking = response?.data.data;
       setBookings([...bookings, newBooking]);
     } catch (error) {
       console.error("Error creating booking:", error);
