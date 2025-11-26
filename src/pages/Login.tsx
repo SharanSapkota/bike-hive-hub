@@ -197,7 +197,8 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md animate-scale-in">
           <div className="lg:hidden mb-8 text-center">
-            <Bike className="w-16 h-16 mx-auto mb-4 text-primary" />
+            {/* <Bike className="w-16 h-16 mx-auto mb-4 text-primary" /> */}
+            <img src="/gearquest.png" alt="Gear Quest" className="w-16 h-16 mx-auto mb-4 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Gear Quest </h1>
           </div>
 
