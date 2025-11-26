@@ -63,7 +63,8 @@ const Sidebar = () => {
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-                <Bike className="h-6 w-6 text-white" />
+                {/* <Bike className="h-6 w-6 text-white" /> */}
+                <img src="/gearquest.png" alt="Gear Quest" className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="font-bold text-lg">GearQuest</h1>

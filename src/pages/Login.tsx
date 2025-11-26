@@ -167,7 +167,8 @@ const Login = () => {
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8 animate-fade-in">
-            <Bike className="w-24 h-24 mb-6" />
+            {/* <Bike className="w-24 h-24 mb-6" /> */}
+            <img src="/gearquest.png" alt="Gear Quest" className="w-24 h-24 mb-6" />
             <h1 className="text-5xl font-bold mb-4">Gear Quest </h1>
             <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
           </div>
