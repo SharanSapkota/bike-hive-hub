@@ -168,7 +168,7 @@ const Login = () => {
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8 animate-fade-in">
             {/* <Bike className="w-24 h-24 mb-6" /> */}
-            <img src="/gearquest.png" alt="Gear Quest" className="w-24 h-24 mb-6" />
+            <img src="/gearquest.png" alt="Gear Quest" className="w-24 h-24 mb-6 object-contain" />
             <h1 className="text-5xl font-bold mb-4">Gear Quest </h1>
             <p className="text-xl opacity-90 mb-8">Your Journey Starts Here</p>
           </div>
@@ -198,7 +198,7 @@ const Login = () => {
         <div className="w-full max-w-md animate-scale-in">
           <div className="lg:hidden mb-8 text-center">
             {/* <Bike className="w-16 h-16 mx-auto mb-4 text-primary" /> */}
-            <img src="/gearquest.png" alt="Gear Quest" className="w-16 h-16 mx-auto mb-4 text-primary" />
+            <img src="/gearquest.png" alt="Gear Quest" className="w-16 h-16 mx-auto mb-4 object-contain" />
             <h1 className="text-3xl font-bold text-foreground">Gear Quest </h1>
           </div>
 
