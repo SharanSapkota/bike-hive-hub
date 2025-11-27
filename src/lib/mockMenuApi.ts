@@ -35,7 +35,7 @@ export const fetchMenuItems = (role: UserRole): MenuItem[] => {
     owner: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
       { icon: Bell, label: 'Notifications', path: '/notifications' },
-      { icon: Bike, label: 'My Bikes', path: '/bikes' },
+      { icon: Bike, label: 'My gears', path: '/bikes' },
       { icon: Package, label: 'Rentals', path: '/rentals' },
       { icon: User, label: 'Profile', path: '/profile' },
     ],
