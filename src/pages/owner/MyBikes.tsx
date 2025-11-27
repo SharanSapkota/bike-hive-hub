@@ -632,7 +632,7 @@ const MyBikes = () => {
         if (user && created?.ownerId === Number(user?.id)) {
           setBikes((prev) => [...prev, created]);
         }
-        sonnerToast('Bike added successfully!', 'You have successfully added the bike.');
+        sonnerToast('Gear added successfully!', 'You have successfully added the gear.');
       }
 
       setIsDialogOpen(false);
@@ -657,7 +657,7 @@ const MyBikes = () => {
         bike.id === bikeId ? { ...bike, available: !bike.available } : bike
       )
     );
-    sonnerToast('Bike availability updated', 'You have successfully updated the bike availability.');
+    sonnerToast('Gear availability updated', 'You have successfully updated the gear availability.');
   };
 
   const handleDeleteBike = async (bikeId: number) => {
@@ -665,14 +665,14 @@ const MyBikes = () => {
     try {
       await api.delete(`/bikes/${bikeId}`);
       setBikes((prev) => prev.filter((bike) => bike.id !== bikeId));
-      sonnerToast('Bike deleted successfully', 'You have successfully deleted the bike.');
+      sonnerToast('Gear deleted successfully', 'You have successfully deleted the gear.');
     } catch (error: any) {
-      console.error('Failed to delete bike:', error);
+      console.error('Failed to delete gear:', error);
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        'Failed to delete bike';
-      sonnerToast('Failed to delete bike', 'Failed to delete the bike.');
+        'Failed to delete gear';
+      sonnerToast('Failed to delete gear', 'Failed to delete the gear.');
     } finally {
       toast.dismiss(loadingId);
     }
@@ -693,19 +693,19 @@ const MyBikes = () => {
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:opacity-90 gap-2" onClick={openAddDialog}>
               <Plus className="h-4 w-4" />
-              Add Bike
+              Add Gear
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingBike ? 'Edit Bike' : 'Add New Bike'}</DialogTitle>
+              <DialogTitle>{editingBike ? 'Edit Gear' : 'Add New Gear'}</DialogTitle>
               <DialogDescription>
                 {editingBike ? 'Update the bike details' : 'Fill in the details to list a new bike'}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Bike Name</Label>
+                <Label htmlFor="name">Gear Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -857,7 +857,7 @@ const MyBikes = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Bike Images (Max {MAX_IMAGES})</Label>
+                <Label>Gear Images (Max {MAX_IMAGES})</Label>
                 <div className="space-y-3">
                   {combinedImagePreviews.length > 0 && (
                     <div className="grid grid-cols-3 gap-3">
@@ -913,7 +913,7 @@ const MyBikes = () => {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe your bike..."
+                  placeholder="Describe your gear..."
                   rows={3}
                 />
               </div>
@@ -946,7 +946,7 @@ const MyBikes = () => {
                 className="bg-gradient-primary hover:opacity-90"
                 disabled={!formData.name}
               >
-                {editingBike ? 'Update Bike' : 'Add Gear'}
+                {editingBike ? 'Update Gear' : 'Add Gear'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -958,7 +958,7 @@ const MyBikes = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Bikes
+              Total Gears
             </CardTitle>
             <Bike className="h-5 w-5 text-primary" />
           </CardHeader>
@@ -1091,7 +1091,7 @@ const MyBikes = () => {
         <Card className="p-12">
           <div className="text-center">
             <Bike className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No bikes yet</h3>
+            <h3 className="text-lg font-semibold mb-2">No gears yet</h3>
             <p className="text-muted-foreground mb-4">
               Start by adding your first bike to the platform
             </p>
