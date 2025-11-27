@@ -683,8 +683,8 @@ const MyBikes = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">My Bikes</h1>
-          <p className="text-muted-foreground">Manage your bike listings</p>
+          <h1 className="text-3xl font-bold mb-2">My Gears</h1>
+          <p className="text-muted-foreground">Manage your gear listings</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
