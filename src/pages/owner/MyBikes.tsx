@@ -638,11 +638,11 @@ const MyBikes = () => {
       setIsDialogOpen(false);
       resetForm();
     } catch (error: any) {
-      console.error('Error saving bike:', error);
+      console.error('Error saving gear:', error);
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (editingBike ? 'Failed to update bike' : 'Failed to add bike');
+        (editingBike ? 'Failed to update gear' : 'Failed to add gear');
       toast.error(message);
     } finally {
       if (loadingId !== undefined) {
@@ -946,7 +946,7 @@ const MyBikes = () => {
                 className="bg-gradient-primary hover:opacity-90"
                 disabled={!formData.name}
               >
-                {editingBike ? 'Update Bike' : 'Add Bike'}
+                {editingBike ? 'Update Bike' : 'Add Gear'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1100,7 +1100,7 @@ const MyBikes = () => {
               setIsDialogOpen(true);
             }} className="bg-gradient-primary hover:opacity-90">
               <Plus className="h-4 w-4 mr-2" />
-              Add Your First Bike
+              Add Your First Gear
             </Button>
           </div>
         </Card>
