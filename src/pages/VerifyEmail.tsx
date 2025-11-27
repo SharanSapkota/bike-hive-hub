@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Loader2, MailCheck, MailWarning } from "lucide-react";
 import { sonnerToast } from "@/components/ui/sonnertoast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -76,8 +77,8 @@ const VerifyEmail = () => {
     setIsSubmitting(true);
     setDisableResend(true);
     try {
-      await api.post("/auth/resend-verification", { email });
-      sonnerToast('Verification email sent!', 'Please check your inbox.');
+      const data = await api.post("/auth/resend-verification", { email });
+      sonnerToast('Email', data?.data?.data?.message || 'Success ');
     } catch (error: any) {
       sonnerToast('Failed to resend verification email', 'Failed to resend the verification email.');
     } finally {
