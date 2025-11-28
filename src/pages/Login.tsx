@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,8 @@ const signupSchema = z
   });
 
 const Login = () => {
+  // const { token } = useAuth();
+  // if(token) return <Navigate to="/" replace />;
   const navigate = useNavigate();
   const { login, register, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -151,7 +153,7 @@ const Login = () => {
         role: registerRole,
       });
 
-      sonnerToast("Registration successful!", "Please verify your email.");
+      // sonnerToast("Registration successful!", "Please verify your email.");
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       sonnerToast("Registration failed", error?.response?.data?.data || "Registration failed");
