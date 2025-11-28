@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LogOut,
@@ -14,12 +14,17 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import { useNotificationContext } from '@/contexts/NotificationContext';
 
 const Sidebar = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const { unreadCount } = useNotificationContext();
 
   useEffect(() => {
+    if(!user) {
+      navigate("/login");
+      return;
+    }
     const loadMenuItems = async () => {
       if (user?.role) {
         const items = await fetchMenuItems(user.role);
@@ -118,7 +123,7 @@ const Sidebar = () => {
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent/30 mb-2">
             <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-medium">
-              {user?.name.charAt(0).toUpperCase()}
+              {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{user?.name}</p>
