@@ -203,13 +203,13 @@ const Payment = () => {
           <div className="mb-4">
             <img 
               src={bikeImage}
-              alt={bike.name ?? "Bike"}
+              alt={bike.name ?? "Gear"}
               className="w-full h-40 object-cover rounded-lg mb-3"
             />
             <div className="flex items-center gap-2 mb-2">
               <Bike className="h-4 w-4 text-primary" />
               <h3 className="font-semibold">
-                {bike.name ?? "Bike"}
+                {bike.name ?? "Gear"}
               </h3>
             </div>
             <p className="text-sm text-muted-foreground">
