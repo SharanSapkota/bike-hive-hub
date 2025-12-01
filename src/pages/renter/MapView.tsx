@@ -23,6 +23,7 @@ import { createBooking } from "@/services/booking";
 import { calculatePrice } from "@/services/pricing";
 import { sonnerToast } from "@/components/ui/sonnertoast";
 import { useNotificationContext } from "@/contexts/NotificationContext";
+import { useCommonContext } from "@/contexts/commonContext";
 
 interface Bike {
   id: string;
@@ -53,6 +54,7 @@ const MapView = () => {
   const navigate = useNavigate();
   const { isLoaded, loadError } = useGoogleMaps();
   const { IncreaseUnreadCount } = useNotificationContext();
+  const { categories } = useCommonContext();
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [myBookings, setMyBookings] = useState<[]>([]);
@@ -511,11 +513,9 @@ const MapView = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="camping">Camping</SelectItem>
-                <SelectItem value="hiking">Hiking</SelectItem>
-                <SelectItem value="climbing">Climbing</SelectItem>
-                <SelectItem value="water-sports">Water Sports</SelectItem>
-                <SelectItem value="winter-sports">Winter Sports</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button 
@@ -644,22 +644,12 @@ const MapView = () => {
           <div className="p-3 space-y-2">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Categories</p>
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-                <span className="text-xs">Camping</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#f59e0b]" />
-                <span className="text-xs">Hiking</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
-                <span className="text-xs">Climbing</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#3b82f6]" />
-                <span className="text-xs">Water Sports</span>
-              </div>
+              {categories.map((category) => (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[#10b981]" />
+                  <span className="text-xs">{category.name}</span>
+                </div>
+              ))}
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#8b5cf6]" />
                 <span className="text-xs">Winter Sports</span>
