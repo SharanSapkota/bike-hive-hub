@@ -24,6 +24,7 @@ import MyBikes from "./pages/owner/MyBikes";
 import Rentals from "./pages/owner/Rentals";
 import RentalRequests from "./pages/owner/RentalRequests";
 import NotFound from "./pages/NotFound";
+import { CommonProvider } from "./contexts/commonContext";
 
 const queryClient = new QueryClient();
 
@@ -77,15 +78,17 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <GoogleMapsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </GoogleMapsProvider>
+      <CommonProvider>
+        <GoogleMapsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </GoogleMapsProvider>
+      </CommonProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
