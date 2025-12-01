@@ -640,23 +640,7 @@ const MapView = () => {
         </Button>
         
         {/* Category Legend */}
-        <Card className="shadow-lg">
-          <div className="p-3 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Categories</p>
-            <div className="space-y-1.5">
-              {categories.map((category) => (
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-                  <span className="text-xs">{category.name}</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#8b5cf6]" />
-                <span className="text-xs">Winter Sports</span>
-              </div>
-            </div>
-          </div>
-        </Card>
+       
       </div>
 
       {/* Anchored popup emerging from marker */}
