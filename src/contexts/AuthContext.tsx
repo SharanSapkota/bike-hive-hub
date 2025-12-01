@@ -48,7 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null); // Deprecated: kept for backward compatibility
   const [loading, setLoading] = useState(true);
-  const justLoggedInRef = useRef(false);
 
   useEffect(() => {
    
