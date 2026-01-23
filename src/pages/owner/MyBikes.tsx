@@ -23,6 +23,12 @@ import { api } from '@/lib/api';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { sonnerToast } from '@/components/ui/sonnertoast';
+import { 
+  fetchCategories, 
+  fetchSubCategoriesByCategoryId, 
+  Category, 
+  SubCategory 
+} from '@/lib/mockCategoryApi';
 
 const mapContainerStyle = {
   width: '100%',
@@ -83,9 +89,17 @@ const MyBikes = () => {
   const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  
+  // Category and SubCategory state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingSubCategories, setIsLoadingSubCategories] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
-    category: 'City',
+    categoryId: '',
+    subCategoryId: '',
     pricePerHour: '',
     pricePerDay: '',
     location: '',
@@ -121,6 +135,22 @@ const MyBikes = () => {
       }
     });
   };
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const cats = await fetchCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (!isLoaded || typeof window === 'undefined' || !window.google) {
@@ -391,7 +421,8 @@ const MyBikes = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      category: 'City',
+      categoryId: '',
+      subCategoryId: '',
       pricePerHour: '',
       pricePerDay: '',
       location: '',
@@ -399,6 +430,7 @@ const MyBikes = () => {
       description: '',
       autoAccept: false,
     });
+    setSubCategories([]);
     setExistingImages([]);
     setExistingImagePreviews([]);
     revokeNewImagePreviews();
@@ -422,9 +454,13 @@ const MyBikes = () => {
 
   const openEditDialog = (bike: BikeData) => {
     setEditingBike(bike);
+    // For editing, we'd need to map category name back to categoryId
+    // Since we're mocking, we'll find the category by name
+    const matchedCategory = categories.find(c => c.name === bike.category);
     setFormData({
       name: bike.name,
-      category: bike.category,
+      categoryId: matchedCategory?.id || '',
+      subCategoryId: '', // Will be set after subcategories load
       pricePerHour: bike.pricePerHour.toString(),
       pricePerDay: bike.pricePerDay.toString(),
       location: bike.location,
@@ -578,7 +614,20 @@ const MyBikes = () => {
 
       const payload = new FormData();
       payload.append('name', formData.name);
-      payload.append('category', formData.category);
+      // Send categoryId and subCategoryId instead of category names
+      payload.append('categoryId', formData.categoryId);
+      payload.append('subCategoryId', formData.subCategoryId);
+      // Also send category name for backward compatibility
+      const selectedCategory = categories.find(c => c.id === formData.categoryId);
+      const selectedSubCategory = subCategories.find(s => s.id === formData.subCategoryId);
+      if (selectedCategory) {
+        payload.append('category', selectedCategory.name);
+        payload.append('categoryName', selectedCategory.name);
+      }
+      if (selectedSubCategory) {
+        payload.append('subCategory', selectedSubCategory.name);
+        payload.append('subCategoryName', selectedSubCategory.name);
+      }
       // payload.append('pricePerHour', formData.pricePerHour);
       if (formData.pricePerDay) {
         payload.append('pricePerDay', formData.pricePerDay);
@@ -607,7 +656,6 @@ const MyBikes = () => {
 
       payload.append('existingImages', JSON.stringify(existingImages));
       payload.append('status', editingBike && !editingBike?.available ? 'MAINTENANCE' : 'AVAILABLE');
-      payload.append('categoryName', formData.category);
 
       newImages.forEach((file) => {
         payload.append('images', file);
@@ -714,23 +762,61 @@ const MyBikes = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mountain">Mountain</SelectItem>
-                    <SelectItem value="City">City</SelectItem>
-                    <SelectItem value="Road">Road</SelectItem>
-                    <SelectItem value="Electric">Electric</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={formData.categoryId}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, categoryId: value, subCategoryId: '' });
+                      // Load subcategories when category changes
+                      setIsLoadingSubCategories(true);
+                      fetchSubCategoriesByCategoryId(value)
+                        .then(subs => setSubCategories(subs))
+                        .finally(() => setIsLoadingSubCategories(false));
+                    }}
+                    disabled={isLoadingCategories}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select category"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="subCategory">Sub-Category</Label>
+                  <Select
+                    value={formData.subCategoryId}
+                    onValueChange={(value) => setFormData({ ...formData, subCategoryId: value })}
+                    disabled={!formData.categoryId || isLoadingSubCategories}
+                  >
+                    <SelectTrigger id="subCategory">
+                      <SelectValue 
+                        placeholder={
+                          !formData.categoryId 
+                            ? "Select category first" 
+                            : isLoadingSubCategories 
+                              ? "Loading..." 
+                              : "Select sub-category"
+                        } 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subCategories.map((subCategory) => (
+                        <SelectItem key={subCategory.id} value={subCategory.id}>
+                          {subCategory.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Commented out: Price per hour input */}
