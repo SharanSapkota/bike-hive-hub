@@ -4,11 +4,11 @@ A modern, full-featured bike and adventure gear rental platform built with React
 
 ## 📸 Screenshots
 
-![Screenshot 1](./public/1.png)
+![Screenshot 1](public/1.png)
 
-![Screenshot 2](./public/2.png)
+![Screenshot 2](public/2.png)
 
-![Screenshot 3](./public/3.png)
+![Screenshot 3](public/3.png)
 
 ## 🚀 Features
 
