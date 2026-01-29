@@ -1,6 +1,6 @@
 # Gear Quest - Rent Adventure Gear Anywhere
 
-A modern, full-featured bike and adventure gear rental platform built with React, TypeScript, and Supabase. Gear Quest connects gear owners with renters, making it easy to find and rent adventure gear in your area.
+A modern, full-featured bike and adventure gear rental platform built with React, TypeScript. Gear Quest connects gear owners with renters, making it easy to find and rent adventure gear in your area.
 
 ## 📸 Screenshots
 
@@ -33,7 +33,6 @@ A modern, full-featured bike and adventure gear rental platform built with React
 ### General Features
 - **Progressive Web App (PWA)**: Install and use as a native app
 - **Real-time Updates**: Socket.io integration for live notifications
-- **Authentication**: Secure email/password authentication with Supabase
 - **Role-based Access Control**: Separate interfaces for renters and owners
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **Dark Mode Support**: Theme switching capability
@@ -53,7 +52,6 @@ A modern, full-featured bike and adventure gear rental platform built with React
 - **Radix UI** - Accessible component primitives
 
 ### Backend & Services
-- **Supabase** - Authentication and database
 - **Stripe** - Payment processing
 - **Google Maps API** - Map integration
 - **Socket.io** - Real-time communication
@@ -71,7 +69,7 @@ A modern, full-featured bike and adventure gear rental platform built with React
 Before you begin, ensure you have the following installed:
 - **Node.js** (v18 or higher)
 - **npm** or **bun** package manager
-- **Supabase** account and project
+
 - **Google Maps API** key
 - **Stripe** account (for payment processing)
 - **AWS S3** bucket (for image uploads)
@@ -95,8 +93,7 @@ Before you begin, ensure you have the following installed:
    
    Create a `.env` file in the root directory with the following variables:
    ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+ 
    VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
    VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
    VITE_API_BASE_URL=your_api_base_url
@@ -106,12 +103,7 @@ Before you begin, ensure you have the following installed:
    VITE_S3_SECRET_ACCESS_KEY=your_s3_secret_key
    ```
 
-4. **Configure Supabase**
-   - Set up your Supabase project
-   - Configure authentication providers
-   - Set up database tables and policies
-
-5. **Start the development server**
+4. **Start the development server**
    ```bash
    npm run dev
    # or
@@ -139,26 +131,17 @@ bike-hive-hub/
 │   │   └── ui/              # shadcn/ui components
 │   ├── contexts/            # React contexts (Auth, Booking, etc.)
 │   ├── hooks/               # Custom React hooks
-│   ├── integrations/        # Third-party integrations (Supabase)
+│   ├── integrations/        # Third-party integrations
 │   ├── lib/                 # Utility functions and API clients
 │   ├── pages/               # Page components
 │   │   ├── owner/           # Owner-specific pages
 │   │   └── renter/          # Renter-specific pages
 │   ├── services/            # API service functions
 │   └── types/               # TypeScript type definitions
-├── public/                  # Static assets
-├── supabase/                # Supabase configuration
+├── public/                  # Static configuration
 └── dist/                    # Production build output
 ```
 
-## 🔐 Authentication
-
-The app uses Supabase for authentication with the following features:
-- Email/password authentication
-- Email verification
-- Password reset functionality
-- Role-based access control (renter, owner, admin)
-- Protected routes
 
 ## 🗺️ Key Pages & Routes
 
@@ -236,7 +219,6 @@ Socket.io integration provides:
 ## 📝 Environment Variables
 
 Make sure to configure all required environment variables in your hosting platform:
-- Supabase credentials
 - Google Maps API key
 - Stripe keys
 - API base URL
